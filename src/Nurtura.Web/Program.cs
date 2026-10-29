@@ -50,11 +50,22 @@ using (var scope = app.Services.CreateScope())
     var adminPassword = app.Configuration["Seed:AdminPassword"]
         ?? throw new InvalidOperationException("Configuration value 'Seed:AdminPassword' not found.");
 
+    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+
     await IdentitySeeder.SeedAsync(
         scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>(),
-        scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>(),
+        userManager,
         adminEmail,
         adminPassword);
+
+    // Test accounts exist only in Development.
+    if (app.Environment.IsDevelopment())
+    {
+        var testPassword = app.Configuration["Seed:TestPassword"]
+            ?? throw new InvalidOperationException("Configuration value 'Seed:TestPassword' not found.");
+
+        await IdentitySeeder.SeedTestUsersAsync(userManager, testPassword);
+    }
 }
 
 // Configure the HTTP request pipeline.

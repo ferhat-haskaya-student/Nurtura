@@ -3,5 +3,16 @@
   "Nav_Home": "Strona główna",
   "Nav_Privacy": "Prywatność",
   "Nav_ToggleNavigation": "Przełącz nawigację",
-  "Language_Switch": "Język"
+  "Nav_Login": "Zaloguj się",
+  "Nav_Logout": "Wyloguj się",
+  "Language_Switch": "Język",
+  "Account_Login_Title": "Logowanie",
+  "Account_Email": "E-mail",
+  "Account_Password": "Hasło",
+  "Account_RememberMe": "Zapamiętaj mnie",
+  "Account_Login_Submit": "Zaloguj się",
+  "Account_InvalidLogin": "Nieprawidłowy e-mail lub hasło.",
+  "Account_LockedOut": "To konto zostało tymczasowo zablokowane po zbyt wielu nieudanych próbach. Spróbuj ponownie za kilka minut.",
+  "Validation_Required": "Pole „{0}” jest wymagane.",
+  "Validation_Email": "Wprowadź prawidłowy adres e-mail."
 }

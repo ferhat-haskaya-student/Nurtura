@@ -3,5 +3,16 @@
   "Nav_Home": "Home",
   "Nav_Privacy": "Privacy",
   "Nav_ToggleNavigation": "Toggle navigation",
-  "Language_Switch": "Language"
+  "Nav_Login": "Log in",
+  "Nav_Logout": "Log out",
+  "Language_Switch": "Language",
+  "Account_Login_Title": "Log in",
+  "Account_Email": "Email",
+  "Account_Password": "Password",
+  "Account_RememberMe": "Remember me",
+  "Account_Login_Submit": "Log in",
+  "Account_InvalidLogin": "Incorrect email or password.",
+  "Account_LockedOut": "This account is temporarily locked after too many failed attempts. Try again in a few minutes.",
+  "Validation_Required": "The {0} field is required.",
+  "Validation_Email": "Enter a valid email address."
 }

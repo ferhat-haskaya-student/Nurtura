@@ -33,6 +33,7 @@
                             <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">@L["Nav_Privacy"]</a>
                         </li>
                     </ul>
+                    <partial name="_LoginPartial" />
                     <div class="d-flex gap-1 py-2 py-sm-0" role="group" aria-label="@L["Language_Switch"]">
                         @foreach (var culture in SupportedCultures.All)
                         {

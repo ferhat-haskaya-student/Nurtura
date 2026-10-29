@@ -4,6 +4,9 @@ namespace Nurtura.Core.Identity;
 
 public static class IdentitySeeder
 {
+    public const string TestMotherEmail = "mother@nurtura.com";
+    public const string TestProfessionalEmail = "professional@nurtura.com";
+
     public static async Task SeedAsync(
         RoleManager<IdentityRole> roleManager,
         UserManager<ApplicationUser> userManager,
@@ -18,17 +21,35 @@ public static class IdentitySeeder
             }
         }
 
-        if (await userManager.FindByEmailAsync(adminEmail) is null)
+        await EnsureUserAsync(userManager, adminEmail, adminPassword, Roles.Admin);
+    }
+
+    // Test accounts for local development. The caller decides when this runs.
+    public static async Task SeedTestUsersAsync(UserManager<ApplicationUser> userManager, string password)
+    {
+        await EnsureUserAsync(userManager, TestMotherEmail, password, Roles.Mother);
+        await EnsureUserAsync(userManager, TestProfessionalEmail, password, Roles.Professional);
+    }
+
+    private static async Task EnsureUserAsync(
+        UserManager<ApplicationUser> userManager,
+        string email,
+        string password,
+        string role)
+    {
+        if (await userManager.FindByEmailAsync(email) is not null)
         {
-            var admin = new ApplicationUser
-            {
-                UserName = adminEmail,
-                Email = adminEmail,
-                EmailConfirmed = true
-            };
-            EnsureSucceeded(await userManager.CreateAsync(admin, adminPassword));
-            EnsureSucceeded(await userManager.AddToRoleAsync(admin, Roles.Admin));
+            return;
         }
+
+        var user = new ApplicationUser
+        {
+            UserName = email,
+            Email = email,
+            EmailConfirmed = true
+        };
+        EnsureSucceeded(await userManager.CreateAsync(user, password));
+        EnsureSucceeded(await userManager.AddToRoleAsync(user, role));
     }
 
     private static void EnsureSucceeded(IdentityResult result)
