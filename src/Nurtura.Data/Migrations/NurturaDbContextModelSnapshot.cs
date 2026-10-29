@@ -154,6 +154,72 @@ namespace Nurtura.Data.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("Nurtura.Core.Entities.Baby", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateOnly>("BirthDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("BirthType")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<int>("BirthWeek")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("FeedingType")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<int>("MotherProfileId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("PhotoUrl")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MotherProfileId");
+
+                    b.ToTable("Babies");
+                });
+
+            modelBuilder.Entity("Nurtura.Core.Entities.MotherConcern", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Concern")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<int>("MotherProfileId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MotherProfileId", "Concern")
+                        .IsUnique();
+
+                    b.ToTable("MotherConcerns");
+                });
+
             modelBuilder.Entity("Nurtura.Core.Entities.MotherProfile", b =>
                 {
                     b.Property<int>("Id")
@@ -169,6 +235,13 @@ namespace Nurtura.Data.Migrations
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
+
+                    b.Property<string>("HelpAtHome")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<bool?>("IsFirstBaby")
+                        .HasColumnType("boolean");
 
                     b.Property<DateTime?>("OnboardingCompletedAt")
                         .HasColumnType("timestamp with time zone");
@@ -186,6 +259,30 @@ namespace Nurtura.Data.Migrations
                         .IsUnique();
 
                     b.ToTable("MotherProfiles");
+                });
+
+            modelBuilder.Entity("Nurtura.Core.Entities.MotherSupportType", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("MotherProfileId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("SupportType")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MotherProfileId", "SupportType")
+                        .IsUnique();
+
+                    b.ToTable("MotherSupportTypes");
                 });
 
             modelBuilder.Entity("Nurtura.Core.Identity.ApplicationUser", b =>
@@ -303,11 +400,38 @@ namespace Nurtura.Data.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Nurtura.Core.Entities.Baby", b =>
+                {
+                    b.HasOne("Nurtura.Core.Entities.MotherProfile", null)
+                        .WithMany()
+                        .HasForeignKey("MotherProfileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Nurtura.Core.Entities.MotherConcern", b =>
+                {
+                    b.HasOne("Nurtura.Core.Entities.MotherProfile", null)
+                        .WithMany()
+                        .HasForeignKey("MotherProfileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Nurtura.Core.Entities.MotherProfile", b =>
                 {
                     b.HasOne("Nurtura.Core.Identity.ApplicationUser", null)
                         .WithOne()
                         .HasForeignKey("Nurtura.Core.Entities.MotherProfile", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Nurtura.Core.Entities.MotherSupportType", b =>
+                {
+                    b.HasOne("Nurtura.Core.Entities.MotherProfile", null)
+                        .WithMany()
+                        .HasForeignKey("MotherProfileId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

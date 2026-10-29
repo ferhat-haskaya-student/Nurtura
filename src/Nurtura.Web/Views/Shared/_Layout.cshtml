@@ -12,6 +12,7 @@
     <title>@ViewData["Title"] - @L["AppName"]</title>
     <script type="importmap"></script>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/lib/flatpickr/dist/flatpickr.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/Nurtura.Web.styles.css" asp-append-version="true" />
 </head>
@@ -65,6 +66,9 @@
     </footer>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/lib/flatpickr/dist/flatpickr.min.js"></script>
+    <script src="~/lib/flatpickr/dist/l10n/pl.js"></script>
+    <script src="~/js/date-input.js" asp-append-version="true"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>

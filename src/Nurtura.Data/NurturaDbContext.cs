@@ -15,6 +15,12 @@ public class NurturaDbContext : IdentityDbContext<ApplicationUser>, INurturaDbCo
 
     public DbSet<MotherProfile> MotherProfiles => Set<MotherProfile>();
 
+    public DbSet<MotherConcern> MotherConcerns => Set<MotherConcern>();
+
+    public DbSet<MotherSupportType> MotherSupportTypes => Set<MotherSupportType>();
+
+    public DbSet<Baby> Babies => Set<Baby>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);

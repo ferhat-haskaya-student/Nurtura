@@ -1,0 +1,128 @@
+@using Nurtura.Core.Entities
+@using Nurtura.Web.Localization
+@model Nurtura.Web.Areas.Mother.Models.OnboardingViewModel
+@{
+    ViewData["Title"] = L["Onboarding_Title"];
+    var today = DateOnly.FromDateTime(DateTime.Today).ToString(DateFormats.Display);
+}
+
+<div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6">
+        <h1 class="h3 mb-2">@ViewData["Title"]</h1>
+        <p class="text-body-secondary mb-4">@L["Onboarding_Intro"]</p>
+
+        <form asp-area="Mother" asp-controller="Onboarding" asp-action="Index" method="post">
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+            <fieldset class="mb-4">
+                <legend class="form-label fs-6 fw-semibold">@L["Onboarding_Concerns"]</legend>
+                @foreach (var concern in Enum.GetValues<Concern>())
+                {
+                    var id = "concern-" + concern;
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="Concerns" id="@id" value="@concern"
+                               checked="@Model.Concerns.Contains(concern)" />
+                        <label class="form-check-label" for="@id">@L["Concern_" + concern]</label>
+                    </div>
+                }
+                <span asp-validation-for="Concerns" class="text-danger"></span>
+            </fieldset>
+
+            <fieldset class="mb-4">
+                <legend class="form-label fs-6 fw-semibold">@L["Onboarding_SupportType"]</legend>
+                @foreach (var supportType in Enum.GetValues<SupportType>())
+                {
+                    var id = "support-" + supportType;
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="SupportTypes" id="@id" value="@supportType"
+                               checked="@Model.SupportTypes.Contains(supportType)" />
+                        <label class="form-check-label" for="@id">@L["SupportType_" + supportType]</label>
+                    </div>
+                }
+                <span asp-validation-for="SupportTypes" class="text-danger"></span>
+            </fieldset>
+
+            <h2 class="h5 mb-3">@L["Onboarding_AboutYou"]</h2>
+
+            <fieldset class="mb-4">
+                <legend class="form-label fs-6 fw-semibold">@L["Onboarding_IsFirstBaby"]</legend>
+                @foreach (var answer in new[] { true, false })
+                {
+                    var id = "first-baby-" + answer;
+                    <div class="form-check">
+                        <input asp-for="IsFirstBaby" class="form-check-input" type="radio" id="@id" value="@answer.ToString().ToLowerInvariant()" />
+                        <label class="form-check-label" for="@id">@L[answer ? "Answer_Yes" : "Answer_No"]</label>
+                    </div>
+                }
+                <span asp-validation-for="IsFirstBaby" class="text-danger"></span>
+            </fieldset>
+
+            <fieldset class="mb-4">
+                <legend class="form-label fs-6 fw-semibold">@L["Onboarding_HelpAtHome"]</legend>
+                @foreach (var helpAtHome in Enum.GetValues<HelpAtHome>())
+                {
+                    var id = "help-" + helpAtHome;
+                    <div class="form-check">
+                        <input asp-for="HelpAtHome" class="form-check-input" type="radio" id="@id" value="@helpAtHome" />
+                        <label class="form-check-label" for="@id">@L["HelpAtHome_" + helpAtHome]</label>
+                    </div>
+                }
+                <span asp-validation-for="HelpAtHome" class="text-danger"></span>
+            </fieldset>
+
+            <h2 class="h5 mb-3">@L["Onboarding_Baby"]</h2>
+
+            <div class="mb-3">
+                <label asp-for="BabyName" class="form-label"></label>
+                <input asp-for="BabyName" class="form-control" autocomplete="off" />
+                <span asp-validation-for="BabyName" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="BabyBirthDate" class="form-label"></label>
+                <input asp-for="BabyBirthDate" asp-format="@DateFormats.DisplayPattern" type="text" class="form-control"
+                       placeholder="@L["Date_Placeholder"]" inputmode="numeric" autocomplete="off"
+                       data-date-input data-date-max="@today" />
+                <span asp-validation-for="BabyBirthDate" class="text-danger"></span>
+            </div>
+
+            <fieldset class="mb-3">
+                <legend class="form-label fs-6 fw-semibold">@L["Onboarding_BirthType"]</legend>
+                @foreach (var birthType in Enum.GetValues<BirthType>())
+                {
+                    var id = "birth-type-" + birthType;
+                    <div class="form-check">
+                        <input asp-for="BirthType" class="form-check-input" type="radio" id="@id" value="@birthType" />
+                        <label class="form-check-label" for="@id">@L["BirthType_" + birthType]</label>
+                    </div>
+                }
+                <span asp-validation-for="BirthType" class="text-danger"></span>
+            </fieldset>
+
+            <div class="mb-3">
+                <label asp-for="BirthWeek" class="form-label"></label>
+                <input asp-for="BirthWeek" type="number" class="form-control" min="@Baby.BirthWeekMin" max="@Baby.BirthWeekMax" step="1" />
+                <span asp-validation-for="BirthWeek" class="text-danger"></span>
+            </div>
+
+            <fieldset class="mb-4">
+                <legend class="form-label fs-6 fw-semibold">@L["Onboarding_FeedingType"]</legend>
+                @foreach (var feedingType in Enum.GetValues<BabyFeedingType>())
+                {
+                    var id = "feeding-" + feedingType;
+                    <div class="form-check">
+                        <input asp-for="FeedingType" class="form-check-input" type="radio" id="@id" value="@feedingType" />
+                        <label class="form-check-label" for="@id">@L["BabyFeedingType_" + feedingType]</label>
+                    </div>
+                }
+                <span asp-validation-for="FeedingType" class="text-danger"></span>
+            </fieldset>
+
+            <button type="submit" class="btn btn-primary w-100">@L["Onboarding_Submit"]</button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

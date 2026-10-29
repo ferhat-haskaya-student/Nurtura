@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Nurtura.Core.Entities;
+using Nurtura.Core.Services;
 
 namespace Nurtura.Core.Identity;
 
@@ -9,6 +10,7 @@ public static class IdentitySeeder
     public const string TestMotherEmail = "mother@nurtura.com";
     public const string TestProfessionalEmail = "professional@nurtura.com";
     public const string TestMotherDisplayName = "Test Mother";
+    public const string TestBabyName = "Test Baby";
 
     public static async Task SeedAsync(
         RoleManager<IdentityRole> roleManager,
@@ -46,6 +48,20 @@ public static class IdentitySeeder
             });
             await db.SaveChangesAsync();
         }
+
+        // The test mother skips onboarding. Does nothing if she is already onboarded.
+        await new MotherOnboardingService(db).CompleteAsync(
+            mother.Id,
+            new OnboardingAnswers(
+                Concerns: [Concern.BabySleep],
+                SupportTypes: [SupportType.TalkingToProfessional],
+                IsFirstBaby: true,
+                HelpAtHome: HelpAtHome.Sometimes,
+                BabyName: TestBabyName,
+                BabyBirthDate: DateOnly.FromDateTime(DateTime.Today).AddMonths(-3),
+                BirthType: BirthType.Natural,
+                BirthWeek: Baby.BirthWeekDefault,
+                FeedingType: BabyFeedingType.Breast));
     }
 
     private static async Task<ApplicationUser> EnsureUserAsync(

@@ -7,8 +7,10 @@ using Nurtura.Core.Identity;
 using Nurtura.Core.Services;
 using Nurtura.Data;
 using Nurtura.Web;
+using Nurtura.Web.Areas.Mother;
 using Nurtura.Web.Identity;
 using Nurtura.Web.Localization;
+using Nurtura.Web.ModelBinding;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,7 +19,11 @@ var builder = WebApplication.CreateBuilder(args);
 // Registered before AddLocalization so it replaces the default .resx-based factory.
 builder.Services.AddSingleton<IStringLocalizerFactory, JsonStringLocalizerFactory>();
 builder.Services.AddLocalization();
-builder.Services.AddControllersWithViews()
+builder.Services.AddControllersWithViews(options =>
+    {
+        options.Filters.Add<MotherOnboardingFilter>();
+        options.ModelBinderProviders.Insert(0, new DateOnlyModelBinderProvider());
+    })
     .AddViewLocalization()
     .AddDataAnnotationsLocalization(options =>
         options.DataAnnotationLocalizerProvider = (_, factory) => factory.Create(typeof(SharedResource)));
@@ -54,6 +60,7 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
     .AddErrorDescriber<LocalizedIdentityErrorDescriber>();
 
 builder.Services.AddScoped<MotherRegistrationService>();
+builder.Services.AddScoped<MotherOnboardingService>();
 
 var app = builder.Build();
 

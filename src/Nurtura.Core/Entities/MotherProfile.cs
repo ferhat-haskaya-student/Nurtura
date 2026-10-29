@@ -13,6 +13,12 @@ public class MotherProfile
     // Not used yet; photo upload comes later.
     public string? PhotoUrl { get; set; }
 
+    // Empty until she finishes onboarding.
+    public bool? IsFirstBaby { get; set; }
+
+    // Empty until she finishes onboarding.
+    public HelpAtHome? HelpAtHome { get; set; }
+
     // UTC. Empty until she finishes onboarding.
     public DateTime? OnboardingCompletedAt { get; set; }
 

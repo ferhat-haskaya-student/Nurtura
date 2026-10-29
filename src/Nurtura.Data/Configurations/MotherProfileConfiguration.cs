@@ -13,6 +13,10 @@ public class MotherProfileConfiguration : IEntityTypeConfiguration<MotherProfile
             .IsRequired()
             .HasMaxLength(MotherProfile.DisplayNameMaxLength);
 
+        builder.Property(p => p.HelpAtHome)
+            .HasConversion<string>()
+            .HasMaxLength(30);
+
         // One profile per user; deleting the user deletes the profile.
         builder.HasIndex(p => p.UserId).IsUnique();
         builder.HasOne<ApplicationUser>()
