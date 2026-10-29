@@ -154,6 +154,40 @@ namespace Nurtura.Data.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("Nurtura.Core.Entities.MotherProfile", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DisplayName")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime?>("OnboardingCompletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("PhotoUrl")
+                        .HasColumnType("text");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("MotherProfiles");
+                });
+
             modelBuilder.Entity("Nurtura.Core.Identity.ApplicationUser", b =>
                 {
                     b.Property<string>("Id")
@@ -265,6 +299,15 @@ namespace Nurtura.Data.Migrations
                     b.HasOne("Nurtura.Core.Identity.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Nurtura.Core.Entities.MotherProfile", b =>
+                {
+                    b.HasOne("Nurtura.Core.Identity.ApplicationUser", null)
+                        .WithOne()
+                        .HasForeignKey("Nurtura.Core.Entities.MotherProfile", "UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

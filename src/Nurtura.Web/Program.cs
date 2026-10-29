@@ -4,8 +4,10 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
 using Nurtura.Core;
 using Nurtura.Core.Identity;
+using Nurtura.Core.Services;
 using Nurtura.Data;
 using Nurtura.Web;
+using Nurtura.Web.Identity;
 using Nurtura.Web.Localization;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -38,8 +40,11 @@ var connectionString = builder.Configuration.GetConnectionString("Nurtura")
 builder.Services.AddDbContext<NurturaDbContext>(options => options.UseNpgsql(connectionString));
 builder.Services.AddScoped<INurturaDbContext>(sp => sp.GetRequiredService<NurturaDbContext>());
 
-builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
-    .AddEntityFrameworkStores<NurturaDbContext>();
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options => options.User.RequireUniqueEmail = true)
+    .AddEntityFrameworkStores<NurturaDbContext>()
+    .AddErrorDescriber<LocalizedIdentityErrorDescriber>();
+
+builder.Services.AddScoped<MotherRegistrationService>();
 
 var app = builder.Build();
 
@@ -64,7 +69,10 @@ using (var scope = app.Services.CreateScope())
         var testPassword = app.Configuration["Seed:TestPassword"]
             ?? throw new InvalidOperationException("Configuration value 'Seed:TestPassword' not found.");
 
-        await IdentitySeeder.SeedTestUsersAsync(userManager, testPassword);
+        await IdentitySeeder.SeedTestUsersAsync(
+            userManager,
+            scope.ServiceProvider.GetRequiredService<INurturaDbContext>(),
+            testPassword);
     }
 }
 

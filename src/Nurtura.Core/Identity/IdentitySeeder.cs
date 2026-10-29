@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Nurtura.Core.Entities;
 
 namespace Nurtura.Core.Identity;
 
@@ -6,6 +8,7 @@ public static class IdentitySeeder
 {
     public const string TestMotherEmail = "mother@nurtura.com";
     public const string TestProfessionalEmail = "professional@nurtura.com";
+    public const string TestMotherDisplayName = "Test Mother";
 
     public static async Task SeedAsync(
         RoleManager<IdentityRole> roleManager,
@@ -25,21 +28,36 @@ public static class IdentitySeeder
     }
 
     // Test accounts for local development. The caller decides when this runs.
-    public static async Task SeedTestUsersAsync(UserManager<ApplicationUser> userManager, string password)
+    public static async Task SeedTestUsersAsync(
+        UserManager<ApplicationUser> userManager,
+        INurturaDbContext db,
+        string password)
     {
-        await EnsureUserAsync(userManager, TestMotherEmail, password, Roles.Mother);
+        var mother = await EnsureUserAsync(userManager, TestMotherEmail, password, Roles.Mother);
         await EnsureUserAsync(userManager, TestProfessionalEmail, password, Roles.Professional);
+
+        if (!await db.MotherProfiles.AnyAsync(p => p.UserId == mother.Id))
+        {
+            db.MotherProfiles.Add(new MotherProfile
+            {
+                UserId = mother.Id,
+                DisplayName = TestMotherDisplayName,
+                CreatedAt = DateTime.UtcNow
+            });
+            await db.SaveChangesAsync();
+        }
     }
 
-    private static async Task EnsureUserAsync(
+    private static async Task<ApplicationUser> EnsureUserAsync(
         UserManager<ApplicationUser> userManager,
         string email,
         string password,
         string role)
     {
-        if (await userManager.FindByEmailAsync(email) is not null)
+        var existing = await userManager.FindByEmailAsync(email);
+        if (existing is not null)
         {
-            return;
+            return existing;
         }
 
         var user = new ApplicationUser
@@ -50,6 +68,7 @@ public static class IdentitySeeder
         };
         EnsureSucceeded(await userManager.CreateAsync(user, password));
         EnsureSucceeded(await userManager.AddToRoleAsync(user, role));
+        return user;
     }
 
     private static void EnsureSucceeded(IdentityResult result)

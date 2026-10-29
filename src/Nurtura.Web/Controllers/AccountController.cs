@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Localization;
 using Nurtura.Core.Identity;
+using Nurtura.Core.Services;
 using Nurtura.Web.Identity;
 using Nurtura.Web.Models.Account;
 
@@ -11,15 +12,18 @@ public class AccountController : Controller
 {
     private readonly SignInManager<ApplicationUser> _signInManager;
     private readonly UserManager<ApplicationUser> _userManager;
+    private readonly MotherRegistrationService _registrationService;
     private readonly IStringLocalizer<SharedResource> _localizer;
 
     public AccountController(
         SignInManager<ApplicationUser> signInManager,
         UserManager<ApplicationUser> userManager,
+        MotherRegistrationService registrationService,
         IStringLocalizer<SharedResource> localizer)
     {
         _signInManager = signInManager;
         _userManager = userManager;
+        _registrationService = registrationService;
         _localizer = localizer;
     }
 
@@ -63,6 +67,47 @@ public class AccountController : Controller
         return View(model);
     }
 
+    [HttpGet]
+    public IActionResult Register()
+    {
+        if (User.Identity?.IsAuthenticated == true)
+        {
+            return RedirectToOwnHome();
+        }
+
+        return View();
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Register(RegisterViewModel model)
+    {
+        if (User.Identity?.IsAuthenticated == true)
+        {
+            return RedirectToOwnHome();
+        }
+
+        if (!ModelState.IsValid)
+        {
+            return View(model);
+        }
+
+        var result = await _registrationService.RegisterAsync(model.DisplayName, model.Email, model.Password);
+        if (!result.Succeeded)
+        {
+            // A taken email gives both DuplicateUserName and DuplicateEmail with the same text; show it once.
+            foreach (var description in result.Errors.Select(e => e.Description).Distinct())
+            {
+                ModelState.AddModelError(string.Empty, description);
+            }
+
+            return View(model);
+        }
+
+        await _signInManager.SignInAsync(result.User!, isPersistent: false);
+        return RedirectToAction("Index", "Home", new { area = Roles.Mother });
+    }
+
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Logout()
@@ -77,4 +122,7 @@ public class AccountController : Controller
         Response.StatusCode = StatusCodes.Status403Forbidden;
         return View();
     }
+
+    private IActionResult RedirectToOwnHome() =>
+        RedirectToAction("Index", "Home", new { area = RoleHome.AreaFor(User) ?? "" });
 }
