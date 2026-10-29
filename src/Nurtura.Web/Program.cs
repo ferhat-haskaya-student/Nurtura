@@ -1,5 +1,7 @@
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Nurtura.Core;
+using Nurtura.Core.Identity;
 using Nurtura.Data;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -12,7 +14,24 @@ var connectionString = builder.Configuration.GetConnectionString("Nurtura")
 builder.Services.AddDbContext<NurturaDbContext>(options => options.UseNpgsql(connectionString));
 builder.Services.AddScoped<INurturaDbContext>(sp => sp.GetRequiredService<NurturaDbContext>());
 
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
+    .AddEntityFrameworkStores<NurturaDbContext>();
+
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var adminEmail = app.Configuration["Seed:AdminEmail"]
+        ?? throw new InvalidOperationException("Configuration value 'Seed:AdminEmail' not found.");
+    var adminPassword = app.Configuration["Seed:AdminPassword"]
+        ?? throw new InvalidOperationException("Configuration value 'Seed:AdminPassword' not found.");
+
+    await IdentitySeeder.SeedAsync(
+        scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>(),
+        scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>(),
+        adminEmail,
+        adminPassword);
+}
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
@@ -25,6 +44,7 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseRouting();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapStaticAssets();
