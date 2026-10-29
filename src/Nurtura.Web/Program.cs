@@ -1,13 +1,37 @@
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using Nurtura.Core;
 using Nurtura.Core.Identity;
 using Nurtura.Data;
+using Nurtura.Web;
+using Nurtura.Web.Localization;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddControllersWithViews();
+// Interface texts come from Resources/en.json and pl.json (see JsonStringLocalizerFactory).
+// Registered before AddLocalization so it replaces the default .resx-based factory.
+builder.Services.AddSingleton<IStringLocalizerFactory, JsonStringLocalizerFactory>();
+builder.Services.AddLocalization();
+builder.Services.AddControllersWithViews()
+    .AddViewLocalization()
+    .AddDataAnnotationsLocalization(options =>
+        options.DataAnnotationLocalizerProvider = (_, factory) => factory.Create(typeof(SharedResource)));
+
+// Language comes from the cookie first, then the browser, then English.
+builder.Services.Configure<RequestLocalizationOptions>(options =>
+{
+    options.SetDefaultCulture(SupportedCultures.Default)
+        .AddSupportedCultures(SupportedCultures.All)
+        .AddSupportedUICultures(SupportedCultures.All);
+    options.RequestCultureProviders =
+    [
+        new CookieRequestCultureProvider(),
+        new AcceptLanguageHeaderRequestCultureProvider()
+    ];
+});
 
 var connectionString = builder.Configuration.GetConnectionString("Nurtura")
     ?? throw new InvalidOperationException("Connection string 'Nurtura' not found.");
@@ -42,6 +66,7 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseRequestLocalization();
 app.UseRouting();
 
 app.UseAuthentication();

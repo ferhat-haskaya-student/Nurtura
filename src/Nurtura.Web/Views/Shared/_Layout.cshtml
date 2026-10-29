@@ -1,9 +1,15 @@
-﻿<!DOCTYPE html>
-<html lang="en">
+﻿@using System.Globalization
+@using Nurtura.Web.Localization
+@{
+    var currentCulture = CultureInfo.CurrentUICulture.Name;
+    var returnUrl = $"{Context.Request.PathBase}{Context.Request.Path}{Context.Request.QueryString}";
+}
+<!DOCTYPE html>
+<html lang="@currentCulture">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - Nurtura.Web</title>
+    <title>@ViewData["Title"] - @L["AppName"]</title>
     <script type="importmap"></script>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
@@ -13,20 +19,34 @@
     <header>
         <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
             <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">Nurtura.Web</a>
+                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">@L["AppName"]</a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
+                        aria-expanded="false" aria-label="@L["Nav_ToggleNavigation"]">
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">@L["Nav_Home"]</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">@L["Nav_Privacy"]</a>
                         </li>
                     </ul>
+                    <div class="d-flex gap-1 py-2 py-sm-0" role="group" aria-label="@L["Language_Switch"]">
+                        @foreach (var culture in SupportedCultures.All)
+                        {
+                            var isCurrent = culture == currentCulture;
+                            <form asp-area="" asp-controller="Language" asp-action="Set" method="post">
+                                <input type="hidden" name="culture" value="@culture" />
+                                <input type="hidden" name="returnUrl" value="@returnUrl" />
+                                <button type="submit" class="btn btn-sm @(isCurrent ? "btn-secondary" : "btn-outline-secondary")"
+                                        title="@CultureInfo.GetCultureInfo(culture).NativeName" aria-pressed="@(isCurrent ? "true" : "false")">
+                                    @culture.ToUpperInvariant()
+                                </button>
+                            </form>
+                        }
+                    </div>
                 </div>
             </div>
         </nav>
@@ -39,7 +59,7 @@
 
     <footer class="border-top footer text-muted">
         <div class="container">
-            &copy; 2026 - Nurtura.Web - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+            &copy; 2026 - @L["AppName"] - <a asp-area="" asp-controller="Home" asp-action="Privacy">@L["Nav_Privacy"]</a>
         </div>
     </footer>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
