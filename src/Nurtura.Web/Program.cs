@@ -1,7 +1,16 @@
+using Microsoft.EntityFrameworkCore;
+using Nurtura.Core;
+using Nurtura.Data;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+
+var connectionString = builder.Configuration.GetConnectionString("Nurtura")
+    ?? throw new InvalidOperationException("Connection string 'Nurtura' not found.");
+builder.Services.AddDbContext<NurturaDbContext>(options => options.UseNpgsql(connectionString));
+builder.Services.AddScoped<INurturaDbContext>(sp => sp.GetRequiredService<NurturaDbContext>());
 
 var app = builder.Build();
 
