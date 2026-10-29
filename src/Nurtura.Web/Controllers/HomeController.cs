@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
+using Nurtura.Web.Identity;
 using Nurtura.Web.Models;
 
 namespace Nurtura.Web.Controllers;
@@ -8,6 +9,13 @@ public class HomeController : Controller
 {
     public IActionResult Index()
     {
+        // Logged-in users have their own home page per role.
+        var area = RoleHome.AreaFor(User);
+        if (area is not null)
+        {
+            return RedirectToAction("Index", "Home", new { area });
+        }
+
         return View();
     }
 

@@ -13,6 +13,12 @@
   "Account_Login_Submit": "Log in",
   "Account_InvalidLogin": "Incorrect email or password.",
   "Account_LockedOut": "This account is temporarily locked after too many failed attempts. Try again in a few minutes.",
+  "Account_AccessDenied_Title": "Access denied",
+  "Account_AccessDenied_Message": "You do not have permission to view this page.",
+  "Account_AccessDenied_BackHome": "Go to your home page",
+  "Mother_Home_Title": "Mother home",
+  "Professional_Home_Title": "Professional home",
+  "Admin_Home_Title": "Admin home",
   "Validation_Required": "The {0} field is required.",
   "Validation_Email": "Enter a valid email address."
 }

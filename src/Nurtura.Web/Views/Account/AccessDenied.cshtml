@@ -1,0 +1,12 @@
+@using Nurtura.Web.Identity
+@{
+    ViewData["Title"] = L["Account_AccessDenied_Title"];
+}
+
+<div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6">
+        <h1 class="h3">@ViewData["Title"]</h1>
+        <p>@L["Account_AccessDenied_Message"]</p>
+        <a class="btn btn-primary" asp-area="@(RoleHome.AreaFor(User) ?? "")" asp-controller="Home" asp-action="Index">@L["Account_AccessDenied_BackHome"]</a>
+    </div>
+</div>

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Localization;
 using Nurtura.Core.Identity;
+using Nurtura.Web.Identity;
 using Nurtura.Web.Models.Account;
 
 namespace Nurtura.Web.Controllers;
@@ -9,11 +10,16 @@ namespace Nurtura.Web.Controllers;
 public class AccountController : Controller
 {
     private readonly SignInManager<ApplicationUser> _signInManager;
+    private readonly UserManager<ApplicationUser> _userManager;
     private readonly IStringLocalizer<SharedResource> _localizer;
 
-    public AccountController(SignInManager<ApplicationUser> signInManager, IStringLocalizer<SharedResource> localizer)
+    public AccountController(
+        SignInManager<ApplicationUser> signInManager,
+        UserManager<ApplicationUser> userManager,
+        IStringLocalizer<SharedResource> localizer)
     {
         _signInManager = signInManager;
+        _userManager = userManager;
         _localizer = localizer;
     }
 
@@ -45,7 +51,10 @@ public class AccountController : Controller
                 return LocalRedirect(returnUrl);
             }
 
-            return RedirectToAction("Index", "Home");
+            // User is not updated until the next request, so the roles are read from the database.
+            var user = await _userManager.FindByEmailAsync(model.Email);
+            IList<string> roles = user is null ? [] : await _userManager.GetRolesAsync(user);
+            return RedirectToAction("Index", "Home", new { area = RoleHome.AreaFor(roles) ?? "" });
         }
 
         // One general message for a wrong email or password, so it does not reveal which one was wrong.
@@ -60,5 +69,12 @@ public class AccountController : Controller
     {
         await _signInManager.SignOutAsync();
         return RedirectToAction("Index", "Home");
+    }
+
+    [HttpGet]
+    public IActionResult AccessDenied()
+    {
+        Response.StatusCode = StatusCodes.Status403Forbidden;
+        return View();
     }
 }
