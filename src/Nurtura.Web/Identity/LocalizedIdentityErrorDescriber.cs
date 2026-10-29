@@ -31,10 +31,6 @@ public class LocalizedIdentityErrorDescriber : IdentityErrorDescriber
     public override IdentityError UserNotInRole(string role) => Error(nameof(UserNotInRole));
     public override IdentityError PasswordTooShort(int length) => Error(nameof(PasswordTooShort), length);
     public override IdentityError PasswordRequiresUniqueChars(int uniqueChars) => Error(nameof(PasswordRequiresUniqueChars), uniqueChars);
-    public override IdentityError PasswordRequiresNonAlphanumeric() => Error(nameof(PasswordRequiresNonAlphanumeric));
-    public override IdentityError PasswordRequiresDigit() => Error(nameof(PasswordRequiresDigit));
-    public override IdentityError PasswordRequiresLower() => Error(nameof(PasswordRequiresLower));
-    public override IdentityError PasswordRequiresUpper() => Error(nameof(PasswordRequiresUpper));
 
     private IdentityError Error(string code, params object[] arguments) => new()
     {

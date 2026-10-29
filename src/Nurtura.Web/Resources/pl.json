@@ -47,9 +47,5 @@
   "Identity_UserAlreadyInRole": "Użytkownik ma już tę rolę.",
   "Identity_UserNotInRole": "Użytkownik nie ma tej roli.",
   "Identity_PasswordTooShort": "Hasło musi mieć co najmniej {0} znaków.",
-  "Identity_PasswordRequiresUniqueChars": "Hasło musi zawierać co najmniej {0} różnych znaków.",
-  "Identity_PasswordRequiresNonAlphanumeric": "Hasło musi zawierać co najmniej jeden znak specjalny, np. ! lub #.",
-  "Identity_PasswordRequiresDigit": "Hasło musi zawierać co najmniej jedną cyfrę (0–9).",
-  "Identity_PasswordRequiresLower": "Hasło musi zawierać co najmniej jedną małą literę (a–z).",
-  "Identity_PasswordRequiresUpper": "Hasło musi zawierać co najmniej jedną wielką literę (A–Z)."
+  "Identity_PasswordRequiresUniqueChars": "Hasło musi zawierać co najmniej {0} różnych znaków."
 }

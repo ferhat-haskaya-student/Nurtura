@@ -47,9 +47,5 @@
   "Identity_UserAlreadyInRole": "The user already has this role.",
   "Identity_UserNotInRole": "The user does not have this role.",
   "Identity_PasswordTooShort": "The password must be at least {0} characters long.",
-  "Identity_PasswordRequiresUniqueChars": "The password must contain at least {0} different characters.",
-  "Identity_PasswordRequiresNonAlphanumeric": "The password must contain at least one special character, such as ! or #.",
-  "Identity_PasswordRequiresDigit": "The password must contain at least one digit (0–9).",
-  "Identity_PasswordRequiresLower": "The password must contain at least one lowercase letter (a–z).",
-  "Identity_PasswordRequiresUpper": "The password must contain at least one uppercase letter (A–Z)."
+  "Identity_PasswordRequiresUniqueChars": "The password must contain at least {0} different characters."
 }
