@@ -1,0 +1,22 @@
+@using Microsoft.AspNetCore.Authentication.Google
+@using Microsoft.AspNetCore.Identity
+@using Nurtura.Core.Identity
+@model string?
+@inject SignInManager<ApplicationUser> SignInManager
+@* "Continue with Google" for mothers. Hidden when Google is not configured. The model is the return URL. *@
+@{
+    var schemes = await SignInManager.GetExternalAuthenticationSchemesAsync();
+}
+@if (schemes.Any(s => s.Name == GoogleDefaults.AuthenticationScheme))
+{
+    <div class="d-flex align-items-center my-3 text-body-secondary">
+        <hr class="flex-grow-1" />
+        <span class="px-2 small">@L["Account_Or"]</span>
+        <hr class="flex-grow-1" />
+    </div>
+
+    <form asp-area="" asp-controller="Account" asp-action="ExternalLogin" method="post">
+        <input type="hidden" name="returnUrl" value="@Model" />
+        <button type="submit" class="btn btn-outline-dark w-100">@L["Account_ContinueWithGoogle"]</button>
+    </form>
+}

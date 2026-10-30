@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
@@ -61,10 +62,33 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
     .AddEntityFrameworkStores<NurturaDbContext>()
     .AddErrorDescriber<LocalizedIdentityErrorDescriber>();
 
+// "Continue with Google" for mothers. Optional: without the key in configuration the app still runs
+// and the button is not shown.
+var googleClientId = builder.Configuration["Authentication:Google:ClientId"];
+var googleClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
+if (!string.IsNullOrEmpty(googleClientId) && !string.IsNullOrEmpty(googleClientSecret))
+{
+    builder.Services.AddAuthentication().AddGoogle(options =>
+    {
+        options.ClientId = googleClientId;
+        options.ClientSecret = googleClientSecret;
+        options.ClaimActions.MapJsonKey(GoogleClaimTypes.EmailVerified, "email_verified");
+
+        // She cancelled or Google returned an error: back to the login page with a message, not an error page.
+        options.Events.OnRemoteFailure = context =>
+        {
+            context.Response.Redirect(context.Request.PathBase + "/Account/ExternalLoginCallback?remoteError=true");
+            context.HandleResponse();
+            return Task.CompletedTask;
+        };
+    });
+}
+
 builder.Services.AddScoped<MotherRegistrationService>();
 builder.Services.AddScoped<MotherOnboardingService>();
 builder.Services.AddScoped<ProfessionalRegistrationService>();
 builder.Services.AddScoped<ProfessionalApprovalService>();
+builder.Services.AddScoped<MotherExternalLoginService>();
 
 var app = builder.Build();
 
