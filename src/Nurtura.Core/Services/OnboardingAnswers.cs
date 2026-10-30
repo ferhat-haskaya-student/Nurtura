@@ -4,7 +4,7 @@ namespace Nurtura.Core.Services;
 
 // Everything the mother answers on the onboarding form.
 public sealed record OnboardingAnswers(
-    IReadOnlyCollection<Concern> Concerns,
+    IReadOnlyCollection<Topic> Concerns,
     IReadOnlyCollection<SupportType> SupportTypes,
     bool IsFirstBaby,
     HelpAtHome HelpAtHome,

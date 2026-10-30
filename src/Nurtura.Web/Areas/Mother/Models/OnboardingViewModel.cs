@@ -9,7 +9,7 @@ namespace Nurtura.Web.Areas.Mother.Models;
 public class OnboardingViewModel
 {
     [Display(Name = "Onboarding_Concerns")]
-    public List<Concern> Concerns { get; set; } = [];
+    public List<Topic> Concerns { get; set; } = [];
 
     [Display(Name = "Onboarding_SupportType")]
     public List<SupportType> SupportTypes { get; set; } = [];

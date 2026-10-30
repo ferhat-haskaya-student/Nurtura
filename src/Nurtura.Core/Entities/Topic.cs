@@ -1,8 +1,8 @@
 namespace Nurtura.Core.Entities;
 
-// The six main concerns from onboarding; the same topics as the appointment categories.
+// The six topics: mother concerns from onboarding, appointment categories and the topics a professional covers.
 // Stored as text, so renaming a value needs a migration.
-public enum Concern
+public enum Topic
 {
     PostpartumWellbeing,
     BabySleep,

@@ -1,0 +1,93 @@
+@using Nurtura.Core.Entities
+@model Nurtura.Web.Models.Account.ProfessionalRegisterViewModel
+@{
+    ViewData["Title"] = L["ProfessionalRegister_Title"];
+}
+
+<div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6">
+        <h1 class="h3 mb-2">@ViewData["Title"]</h1>
+        <p class="text-body-secondary mb-4">@L["ProfessionalRegister_Intro"]</p>
+
+        <form asp-controller="Account" asp-action="RegisterProfessional" method="post">
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+            <div class="mb-3">
+                <label asp-for="DisplayName" class="form-label"></label>
+                <input asp-for="DisplayName" class="form-control" autocomplete="nickname" />
+                <span asp-validation-for="DisplayName" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Email" class="form-label"></label>
+                <input asp-for="Email" class="form-control" autocomplete="email" />
+                <span asp-validation-for="Email" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Password" class="form-label"></label>
+                <input asp-for="Password" class="form-control" autocomplete="new-password" />
+                <span asp-validation-for="Password" class="text-danger"></span>
+            </div>
+
+            <div class="mb-4">
+                <label asp-for="ConfirmPassword" class="form-label"></label>
+                <input asp-for="ConfirmPassword" class="form-control" autocomplete="new-password" />
+                <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+            </div>
+
+            <fieldset class="mb-4">
+                <legend class="form-label fs-6 fw-semibold">@L["ProfessionalRegister_ProfessionalType"]</legend>
+                @foreach (var professionalType in Enum.GetValues<ProfessionalType>())
+                {
+                    var id = "type-" + professionalType;
+                    <div class="form-check">
+                        <input asp-for="ProfessionalType" class="form-check-input" type="radio" id="@id" value="@professionalType" />
+                        <label class="form-check-label" for="@id">@L["ProfessionalType_" + professionalType]</label>
+                    </div>
+                }
+                <span asp-validation-for="ProfessionalType" class="text-danger"></span>
+            </fieldset>
+
+            <fieldset class="mb-4">
+                <legend class="form-label fs-6 fw-semibold">@L["ProfessionalRegister_Topics"]</legend>
+                @foreach (var topic in Enum.GetValues<Topic>())
+                {
+                    var id = "topic-" + topic;
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="Topics" id="@id" value="@topic"
+                               checked="@Model.Topics.Contains(topic)" />
+                        <label class="form-check-label" for="@id">@L["Topic_" + topic]</label>
+                    </div>
+                }
+                <span asp-validation-for="Topics" class="text-danger"></span>
+            </fieldset>
+
+            <fieldset class="mb-4">
+                <legend class="form-label fs-6 fw-semibold">@L["ProfessionalRegister_Languages"]</legend>
+                @foreach (var language in Enum.GetValues<Language>())
+                {
+                    var id = "language-" + language;
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="Languages" id="@id" value="@language"
+                               checked="@Model.Languages.Contains(language)" />
+                        <label class="form-check-label" for="@id">@L["Language_" + language]</label>
+                    </div>
+                }
+                <span asp-validation-for="Languages" class="text-danger"></span>
+            </fieldset>
+
+            <div class="mb-4">
+                <label asp-for="Bio" class="form-label"></label>
+                <textarea asp-for="Bio" class="form-control" rows="5" maxlength="@ProfessionalProfile.BioMaxLength"></textarea>
+                <span asp-validation-for="Bio" class="text-danger"></span>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100">@L["Account_Register_Submit"]</button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

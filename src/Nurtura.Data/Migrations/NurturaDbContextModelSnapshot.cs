@@ -285,6 +285,100 @@ namespace Nurtura.Data.Migrations
                     b.ToTable("MotherSupportTypes");
                 });
 
+            modelBuilder.Entity("Nurtura.Core.Entities.ProfessionalCategory", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<int>("ProfessionalProfileId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProfessionalProfileId", "Category")
+                        .IsUnique();
+
+                    b.ToTable("ProfessionalCategories");
+                });
+
+            modelBuilder.Entity("Nurtura.Core.Entities.ProfessionalLanguage", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Language")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<int>("ProfessionalProfileId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProfessionalProfileId", "Language")
+                        .IsUnique();
+
+                    b.ToTable("ProfessionalLanguages");
+                });
+
+            modelBuilder.Entity("Nurtura.Core.Entities.ProfessionalProfile", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ApprovalStatus")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<string>("Bio")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DisplayName")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("PhotoUrl")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ProfessionalType")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("ProfessionalProfiles");
+                });
+
             modelBuilder.Entity("Nurtura.Core.Identity.ApplicationUser", b =>
                 {
                     b.Property<string>("Id")
@@ -432,6 +526,33 @@ namespace Nurtura.Data.Migrations
                     b.HasOne("Nurtura.Core.Entities.MotherProfile", null)
                         .WithMany()
                         .HasForeignKey("MotherProfileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Nurtura.Core.Entities.ProfessionalCategory", b =>
+                {
+                    b.HasOne("Nurtura.Core.Entities.ProfessionalProfile", null)
+                        .WithMany()
+                        .HasForeignKey("ProfessionalProfileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Nurtura.Core.Entities.ProfessionalLanguage", b =>
+                {
+                    b.HasOne("Nurtura.Core.Entities.ProfessionalProfile", null)
+                        .WithMany()
+                        .HasForeignKey("ProfessionalProfileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Nurtura.Core.Entities.ProfessionalProfile", b =>
+                {
+                    b.HasOne("Nurtura.Core.Identity.ApplicationUser", null)
+                        .WithOne()
+                        .HasForeignKey("Nurtura.Core.Entities.ProfessionalProfile", "UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

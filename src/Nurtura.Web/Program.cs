@@ -8,6 +8,7 @@ using Nurtura.Core.Services;
 using Nurtura.Data;
 using Nurtura.Web;
 using Nurtura.Web.Areas.Mother;
+using Nurtura.Web.Areas.Professional;
 using Nurtura.Web.Identity;
 using Nurtura.Web.Localization;
 using Nurtura.Web.ModelBinding;
@@ -22,6 +23,7 @@ builder.Services.AddLocalization();
 builder.Services.AddControllersWithViews(options =>
     {
         options.Filters.Add<MotherOnboardingFilter>();
+        options.Filters.Add<ProfessionalApprovalFilter>();
         options.ModelBinderProviders.Insert(0, new DateOnlyModelBinderProvider());
     })
     .AddViewLocalization()
@@ -61,6 +63,8 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 
 builder.Services.AddScoped<MotherRegistrationService>();
 builder.Services.AddScoped<MotherOnboardingService>();
+builder.Services.AddScoped<ProfessionalRegistrationService>();
+builder.Services.AddScoped<ProfessionalApprovalService>();
 
 var app = builder.Build();
 

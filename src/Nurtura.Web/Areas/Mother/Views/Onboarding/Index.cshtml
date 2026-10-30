@@ -16,13 +16,13 @@
 
             <fieldset class="mb-4">
                 <legend class="form-label fs-6 fw-semibold">@L["Onboarding_Concerns"]</legend>
-                @foreach (var concern in Enum.GetValues<Concern>())
+                @foreach (var concern in Enum.GetValues<Topic>())
                 {
                     var id = "concern-" + concern;
                     <div class="form-check">
                         <input class="form-check-input" type="checkbox" name="Concerns" id="@id" value="@concern"
                                checked="@Model.Concerns.Contains(concern)" />
-                        <label class="form-check-label" for="@id">@L["Concern_" + concern]</label>
+                        <label class="form-check-label" for="@id">@L["Topic_" + concern]</label>
                     </div>
                 }
                 <span asp-validation-for="Concerns" class="text-danger"></span>

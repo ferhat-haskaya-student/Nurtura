@@ -14,6 +14,12 @@ public interface INurturaDbContext
 
     DbSet<Baby> Babies { get; }
 
+    DbSet<ProfessionalProfile> ProfessionalProfiles { get; }
+
+    DbSet<ProfessionalCategory> ProfessionalCategories { get; }
+
+    DbSet<ProfessionalLanguage> ProfessionalLanguages { get; }
+
     // Used for transactions that span Identity and Nurtura tables.
     DatabaseFacade Database { get; }
 

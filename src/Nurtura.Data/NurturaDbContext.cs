@@ -21,6 +21,12 @@ public class NurturaDbContext : IdentityDbContext<ApplicationUser>, INurturaDbCo
 
     public DbSet<Baby> Babies => Set<Baby>();
 
+    public DbSet<ProfessionalProfile> ProfessionalProfiles => Set<ProfessionalProfile>();
+
+    public DbSet<ProfessionalCategory> ProfessionalCategories => Set<ProfessionalCategory>();
+
+    public DbSet<ProfessionalLanguage> ProfessionalLanguages => Set<ProfessionalLanguage>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);

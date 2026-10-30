@@ -18,7 +18,7 @@ public class MotherRegistrationService
 
     // Creates the user, the Mother role link and the profile in one transaction:
     // if any step fails, nothing is saved.
-    public async Task<MotherRegistrationResult> RegisterAsync(
+    public async Task<RegistrationResult> RegisterAsync(
         string displayName,
         string email,
         string password,
@@ -31,13 +31,13 @@ public class MotherRegistrationService
         var result = await _userManager.CreateAsync(user, password);
         if (!result.Succeeded)
         {
-            return MotherRegistrationResult.Failed(result.Errors);
+            return RegistrationResult.Failed(result.Errors);
         }
 
         result = await _userManager.AddToRoleAsync(user, Roles.Mother);
         if (!result.Succeeded)
         {
-            return MotherRegistrationResult.Failed(result.Errors);
+            return RegistrationResult.Failed(result.Errors);
         }
 
         _db.MotherProfiles.Add(new MotherProfile
@@ -49,6 +49,6 @@ public class MotherRegistrationService
         await _db.SaveChangesAsync(cancellationToken);
 
         await transaction.CommitAsync(cancellationToken);
-        return MotherRegistrationResult.Success(user);
+        return RegistrationResult.Success(user);
     }
 }

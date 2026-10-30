@@ -7,5 +7,5 @@ public class MotherConcern
 
     public int MotherProfileId { get; set; }
 
-    public Concern Concern { get; set; }
+    public Topic Concern { get; set; }
 }
