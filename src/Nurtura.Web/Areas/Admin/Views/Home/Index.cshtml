@@ -1,4 +1,62 @@
+@using Nurtura.Web.Localization
+@model IReadOnlyList<Nurtura.Core.Services.PendingProfessional>
 @{
     ViewData["Title"] = L["Admin_Home_Title"];
+    var statusMessage = TempData["StatusMessage"] as string;
 }
-<h1 class="h3">@ViewData["Title"]</h1>
+
+<div class="row justify-content-center">
+    <div class="col-12 col-lg-8">
+        <h1 class="h3 mb-3">@ViewData["Title"]</h1>
+
+        @if (statusMessage is not null)
+        {
+            <div class="alert alert-success" role="status">@statusMessage</div>
+        }
+
+        <h2 class="h5 mb-3">@L["Admin_Pending_Title"]</h2>
+
+        @if (Model.Count == 0)
+        {
+            <p class="text-body-secondary">@L["Admin_Pending_None"]</p>
+        }
+
+        @foreach (var professional in Model)
+        {
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h3 class="card-title h6 mb-3">@professional.DisplayName</h3>
+
+                    <dl class="mb-3">
+                        <dt>@L["Admin_Email"]</dt>
+                        <dd class="text-break">@professional.Email</dd>
+
+                        <dt>@L["Admin_ProfessionalType"]</dt>
+                        <dd>@L["ProfessionalType_" + professional.ProfessionalType]</dd>
+
+                        <dt>@L["Admin_Topics"]</dt>
+                        <dd>@string.Join(", ", professional.Topics.Select(t => L["Topic_" + t].Value))</dd>
+
+                        <dt>@L["Admin_Languages"]</dt>
+                        <dd>@string.Join(", ", professional.Languages.Select(l => L["Language_" + l].Value))</dd>
+
+                        <dt>@L["Admin_Bio"]</dt>
+                        <dd class="text-break">@professional.Bio</dd>
+
+                        <dt>@L["Admin_SignedUp"]</dt>
+                        <dd class="mb-0">@professional.CreatedAt.ToLocalTime().ToString(DateFormats.Display)</dd>
+                    </dl>
+
+                    <div class="d-flex gap-2">
+                        <form asp-area="Admin" asp-controller="Home" asp-action="Approve" asp-route-id="@professional.ProfileId" method="post" class="flex-fill">
+                            <button type="submit" class="btn btn-success w-100">@L["Admin_Approve"]</button>
+                        </form>
+                        <form asp-area="Admin" asp-controller="Home" asp-action="Reject" asp-route-id="@professional.ProfileId" method="post" class="flex-fill">
+                            <button type="submit" class="btn btn-outline-danger w-100">@L["Admin_Reject"]</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
