@@ -21,6 +21,12 @@ public interface INurturaDbContext
 
     DbSet<ProfessionalLanguage> ProfessionalLanguages { get; }
 
+    DbSet<DailyCheckIn> DailyCheckIns { get; }
+
+    DbSet<FeelingTag> FeelingTags { get; }
+
+    DbSet<CheckInFeelingTag> CheckInFeelingTags { get; }
+
     // Identity's user table; implemented by IdentityDbContext.
     DbSet<ApplicationUser> Users { get; }
 

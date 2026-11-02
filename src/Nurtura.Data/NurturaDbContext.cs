@@ -27,6 +27,12 @@ public class NurturaDbContext : IdentityDbContext<ApplicationUser>, INurturaDbCo
 
     public DbSet<ProfessionalLanguage> ProfessionalLanguages => Set<ProfessionalLanguage>();
 
+    public DbSet<DailyCheckIn> DailyCheckIns => Set<DailyCheckIn>();
+
+    public DbSet<FeelingTag> FeelingTags => Set<FeelingTag>();
+
+    public DbSet<CheckInFeelingTag> CheckInFeelingTags => Set<CheckInFeelingTag>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);

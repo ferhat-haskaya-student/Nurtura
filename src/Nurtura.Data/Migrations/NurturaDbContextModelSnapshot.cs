@@ -196,6 +196,140 @@ namespace Nurtura.Data.Migrations
                     b.ToTable("Babies");
                 });
 
+            modelBuilder.Entity("Nurtura.Core.Entities.CheckInFeelingTag", b =>
+                {
+                    b.Property<int>("DailyCheckInId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("FeelingTagId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("DailyCheckInId", "FeelingTagId");
+
+                    b.HasIndex("FeelingTagId");
+
+                    b.ToTable("CheckInFeelingTags");
+                });
+
+            modelBuilder.Entity("Nurtura.Core.Entities.DailyCheckIn", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateOnly>("Date")
+                        .HasColumnType("date");
+
+                    b.Property<int>("Energy")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsShared")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("Mood")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("MotherProfileId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<int>("SleepQuality")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Stress")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MotherProfileId", "Date")
+                        .IsUnique();
+
+                    b.ToTable("DailyCheckIns", t =>
+                        {
+                            t.HasCheckConstraint("CK_DailyCheckIns_Energy", "\"Energy\" BETWEEN 1 AND 5");
+
+                            t.HasCheckConstraint("CK_DailyCheckIns_Mood", "\"Mood\" BETWEEN 1 AND 5");
+
+                            t.HasCheckConstraint("CK_DailyCheckIns_SleepQuality", "\"SleepQuality\" BETWEEN 1 AND 5");
+
+                            t.HasCheckConstraint("CK_DailyCheckIns_Stress", "\"Stress\" BETWEEN 1 AND 5");
+                        });
+                });
+
+            modelBuilder.Entity("Nurtura.Core.Entities.FeelingTag", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Key")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Key")
+                        .IsUnique();
+
+                    b.ToTable("FeelingTags");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Key = "Tired"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Key = "Anxious"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Key = "Overwhelmed"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Key = "Sad"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Key = "Lonely"
+                        },
+                        new
+                        {
+                            Id = 6,
+                            Key = "Calm"
+                        },
+                        new
+                        {
+                            Id = 7,
+                            Key = "Happy"
+                        },
+                        new
+                        {
+                            Id = 8,
+                            Key = "Supported"
+                        });
+                });
+
             modelBuilder.Entity("Nurtura.Core.Entities.MotherConcern", b =>
                 {
                     b.Property<int>("Id")
@@ -503,6 +637,30 @@ namespace Nurtura.Data.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Nurtura.Core.Entities.CheckInFeelingTag", b =>
+                {
+                    b.HasOne("Nurtura.Core.Entities.DailyCheckIn", null)
+                        .WithMany("FeelingTags")
+                        .HasForeignKey("DailyCheckInId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Nurtura.Core.Entities.FeelingTag", null)
+                        .WithMany()
+                        .HasForeignKey("FeelingTagId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Nurtura.Core.Entities.DailyCheckIn", b =>
+                {
+                    b.HasOne("Nurtura.Core.Entities.MotherProfile", null)
+                        .WithMany()
+                        .HasForeignKey("MotherProfileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Nurtura.Core.Entities.MotherConcern", b =>
                 {
                     b.HasOne("Nurtura.Core.Entities.MotherProfile", null)
@@ -555,6 +713,11 @@ namespace Nurtura.Data.Migrations
                         .HasForeignKey("Nurtura.Core.Entities.ProfessionalProfile", "UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("Nurtura.Core.Entities.DailyCheckIn", b =>
+                {
+                    b.Navigation("FeelingTags");
                 });
 #pragma warning restore 612, 618
         }
