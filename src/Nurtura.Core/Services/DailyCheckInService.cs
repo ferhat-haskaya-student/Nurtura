@@ -82,6 +82,25 @@ public class DailyCheckInService
             TopFeelings(thisWeek, tags));
     }
 
+    // The dashboard charts cover the last 4 weeks, ending today.
+    public const int ChartDays = 28;
+
+    public async Task<CheckInChart> GetChartAsync(string userId, CancellationToken cancellationToken = default)
+    {
+        var today = PolandTime.Today;
+        var from = today.AddDays(-(ChartDays - 1));
+        var checkIns = await OwnCheckIns(userId)
+            .Where(c => c.Date >= from && c.Date <= today)
+            .Select(c => new CheckInChartDay(c.Date, c.Mood, c.SleepQuality, c.Energy, c.Stress))
+            .ToListAsync(cancellationToken);
+
+        var days = Enumerable.Range(0, ChartDays)
+            .Select(offset => from.AddDays(offset))
+            .Select(day => checkIns.SingleOrDefault(c => c.Date == day) ?? new CheckInChartDay(day, null, null, null, null))
+            .ToList();
+        return new CheckInChart(days, checkIns.Count);
+    }
+
     // Null when she has no check-in for that date.
     public async Task<CheckInDay?> GetDayAsync(string userId, DateOnly date, CancellationToken cancellationToken = default)
     {

@@ -98,8 +98,9 @@ public class CheckInController : Controller
             return NotFound();
         }
 
+        // Back to the dashboard (mother home), which shows the message.
         TempData[StatusMessageKey] = _localizer["CheckIn_Saved"].Value;
-        return RedirectToAction(nameof(Index), new { date = model.Date.Value.ToString(DateFormats.Display) });
+        return RedirectToAction("Index", "Home", new { area = Roles.Mother });
     }
 
     // The week's summary and its 7 days. Opens on the current week.

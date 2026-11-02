@@ -1,13 +1,91 @@
+@using System.Text.Json
+@using Nurtura.Core.Entities
+@using Nurtura.Web.Localization
+@model Nurtura.Web.Areas.Mother.Models.DashboardViewModel
 @{
-    ViewData["Title"] = L["Mother_Home_Title"];
-}
-<h1 class="h3">@ViewData["Title"]</h1>
+    // The browser tab stays short; the page heading greets her by name.
+    ViewData["Title"] = L["Nav_Home"];
+    var chart = Model.Chart;
+    var statusMessage = TempData["StatusMessage"] as string;
+    var showCharts = chart.CheckInCount >= 2;
+    var ratings = new[]
+    {
+        nameof(DailyCheckIn.Mood), nameof(DailyCheckIn.SleepQuality), nameof(DailyCheckIn.Energy), nameof(DailyCheckIn.Stress)
+    };
 
-<div class="row g-2 mt-1">
-    <div class="col-12 col-md-6 col-lg-4">
-        <a asp-area="Mother" asp-controller="CheckIn" asp-action="Index" class="btn btn-primary w-100">@L["Mother_Home_CheckInLink"]</a>
-    </div>
-    <div class="col-12 col-md-6 col-lg-4">
-        <a asp-area="Mother" asp-controller="CheckIn" asp-action="Week" class="btn btn-outline-primary w-100">@L["Mother_Home_WeekLink"]</a>
+    // Read by wwwroot/js/wellbeing-charts.js. Days without a check-in stay null.
+    var chartData = JsonSerializer.Serialize(new
+    {
+        labels = chart.Days.Select(d => d.Date.ToString("dd-MM")),
+        dates = chart.Days.Select(d => d.Date.ToString(DateFormats.Display)),
+        series = new Dictionary<string, IEnumerable<int?>>
+        {
+            [nameof(DailyCheckIn.Mood)] = chart.Days.Select(d => d.Mood),
+            [nameof(DailyCheckIn.SleepQuality)] = chart.Days.Select(d => d.SleepQuality),
+            [nameof(DailyCheckIn.Energy)] = chart.Days.Select(d => d.Energy),
+            [nameof(DailyCheckIn.Stress)] = chart.Days.Select(d => d.Stress)
+        }
+    });
+}
+
+<div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6">
+        <h1 class="h3 mb-3">@L["Dashboard_Greeting", Model.DisplayName]</h1>
+
+        @if (statusMessage is not null)
+        {
+            <div class="alert alert-success" role="status">@statusMessage</div>
+        }
+
+        <div class="card mb-4">
+            <div class="card-body">
+                @if (chart.HasCheckInToday)
+                {
+                    <p class="mb-2">
+                        @L["Dashboard_CheckedInToday"]
+                        <a asp-area="Mother" asp-controller="CheckIn" asp-action="Index">@L["Dashboard_EditToday"]</a>
+                    </p>
+                }
+                else
+                {
+                    <p class="mb-2">@L["Dashboard_HowAreYou"]</p>
+                    <a asp-area="Mother" asp-controller="CheckIn" asp-action="Index" class="btn btn-primary w-100 mb-2">@L["Dashboard_CheckInNow"]</a>
+                }
+                <a asp-area="Mother" asp-controller="CheckIn" asp-action="Week">@L["Dashboard_WeeklyOverview"]</a>
+            </div>
+        </div>
+
+        @if (showCharts)
+        {
+            <h2 class="h5 mb-3">@L["Dashboard_ChartsTitle"]</h2>
+            @foreach (var rating in ratings)
+            {
+                var name = L["CheckIn_" + rating];
+                <section class="mb-4">
+                    <h3 class="h6 mb-1">@name</h3>
+                    <div class="position-relative" style="height: 160px">
+                        <canvas data-rating="@rating" data-label="@name" role="img" aria-label="@L["Dashboard_ChartAria", name]"></canvas>
+                    </div>
+                    <p class="small text-body-secondary mb-0">
+                        @L["Dashboard_ScaleMeaning", L["CheckIn_" + rating + "_Low"], L["CheckIn_" + rating + "_High"]]
+                    </p>
+                </section>
+            }
+            <script type="application/json" id="wellbeing-chart-data">@Html.Raw(chartData)</script>
+        }
+        else
+        {
+            <p class="text-body-secondary mb-4">@L["Dashboard_ChartsEmpty"]</p>
+        }
+
+        <p class="small text-body-secondary border-top pt-3 mb-4">@L["Dashboard_BoundaryNote"]</p>
     </div>
 </div>
+
+@section Scripts {
+    @if (showCharts)
+    {
+        <script src="~/lib/chart.js/dist/chart.umd.js"></script>
+        <script src="~/js/wellbeing-charts.js" asp-append-version="true"></script>
+    }
+}
