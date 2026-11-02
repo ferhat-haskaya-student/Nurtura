@@ -1,0 +1,167 @@
+@using Nurtura.Core.Entities
+@using Nurtura.Core.Services
+@using Nurtura.Web.Localization
+@model Nurtura.Core.Services.CheckInWeek
+@{
+    ViewData["Title"] = L["Week_Title"];
+    var ratings = new (string Name, Func<RatingAverages, decimal> Value, Func<DailyCheckIn, int> DayValue)[]
+    {
+        (nameof(DailyCheckIn.Mood), a => a.Mood, c => c.Mood),
+        (nameof(DailyCheckIn.SleepQuality), a => a.SleepQuality, c => c.SleepQuality),
+        (nameof(DailyCheckIn.Energy), a => a.Energy, c => c.Energy),
+        (nameof(DailyCheckIn.Stress), a => a.Stress, c => c.Stress)
+    };
+}
+
+<div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6">
+        <h1 class="h3 mb-1">@ViewData["Title"]</h1>
+        <p class="text-body-secondary mb-3">@L["Week_Intro"]</p>
+
+        <div class="d-flex align-items-center justify-content-between mb-3">
+            @if (Model.PreviousWeekStart is { } previous)
+            {
+                <a asp-action="Week" asp-route-date="@previous.ToString(DateFormats.Display)" class="btn btn-outline-primary"
+                   aria-label="@L["Week_Previous"]" title="@L["Week_Previous"]">&lsaquo;</a>
+            }
+            else
+            {
+                <span class="btn btn-outline-primary invisible" aria-hidden="true">&lsaquo;</span>
+            }
+            <span class="fw-semibold text-center">
+                @L["Week_Range", Model.WeekStart.ToString(DateFormats.Display), Model.WeekStart.AddDays(6).ToString(DateFormats.Display)]
+            </span>
+            @if (Model.NextWeekStart is { } next)
+            {
+                <a asp-action="Week" asp-route-date="@next.ToString(DateFormats.Display)" class="btn btn-outline-primary"
+                   aria-label="@L["Week_Next"]" title="@L["Week_Next"]">&rsaquo;</a>
+            }
+            else
+            {
+                <span class="btn btn-outline-primary invisible" aria-hidden="true">&rsaquo;</span>
+            }
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-body">
+                @if (Model.Averages is null)
+                {
+                    <p class="mb-0">@L["Week_Empty"]</p>
+                }
+                else
+                {
+                    <p class="small text-body-secondary mb-3">
+                        @(Model.IsCurrentWeek
+                            ? L["Week_BasedOnSoFar", Model.CheckInCount, Model.DaysSoFar]
+                            : L["Week_BasedOn", Model.CheckInCount])
+                        <br />@L["Week_ScaleNote"]
+                    </p>
+
+                    @foreach (var rating in ratings)
+                    {
+                        var average = rating.Value(Model.Averages);
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-baseline">
+                                <span class="fw-semibold">@L["CheckIn_" + rating.Name]</span>
+                                <span class="fs-5">@average.ToString("0.0")</span>
+                            </div>
+                            @if (Model.PreviousAverages is not null)
+                            {
+                                var previousAverage = rating.Value(Model.PreviousAverages);
+                                var trend = DailyCheckInService.CompareAverages(average, previousAverage);
+                                var arrow = trend switch
+                                {
+                                    RatingTrend.Higher => "↑",
+                                    RatingTrend.Lower => "↓",
+                                    _ => "→"
+                                };
+                                <div class="small text-primary">
+                                    <span aria-hidden="true">@arrow</span>
+                                    @L["Week_Trend_" + trend] (@L["Week_LastWeekValue", previousAverage.ToString("0.0")])
+                                </div>
+                            }
+                        </div>
+                    }
+
+                    @if (Model.TopFeelings.Count > 0)
+                    {
+                        <h2 class="h6 mt-4 mb-2">@L["Week_TopFeelings"]</h2>
+                        <ul class="list-unstyled mb-0">
+                            @foreach (var feeling in Model.TopFeelings)
+                            {
+                                <li>
+                                    @L["FeelingTag_" + feeling.Tag.Key] —
+                                    @L[feeling.Days == 1 ? "Week_FeelingDays_One" : "Week_FeelingDays_Many", feeling.Days]
+                                </li>
+                            }
+                        </ul>
+                    }
+                }
+            </div>
+        </div>
+
+        <div class="list-group mb-4">
+            @foreach (var day in Model.Days)
+            {
+                // Future days and old days without a check-in have nothing to open.
+                if (!day.IsFuture && (day.CheckIn is not null || day.IsEditable))
+                {
+                    <a asp-action="Day" asp-route-date="@day.Date.ToString(DateFormats.Display)" class="list-group-item list-group-item-action py-3">
+                        @{ DayContent(day); }
+                    </a>
+                }
+                else
+                {
+                    <div class="list-group-item py-3 @(day.IsFuture ? "text-body-tertiary" : "")">
+                        @{ DayContent(day); }
+                    </div>
+                }
+            }
+        </div>
+    </div>
+</div>
+
+@{
+    void DayContent(CheckInDay day)
+    {
+        <div class="d-flex justify-content-between align-items-center">
+            <span class="fw-semibold">@L["Weekday_" + day.Date.DayOfWeek] @day.Date.ToString(DateFormats.Display)</span>
+            @if (day.CheckIn is not null)
+            {
+                <span>
+                    @if (day.CheckIn.Note is not null)
+                    {
+                        <span class="badge text-bg-light border">@L["CheckIn_HasNote"]</span>
+                    }
+                    @if (day.CheckIn.IsShared)
+                    {
+                        <span class="badge text-bg-light border">@L["CheckIn_Shared"]</span>
+                    }
+                </span>
+            }
+        </div>
+
+        if (day.CheckIn is not null)
+        {
+            <div class="row row-cols-2 row-cols-sm-4 g-1 small mt-1">
+                @foreach (var rating in ratings)
+                {
+                    <div class="col">@L["CheckIn_" + rating.Name]: <span class="fw-semibold">@rating.DayValue(day.CheckIn)</span></div>
+                }
+            </div>
+            if (day.Tags.Count > 0)
+            {
+                <div class="d-flex flex-wrap gap-1 mt-2">
+                    @foreach (var tag in day.Tags)
+                    {
+                        <span class="badge rounded-pill text-bg-secondary">@L["FeelingTag_" + tag.Key]</span>
+                    }
+                </div>
+            }
+        }
+        else if (!day.IsFuture)
+        {
+            <div class="small text-body-secondary mt-1">@L["CheckIn_NoCheckIn"]</div>
+        }
+    }
+}

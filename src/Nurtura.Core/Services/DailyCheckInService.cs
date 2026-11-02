@@ -18,6 +18,149 @@ public class DailyCheckInService
     public static bool IsEditableDate(DateOnly date, DateOnly today) =>
         date <= today && date >= today.AddDays(-DailyCheckIn.EditableDays);
 
+    // A week runs Monday to Sunday.
+    public static DateOnly WeekStartOf(DateOnly date) =>
+        date.AddDays(-(((int)date.DayOfWeek + 6) % 7));
+
+    // A difference under 0.5 counts as about the same.
+    public static RatingTrend CompareAverages(decimal current, decimal previous) =>
+        Math.Abs(current - previous) < 0.5m ? RatingTrend.AboutTheSame
+        : current > previous ? RatingTrend.Higher
+        : RatingTrend.Lower;
+
+    // The week containing the date, kept between the week of her first check-in and the current week.
+    public async Task<CheckInWeek> GetWeekAsync(string userId, DateOnly date, CancellationToken cancellationToken = default)
+    {
+        var today = PolandTime.Today;
+        var currentWeekStart = WeekStartOf(today);
+
+        var firstDate = await OwnCheckIns(userId)
+            .OrderBy(c => c.Date)
+            .Select(c => (DateOnly?)c.Date)
+            .FirstOrDefaultAsync(cancellationToken);
+        var firstWeekStart = firstDate is null ? currentWeekStart : WeekStartOf(firstDate.Value);
+
+        var weekStart = WeekStartOf(date);
+        if (weekStart > currentWeekStart)
+        {
+            weekStart = currentWeekStart;
+        }
+        else if (weekStart < firstWeekStart)
+        {
+            weekStart = firstWeekStart;
+        }
+
+        var previousWeekStart = weekStart.AddDays(-7);
+        var weekEnd = weekStart.AddDays(6);
+        var checkIns = await OwnCheckIns(userId)
+            .AsNoTracking()
+            .Include(c => c.FeelingTags)
+            .Where(c => c.Date >= previousWeekStart && c.Date <= weekEnd)
+            .ToListAsync(cancellationToken);
+        var thisWeek = checkIns.Where(c => c.Date >= weekStart).ToList();
+        var previousWeek = checkIns.Where(c => c.Date < weekStart).ToList();
+
+        var tags = await GetFeelingTagsAsync(cancellationToken);
+        var days = Enumerable.Range(0, 7)
+            .Select(offset => weekStart.AddDays(offset))
+            .Select(day => ToDay(day, thisWeek.SingleOrDefault(c => c.Date == day), tags, today))
+            .ToList();
+
+        var averages = Average(thisWeek);
+        var isCurrentWeek = weekStart == currentWeekStart;
+
+        return new CheckInWeek(
+            weekStart,
+            weekStart > firstWeekStart ? previousWeekStart : null,
+            weekStart < currentWeekStart ? weekStart.AddDays(7) : null,
+            isCurrentWeek,
+            days,
+            thisWeek.Count,
+            isCurrentWeek ? today.DayNumber - weekStart.DayNumber + 1 : 7,
+            averages,
+            averages is null ? null : Average(previousWeek),
+            TopFeelings(thisWeek, tags));
+    }
+
+    // Null when she has no check-in for that date.
+    public async Task<CheckInDay?> GetDayAsync(string userId, DateOnly date, CancellationToken cancellationToken = default)
+    {
+        var checkIn = await GetAsync(userId, date, cancellationToken);
+        return checkIn is null
+            ? null
+            : ToDay(date, checkIn, await GetFeelingTagsAsync(cancellationToken), PolandTime.Today);
+    }
+
+    // Changes only who can see her check-in for that date. Allowed on any day, even after the rest is locked.
+    // Returns false when she has no check-in that day.
+    public async Task<bool> SetSharedAsync(string userId, DateOnly date, bool isShared, CancellationToken cancellationToken = default)
+    {
+        var checkIn = await OwnCheckIns(userId).SingleOrDefaultAsync(c => c.Date == date, cancellationToken);
+        if (checkIn is null)
+        {
+            return false;
+        }
+
+        checkIn.IsShared = isShared;
+        checkIn.UpdatedAt = DateTime.UtcNow;
+        await _db.SaveChangesAsync(cancellationToken);
+        return true;
+    }
+
+    private IQueryable<DailyCheckIn> OwnCheckIns(string userId) =>
+        _db.DailyCheckIns.Where(c => _db.MotherProfiles.Any(p => p.Id == c.MotherProfileId && p.UserId == userId));
+
+    // Only the days she checked in. Null when she has none.
+    private static RatingAverages? Average(IReadOnlyCollection<DailyCheckIn> checkIns)
+    {
+        if (checkIns.Count == 0)
+        {
+            return null;
+        }
+
+        static decimal Round(double value) => Math.Round((decimal)value, 1, MidpointRounding.AwayFromZero);
+
+        return new RatingAverages(
+            Round(checkIns.Average(c => c.Mood)),
+            Round(checkIns.Average(c => c.SleepQuality)),
+            Round(checkIns.Average(c => c.Energy)),
+            Round(checkIns.Average(c => c.Stress)));
+    }
+
+    // Her three most ticked tags with the number of days each. Tags tied with the third are kept,
+    // and equal counts are sorted by tag order.
+    private static IReadOnlyList<FeelingCount> TopFeelings(
+        IReadOnlyCollection<DailyCheckIn> checkIns,
+        IReadOnlyList<FeelingTag> tags)
+    {
+        var counts = checkIns
+            .SelectMany(c => c.FeelingTags)
+            .GroupBy(t => t.FeelingTagId)
+            .Select(g => (TagId: g.Key, Days: g.Count()))
+            .OrderByDescending(x => x.Days)
+            .ThenBy(x => x.TagId)
+            .ToList();
+        if (counts.Count == 0)
+        {
+            return [];
+        }
+
+        var cutoff = counts[Math.Min(3, counts.Count) - 1].Days;
+        return counts
+            .TakeWhile(x => x.Days >= cutoff)
+            .Select(x => new FeelingCount(tags.Single(t => t.Id == x.TagId), x.Days))
+            .ToList();
+    }
+
+    // tags is the full list in tag order.
+    private static CheckInDay ToDay(DateOnly date, DailyCheckIn? checkIn, IReadOnlyList<FeelingTag> tags, DateOnly today) =>
+        new(
+            date,
+            checkIn,
+            checkIn is null ? [] : tags.Where(t => checkIn.FeelingTags.Any(f => f.FeelingTagId == t.Id)).ToList(),
+            date > today,
+            IsEditableDate(date, today));
+
     public async Task<IReadOnlyList<FeelingTag>> GetFeelingTagsAsync(CancellationToken cancellationToken = default)
     {
         return await _db.FeelingTags

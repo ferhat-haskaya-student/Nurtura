@@ -101,4 +101,49 @@ public class CheckInController : Controller
         TempData[StatusMessageKey] = _localizer["CheckIn_Saved"].Value;
         return RedirectToAction(nameof(Index), new { date = model.Date.Value.ToString(DateFormats.Display) });
     }
+
+    // The week's summary and its 7 days. Opens on the current week.
+    [HttpGet]
+    public async Task<IActionResult> Week(DateOnly? date)
+    {
+        return View(await _checkInService.GetWeekAsync(_userManager.GetUserId(User)!, date ?? PolandTime.Today));
+    }
+
+    // A day from the week page: days she can still edit open the check-in form, older ones a read-only view.
+    [HttpGet]
+    public async Task<IActionResult> Day(DateOnly? date)
+    {
+        if (date is null)
+        {
+            return RedirectToAction(nameof(Week));
+        }
+
+        var display = date.Value.ToString(DateFormats.Display);
+        if (DailyCheckInService.IsEditableDate(date.Value, PolandTime.Today))
+        {
+            return RedirectToAction(nameof(Index), new { date = display });
+        }
+
+        var day = await _checkInService.GetDayAsync(_userManager.GetUserId(User)!, date.Value);
+        if (day is null)
+        {
+            return RedirectToAction(nameof(Week), new { date = display });
+        }
+
+        return View(day);
+    }
+
+    // Who can see a check-in can be changed on any day, even after ratings, tags and note are locked.
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Share(DateOnly? date, bool isShared)
+    {
+        if (date is null || !await _checkInService.SetSharedAsync(_userManager.GetUserId(User)!, date.Value, isShared))
+        {
+            return NotFound();
+        }
+
+        TempData[StatusMessageKey] = _localizer["CheckIn_SharingSaved"].Value;
+        return RedirectToAction(nameof(Day), new { date = date.Value.ToString(DateFormats.Display) });
+    }
 }

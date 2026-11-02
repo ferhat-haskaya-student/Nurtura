@@ -1,0 +1,89 @@
+@using Nurtura.Core.Entities
+@using Nurtura.Web.Localization
+@model Nurtura.Core.Services.CheckInDay
+@{
+    // Only days she can no longer edit come here; see CheckInController.Day.
+    var checkIn = Model.CheckIn!;
+    var date = Model.Date.ToString(DateFormats.Display);
+    ViewData["Title"] = L["CheckIn_Title"];
+    var statusMessage = TempData["StatusMessage"] as string;
+    var ratings = new (string Name, int Value)[]
+    {
+        (nameof(DailyCheckIn.Mood), checkIn.Mood),
+        (nameof(DailyCheckIn.SleepQuality), checkIn.SleepQuality),
+        (nameof(DailyCheckIn.Energy), checkIn.Energy),
+        (nameof(DailyCheckIn.Stress), checkIn.Stress)
+    };
+}
+
+<div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6">
+        <a asp-action="Week" asp-route-date="@date" class="d-inline-block mb-2">&lsaquo; @L["CheckIn_BackToWeek"]</a>
+        <h1 class="h3 mb-1">@ViewData["Title"]</h1>
+        <p class="fw-semibold mb-3">@L["Weekday_" + Model.Date.DayOfWeek] @date</p>
+
+        @if (statusMessage is not null)
+        {
+            <div class="alert alert-success" role="status">@statusMessage</div>
+        }
+
+        <div class="alert alert-light border small" role="note">@L["CheckIn_ReadOnlyNotice", DailyCheckIn.EditableDays]</div>
+
+        <dl class="mb-4">
+            @foreach (var rating in ratings)
+            {
+                <div class="mb-2">
+                    <dt>@L["CheckIn_" + rating.Name]: @rating.Value</dt>
+                    <dd class="small text-body-secondary mb-0">
+                        1 = @L["CheckIn_" + rating.Name + "_Low"], 5 = @L["CheckIn_" + rating.Name + "_High"]
+                    </dd>
+                </div>
+            }
+        </dl>
+
+        <h2 class="h6">@L["CheckIn_FeelingTags"]</h2>
+        @if (Model.Tags.Count > 0)
+        {
+            <div class="d-flex flex-wrap gap-1 mb-4">
+                @foreach (var tag in Model.Tags)
+                {
+                    <span class="badge rounded-pill text-bg-secondary">@L["FeelingTag_" + tag.Key]</span>
+                }
+            </div>
+        }
+        else
+        {
+            <p class="text-body-secondary mb-4">@L["CheckIn_NoFeelings"]</p>
+        }
+
+        <h2 class="h6">@L["CheckIn_NoteTitle"]</h2>
+        @if (checkIn.Note is not null)
+        {
+            <p class="mb-4" style="white-space: pre-wrap">@checkIn.Note</p>
+        }
+        else
+        {
+            <p class="text-body-secondary mb-4">@L["CheckIn_NoNote"]</p>
+        }
+
+        <form asp-action="Share" method="post" class="mb-4">
+            <input type="hidden" name="date" value="@date" />
+            <fieldset class="mb-3">
+                <legend class="form-label fs-6 fw-semibold mb-1">@L["CheckIn_Sharing"]</legend>
+                @foreach (var shared in new[] { false, true })
+                {
+                    var id = "shared-" + shared.ToString().ToLowerInvariant();
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="isShared" id="@id"
+                               value="@shared.ToString().ToLowerInvariant()" checked="@(checkIn.IsShared == shared)" />
+                        <label class="form-check-label" for="@id">
+                            <span class="fw-semibold">@L[shared ? "CheckIn_Sharing_Shared" : "CheckIn_Sharing_Private"]</span>
+                            <span class="d-block small text-body-secondary">@L[shared ? "CheckIn_Sharing_Shared_Hint" : "CheckIn_Sharing_Private_Hint"]</span>
+                        </label>
+                    </div>
+                }
+            </fieldset>
+            <button type="submit" class="btn btn-primary w-100">@L["CheckIn_SaveSharing"]</button>
+        </form>
+    </div>
+</div>

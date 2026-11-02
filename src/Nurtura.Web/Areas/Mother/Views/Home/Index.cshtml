@@ -3,8 +3,11 @@
 }
 <h1 class="h3">@ViewData["Title"]</h1>
 
-<div class="row mt-3">
+<div class="row g-2 mt-1">
     <div class="col-12 col-md-6 col-lg-4">
         <a asp-area="Mother" asp-controller="CheckIn" asp-action="Index" class="btn btn-primary w-100">@L["Mother_Home_CheckInLink"]</a>
+    </div>
+    <div class="col-12 col-md-6 col-lg-4">
+        <a asp-area="Mother" asp-controller="CheckIn" asp-action="Week" class="btn btn-outline-primary w-100">@L["Mother_Home_WeekLink"]</a>
     </div>
 </div>
