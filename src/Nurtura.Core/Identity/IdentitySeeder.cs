@@ -59,11 +59,12 @@ public static class IdentitySeeder
                 SupportTypes: [SupportType.TalkingToProfessional],
                 IsFirstBaby: true,
                 HelpAtHome: HelpAtHome.Sometimes,
-                BabyName: TestBabyName,
-                BabyBirthDate: DateOnly.FromDateTime(DateTime.Today).AddMonths(-3),
-                BirthType: BirthType.Natural,
-                BirthWeek: Baby.BirthWeekDefault,
-                FeedingType: BabyFeedingType.Breast));
+                Baby: new BabyDetails(
+                    Name: TestBabyName,
+                    BirthDate: DateOnly.FromDateTime(DateTime.Today).AddMonths(-3),
+                    BirthType: BirthType.Natural,
+                    BirthWeek: Baby.BirthWeekDefault,
+                    FeedingType: BabyFeedingType.Breast)));
 
         // The test professional is already approved, so the Professional area is open to her.
         if (!await db.ProfessionalProfiles.AnyAsync(p => p.UserId == professional.Id))

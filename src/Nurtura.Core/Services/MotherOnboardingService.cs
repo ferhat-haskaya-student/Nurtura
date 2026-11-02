@@ -43,15 +43,7 @@ public class MotherOnboardingService
             throw new ArgumentException("At least one support type is required.", nameof(answers));
         }
 
-        if (answers.BabyBirthDate > DateOnly.FromDateTime(DateTime.Today))
-        {
-            throw new ArgumentException("The birth date cannot be in the future.", nameof(answers));
-        }
-
-        if (answers.BirthWeek is < Baby.BirthWeekMin or > Baby.BirthWeekMax)
-        {
-            throw new ArgumentException("The birth week is out of range.", nameof(answers));
-        }
+        answers.Baby.EnsureValid(PolandTime.Today);
 
         await using var transaction = await _db.Database.BeginTransactionAsync(cancellationToken);
 
@@ -73,15 +65,9 @@ public class MotherOnboardingService
             SupportType = supportType
         }));
 
-        _db.Babies.Add(new Baby
-        {
-            MotherProfileId = profile.Id,
-            Name = answers.BabyName.Trim(),
-            BirthDate = answers.BabyBirthDate,
-            BirthType = answers.BirthType,
-            BirthWeek = answers.BirthWeek,
-            FeedingType = answers.FeedingType
-        });
+        var baby = new Baby { MotherProfileId = profile.Id };
+        answers.Baby.CopyTo(baby);
+        _db.Babies.Add(baby);
 
         profile.IsFirstBaby = answers.IsFirstBaby;
         profile.HelpAtHome = answers.HelpAtHome;

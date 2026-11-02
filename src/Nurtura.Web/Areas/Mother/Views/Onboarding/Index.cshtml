@@ -1,9 +1,7 @@
 @using Nurtura.Core.Entities
-@using Nurtura.Web.Localization
 @model Nurtura.Web.Areas.Mother.Models.OnboardingViewModel
 @{
     ViewData["Title"] = L["Onboarding_Title"];
-    var today = DateOnly.FromDateTime(DateTime.Today).ToString(DateFormats.Display);
 }
 
 <div class="row justify-content-center">
@@ -72,51 +70,7 @@
 
             <h2 class="h5 mb-3">@L["Onboarding_Baby"]</h2>
 
-            <div class="mb-3">
-                <label asp-for="BabyName" class="form-label"></label>
-                <input asp-for="BabyName" class="form-control" autocomplete="off" />
-                <span asp-validation-for="BabyName" class="text-danger"></span>
-            </div>
-
-            <div class="mb-3">
-                <label asp-for="BabyBirthDate" class="form-label"></label>
-                <input asp-for="BabyBirthDate" asp-format="@DateFormats.DisplayPattern" type="text" class="form-control"
-                       placeholder="@L["Date_Placeholder"]" inputmode="numeric" autocomplete="off"
-                       data-date-input data-date-max="@today" />
-                <span asp-validation-for="BabyBirthDate" class="text-danger"></span>
-            </div>
-
-            <fieldset class="mb-3">
-                <legend class="form-label fs-6 fw-semibold">@L["Onboarding_BirthType"]</legend>
-                @foreach (var birthType in Enum.GetValues<BirthType>())
-                {
-                    var id = "birth-type-" + birthType;
-                    <div class="form-check">
-                        <input asp-for="BirthType" class="form-check-input" type="radio" id="@id" value="@birthType" />
-                        <label class="form-check-label" for="@id">@L["BirthType_" + birthType]</label>
-                    </div>
-                }
-                <span asp-validation-for="BirthType" class="text-danger"></span>
-            </fieldset>
-
-            <div class="mb-3">
-                <label asp-for="BirthWeek" class="form-label"></label>
-                <input asp-for="BirthWeek" type="number" class="form-control" min="@Baby.BirthWeekMin" max="@Baby.BirthWeekMax" step="1" />
-                <span asp-validation-for="BirthWeek" class="text-danger"></span>
-            </div>
-
-            <fieldset class="mb-4">
-                <legend class="form-label fs-6 fw-semibold">@L["Onboarding_FeedingType"]</legend>
-                @foreach (var feedingType in Enum.GetValues<BabyFeedingType>())
-                {
-                    var id = "feeding-" + feedingType;
-                    <div class="form-check">
-                        <input asp-for="FeedingType" class="form-check-input" type="radio" id="@id" value="@feedingType" />
-                        <label class="form-check-label" for="@id">@L["BabyFeedingType_" + feedingType]</label>
-                    </div>
-                }
-                <span asp-validation-for="FeedingType" class="text-danger"></span>
-            </fieldset>
+            <partial name="_BabyFields" for="Baby" />
 
             <button type="submit" class="btn btn-primary w-100">@L["Onboarding_Submit"]</button>
         </form>

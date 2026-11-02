@@ -1,0 +1,20 @@
+@model Nurtura.Core.Entities.Baby
+@{
+    ViewData["Title"] = L["Baby_RemoveTitle"];
+}
+
+@* Plain and calm, with no reasons asked: the same words fit a profile added by mistake and a loss. *@
+<div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6">
+        <h1 class="h3 mb-2">@ViewData["Title"]</h1>
+        <p class="fw-semibold text-break mb-3">@Model.Name</p>
+        <p class="mb-4">@L["Baby_RemoveText"]</p>
+
+        <form asp-area="Mother" asp-controller="Baby" asp-action="Remove" asp-route-id="@Model.Id" method="post">
+            <button type="submit" class="btn btn-outline-danger w-100 mb-3">@L["Baby_RemoveConfirm"]</button>
+        </form>
+
+        <a asp-area="Mother" asp-controller="Baby" asp-action="Edit" asp-route-id="@Model.Id"
+           class="btn btn-outline-secondary w-100">@L["Baby_RemoveBack"]</a>
+    </div>
+</div>

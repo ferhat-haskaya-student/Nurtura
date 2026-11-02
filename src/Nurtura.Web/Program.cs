@@ -91,6 +91,7 @@ builder.Services.AddScoped<ProfessionalApprovalService>();
 builder.Services.AddScoped<MotherExternalLoginService>();
 builder.Services.AddScoped<DailyCheckInService>();
 builder.Services.AddScoped<MotherProfileService>();
+builder.Services.AddScoped<BabyService>();
 
 var app = builder.Build();
 

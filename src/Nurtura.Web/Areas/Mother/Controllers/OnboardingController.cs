@@ -57,11 +57,6 @@ public class OnboardingController : Controller
             ModelState.AddModelError(nameof(model.SupportTypes), _localizer["Validation_SelectAtLeastOne"]);
         }
 
-        if (model.BabyBirthDate > DateOnly.FromDateTime(DateTime.Today))
-        {
-            ModelState.AddModelError(nameof(model.BabyBirthDate), _localizer["Validation_DateNotInFuture"]);
-        }
-
         if (!ModelState.IsValid)
         {
             return View(model);
@@ -75,11 +70,7 @@ public class OnboardingController : Controller
                 model.SupportTypes,
                 model.IsFirstBaby!.Value,
                 model.HelpAtHome!.Value,
-                model.BabyName,
-                model.BabyBirthDate!.Value,
-                model.BirthType!.Value,
-                model.BirthWeek!.Value,
-                model.FeedingType!.Value));
+                model.Baby.ToDetails()));
 
         return RedirectToMotherHome();
     }

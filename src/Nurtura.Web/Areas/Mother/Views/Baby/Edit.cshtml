@@ -1,0 +1,31 @@
+@model Nurtura.Web.Areas.Mother.Models.BabyFormModel
+@{
+    ViewData["Title"] = L["Baby_EditTitle"];
+    var id = ViewContext.RouteData.Values["id"];
+}
+
+<div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6">
+        <h1 class="h3 mb-3">@ViewData["Title"]</h1>
+
+        <form asp-area="Mother" asp-controller="Baby" asp-action="Edit" asp-route-id="@id" method="post">
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+            <partial name="_BabyFields" model="Model" />
+
+            <button type="submit" class="btn btn-primary w-100 mb-3">@L["Baby_Save"]</button>
+        </form>
+
+        <a asp-area="Mother" asp-controller="Baby" asp-action="Index" asp-route-id="@id">@L["Baby_Cancel"]</a>
+
+        @* Kept quiet on purpose: small and out of the way, never a button next to Save. *@
+        <p class="small border-top pt-3 mt-4 mb-0">
+            <a asp-area="Mother" asp-controller="Baby" asp-action="Remove" asp-route-id="@id"
+               class="link-secondary">@L["Baby_RemoveLink"]</a>
+        </p>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

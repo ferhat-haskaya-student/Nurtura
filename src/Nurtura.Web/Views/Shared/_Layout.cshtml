@@ -1,5 +1,6 @@
 ﻿@using System.Globalization
 @using Nurtura.Web.Localization
+@using Nurtura.Core.Identity
 @{
     var currentCulture = CultureInfo.CurrentUICulture.Name;
     var returnUrl = $"{Context.Request.PathBase}{Context.Request.Path}{Context.Request.QueryString}";
@@ -30,6 +31,12 @@
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">@L["Nav_Home"]</a>
                         </li>
+                        @if (User.IsInRole(Roles.Mother))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-area="Mother" asp-controller="Baby" asp-action="Index">@L["Nav_Baby"]</a>
+                            </li>
+                        }
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">@L["Nav_Privacy"]</a>
                         </li>

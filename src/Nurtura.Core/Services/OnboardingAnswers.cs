@@ -8,8 +8,4 @@ public sealed record OnboardingAnswers(
     IReadOnlyCollection<SupportType> SupportTypes,
     bool IsFirstBaby,
     HelpAtHome HelpAtHome,
-    string BabyName,
-    DateOnly BabyBirthDate,
-    BirthType BirthType,
-    int BirthWeek,
-    BabyFeedingType FeedingType);
+    BabyDetails Baby);
