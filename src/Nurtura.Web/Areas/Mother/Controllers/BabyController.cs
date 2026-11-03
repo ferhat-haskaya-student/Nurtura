@@ -21,15 +21,18 @@ public class BabyController : Controller
     private const string SelectedBabyCookie = "Nurtura.SelectedBaby";
 
     private readonly BabyService _babyService;
+    private readonly SleepService _sleepService;
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly IStringLocalizer<SharedResource> _localizer;
 
     public BabyController(
         BabyService babyService,
+        SleepService sleepService,
         UserManager<ApplicationUser> userManager,
         IStringLocalizer<SharedResource> localizer)
     {
         _babyService = babyService;
+        _sleepService = sleepService;
         _userManager = userManager;
         _localizer = localizer;
     }
@@ -57,7 +60,8 @@ public class BabyController : Controller
 
         selected ??= BabyService.Youngest(babies);
         var age = selected is null ? null : BabyAge.Calculate(selected.BirthDate, PolandTime.Today);
-        return View(new BabySectionViewModel(babies, selected, age));
+        var sleep = selected is null ? null : await _sleepService.GetOverviewAsync(UserId, selected.Id);
+        return View(new BabySectionViewModel(babies, selected, age, sleep));
     }
 
     [HttpGet]

@@ -26,6 +26,7 @@ builder.Services.AddControllersWithViews(options =>
         options.Filters.Add<MotherOnboardingFilter>();
         options.Filters.Add<ProfessionalApprovalFilter>();
         options.ModelBinderProviders.Insert(0, new DateOnlyModelBinderProvider());
+        options.ModelBinderProviders.Insert(0, new TimeOnlyModelBinderProvider());
     })
     .AddViewLocalization()
     .AddDataAnnotationsLocalization(options =>
@@ -92,6 +93,7 @@ builder.Services.AddScoped<MotherExternalLoginService>();
 builder.Services.AddScoped<DailyCheckInService>();
 builder.Services.AddScoped<MotherProfileService>();
 builder.Services.AddScoped<BabyService>();
+builder.Services.AddScoped<SleepService>();
 
 var app = builder.Build();
 

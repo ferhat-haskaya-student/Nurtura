@@ -119,16 +119,7 @@
             dateForm.querySelector('input[name="date"]').addEventListener('change', function () {
                 dateForm.submit();
             });
-
-            var note = document.querySelector('[data-note-input]');
-            var counter = document.querySelector('[data-note-counter]');
-            function updateCounter() {
-                counter.textContent = counter.dataset.template
-                    .replace('{0}', note.value.length)
-                    .replace('{1}', counter.dataset.max);
-            }
-            note.addEventListener('input', updateCounter);
-            updateCounter();
         })();
     </script>
+    <script src="~/js/note-counter.js" asp-append-version="true"></script>
 }

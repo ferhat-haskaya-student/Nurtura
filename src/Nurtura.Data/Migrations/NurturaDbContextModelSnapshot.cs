@@ -513,6 +513,51 @@ namespace Nurtura.Data.Migrations
                     b.ToTable("ProfessionalProfiles");
                 });
 
+            modelBuilder.Entity("Nurtura.Core.Entities.SleepRecord", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BabyId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("EndTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsShared")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTime>("StartTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BabyId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_SleepRecords_BabyId_Running")
+                        .HasFilter("\"EndTime\" IS NULL");
+
+                    b.HasIndex("BabyId", "StartTime");
+
+                    b.ToTable("SleepRecords", t =>
+                        {
+                            t.HasCheckConstraint("CK_SleepRecords_EndAfterStart", "\"EndTime\" IS NULL OR \"EndTime\" > \"StartTime\"");
+                        });
+                });
+
             modelBuilder.Entity("Nurtura.Core.Identity.ApplicationUser", b =>
                 {
                     b.Property<string>("Id")
@@ -711,6 +756,15 @@ namespace Nurtura.Data.Migrations
                     b.HasOne("Nurtura.Core.Identity.ApplicationUser", null)
                         .WithOne()
                         .HasForeignKey("Nurtura.Core.Entities.ProfessionalProfile", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Nurtura.Core.Entities.SleepRecord", b =>
+                {
+                    b.HasOne("Nurtura.Core.Entities.Baby", null)
+                        .WithMany()
+                        .HasForeignKey("BabyId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

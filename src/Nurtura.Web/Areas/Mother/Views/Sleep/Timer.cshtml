@@ -1,0 +1,165 @@
+@using Nurtura.Core.Entities
+@using Nurtura.Web.Areas.Mother
+@using Nurtura.Web.Areas.Mother.Models
+@using Nurtura.Web.Localization
+@model SleepTimerViewModel
+@{
+    ViewData["Title"] = L["Sleep_Title"];
+    var serverNow = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+
+    // The big round button: Start a new sleep, Stop a running one, Resume a stopped one (if CanResume).
+    var (command, buttonText) = Model.State switch
+    {
+        SleepTimerState.Running => ("stop", L["Sleep_Stop"]),
+        SleepTimerState.Stopped => ("resume", L["Sleep_Resume"]),
+        _ => ("start", L["Sleep_Start"])
+    };
+
+    // Details stay folded unless there is something in them to see.
+    var showDetails = !string.IsNullOrEmpty(Model.Note) || Model.IsShared
+        || ViewData.ModelState[nameof(Model.Note)]?.Errors.Count > 0;
+}
+
+<div class="row justify-content-center" data-server-now="@serverNow">
+    <div class="col-12 col-md-8 col-lg-6">
+        <h1 class="h3 mb-1">@ViewData["Title"]</h1>
+        <p class="text-body-secondary text-break mb-3">@Model.BabyName</p>
+
+        @if (Model.IsLongRunning)
+        {
+            <div class="alert alert-info" role="status">
+                @L["Sleep_LongRunning"]
+                <a href="#end" class="alert-link">@L["Sleep_SetEndTime"]</a>
+            </div>
+        }
+
+        <form asp-area="Mother" asp-controller="Sleep" asp-action="Save" method="post">
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+            <input type="hidden" name="babyId" value="@Model.BabyId" />
+            <input type="hidden" name="sleepId" value="@Model.SleepId" />
+            <input asp-for="DefaultStart" type="hidden" />
+
+            <fieldset class="mb-3">
+                <legend class="form-label fs-6 fw-semibold mb-1">@L["Sleep_FellAsleep"]</legend>
+                <div class="row g-2">
+                    <div class="col-7">
+                        <label asp-for="StartDate" class="visually-hidden"></label>
+                        <input asp-for="StartDate" asp-format="@DateFormats.DisplayPattern" type="text" class="form-control"
+                               placeholder="@L["Date_Placeholder"]" inputmode="numeric" autocomplete="off" data-date-input />
+                    </div>
+                    <div class="col-5">
+                        <label asp-for="StartTime" class="visually-hidden"></label>
+                        <input asp-for="StartTime" asp-format="@TimeFormats.DisplayPattern" type="text" class="form-control"
+                               placeholder="@L["Time_Placeholder"]" inputmode="numeric" autocomplete="off" data-time-input />
+                    </div>
+                </div>
+                <span asp-validation-for="StartDate" class="text-danger d-block"></span>
+                <span asp-validation-for="StartTime" class="text-danger d-block"></span>
+            </fieldset>
+
+            <fieldset class="mb-3" id="end">
+                <legend class="form-label fs-6 fw-semibold mb-1">@L["Sleep_WokeUp"]</legend>
+                <div class="row g-2">
+                    <div class="col-7">
+                        <label asp-for="EndDate" class="visually-hidden"></label>
+                        <input asp-for="EndDate" asp-format="@DateFormats.DisplayPattern" type="text" class="form-control"
+                               placeholder="@L["Date_Placeholder"]" inputmode="numeric" autocomplete="off" data-date-input />
+                    </div>
+                    <div class="col-5">
+                        <label asp-for="EndTime" class="visually-hidden"></label>
+                        <input asp-for="EndTime" asp-format="@TimeFormats.DisplayPattern" type="text" class="form-control"
+                               placeholder="@L["Time_Placeholder"]" inputmode="numeric" autocomplete="off" data-time-input />
+                    </div>
+                </div>
+                <span asp-validation-for="EndDate" class="text-danger d-block"></span>
+                <span asp-validation-for="EndTime" class="text-danger d-block"></span>
+            </fieldset>
+
+            <div class="text-center my-4">
+                @if (Model.RunningSince is not null)
+                {
+                    var elapsed = DateTime.UtcNow - Model.RunningSince.Value;
+                    <p class="display-5 mb-3" aria-live="off"
+                       data-running-since="@(new DateTimeOffset(Model.RunningSince.Value).ToUnixTimeMilliseconds())"
+                       data-format="clock">@((int)elapsed.TotalHours):@elapsed.Minutes.ToString("00"):@elapsed.Seconds.ToString("00")</p>
+                }
+                else if (Model.Duration is not null)
+                {
+                    <p class="display-5 mb-3">@SleepText.Duration(L, Model.Duration.Value)</p>
+                }
+                else
+                {
+                    <p class="display-5 mb-3 text-body-secondary">0:00:00</p>
+                }
+
+                @* A stopped sleep that can no longer be resumed has no big button: only Save and Reset. *@
+                @if (Model.State != SleepTimerState.Stopped || Model.CanResume)
+                {
+                    <button type="submit" name="command" value="@command"
+                            class="btn btn-primary rounded-circle fs-4" style="width: 9rem; height: 9rem">@buttonText</button>
+                }
+            </div>
+
+            <button class="btn btn-link px-0 mb-2" type="button" data-bs-toggle="collapse" data-bs-target="#sleep-details"
+                    aria-expanded="@(showDetails ? "true" : "false")" aria-controls="sleep-details">@L["Sleep_AddDetails"]</button>
+            <div class="collapse @(showDetails ? "show" : null)" id="sleep-details">
+                <div class="mb-3">
+                    <label asp-for="Note" class="form-label fw-semibold"></label>
+                    <textarea asp-for="Note" class="form-control" rows="3" maxlength="@SleepRecord.NoteMaxLength"
+                              data-note-input></textarea>
+                    <div class="form-text text-end" data-note-counter data-template="@L["CheckIn_NoteCounter"]"
+                         data-max="@SleepRecord.NoteMaxLength" aria-live="polite"></div>
+                    <span asp-validation-for="Note" class="text-danger"></span>
+                </div>
+
+                <fieldset class="mb-3">
+                    <legend class="form-label fs-6 fw-semibold mb-1">@L["Sleep_Sharing"]</legend>
+                    @foreach (var shared in new[] { false, true })
+                    {
+                        var id = "shared-" + shared.ToString().ToLowerInvariant();
+                        <div class="form-check mb-2">
+                            <input asp-for="IsShared" class="form-check-input" type="radio" id="@id"
+                                   value="@shared.ToString().ToLowerInvariant()" />
+                            <label class="form-check-label" for="@id">
+                                <span class="fw-semibold">@L[shared ? "CheckIn_Sharing_Shared" : "CheckIn_Sharing_Private"]</span>
+                                <span class="d-block small text-body-secondary">@L[shared ? "CheckIn_Sharing_Shared_Hint" : "CheckIn_Sharing_Private_Hint"]</span>
+                            </label>
+                        </div>
+                    }
+                </fieldset>
+            </div>
+
+            <button type="submit" name="command" value="save" class="btn btn-outline-primary w-100 mb-3">@L["Sleep_Save"]</button>
+        </form>
+
+        @if (Model.SleepId is not null)
+        {
+            <button type="button" class="btn btn-outline-secondary w-100 mb-3" data-bs-toggle="modal"
+                    data-bs-target="#reset-sleep">@L["Sleep_Reset"]</button>
+
+            <div class="modal fade" id="reset-sleep" tabindex="-1" aria-labelledby="reset-sleep-title" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-body">
+                            <h2 class="h5 mb-0" id="reset-sleep-title">@L["Sleep_ResetQuestion"]</h2>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">@L["Sleep_Keep"]</button>
+                            <form asp-area="Mother" asp-controller="Sleep" asp-action="Reset" asp-route-id="@Model.SleepId" method="post">
+                                <button type="submit" class="btn btn-outline-danger">@L["Sleep_Discard"]</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <a asp-area="Mother" asp-controller="Baby" asp-action="Index" asp-route-id="@Model.BabyId">@L["Sleep_Back"]</a>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/note-counter.js" asp-append-version="true"></script>
+    <script src="~/js/sleep-timer.js" asp-append-version="true"></script>
+}
