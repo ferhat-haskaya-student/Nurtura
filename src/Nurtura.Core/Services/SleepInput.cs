@@ -21,8 +21,6 @@ public enum SleepSaveStatus
 // Id is the saved sleep's id. Clash is the sleep it overlaps (Overlap) or the one already running (AlreadyRunning).
 public sealed record SleepSaveResult(SleepSaveStatus Status, int? Id = null, SleepRecord? Clash = null);
 
-// The baby page: the running sleep, the last finished one, and the recent finished ones grouped by the
-// Warsaw day they started, newest first.
-public sealed record SleepOverview(SleepRecord? Running, SleepRecord? Last, IReadOnlyList<SleepDay> Recent);
-
-public sealed record SleepDay(DateOnly Date, IReadOnlyList<SleepRecord> Sleeps);
+// The baby page: the running sleep, the last finished one, and the finished ones that started in the
+// timeline's days (BabyTimeline), newest first.
+public sealed record SleepOverview(SleepRecord? Running, SleepRecord? Last, IReadOnlyList<SleepRecord> Recent);

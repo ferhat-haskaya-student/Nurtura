@@ -1,0 +1,172 @@
+@using Nurtura.Core.Entities
+@using Nurtura.Web.Areas.Mother.Models
+@model FeedingViewModel
+@{
+    ViewData["Title"] = L["Feeding_Title"];
+
+    // Details stay folded unless there is something in them to see.
+    var showDetails = !string.IsNullOrEmpty(Model.Note) || Model.IsShared
+        || ViewData.ModelState[nameof(Model.Note)]?.Errors.Count > 0;
+}
+
+<div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6">
+        <h1 class="h3 mb-1">@ViewData["Title"]</h1>
+        <p class="text-body-secondary text-break mb-3">@Model.BabyName</p>
+
+        <form asp-area="Mother" asp-controller="Feeding" asp-action="Save" method="post" data-submit-once>
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+            <input type="hidden" name="babyId" value="@Model.BabyId" />
+            <input type="hidden" name="feedId" value="@Model.FeedId" />
+            <input asp-for="DefaultTime" type="hidden" />
+
+            <partial name="_TimePickerField" model="@(new TimePickerField("time", L["Feeding_Time"],
+                nameof(Model.Date), nameof(Model.Time), Model.Date, Model.Time))" />
+
+            @* All three types are always offered: the app never hides solids by age. *@
+            <fieldset class="mb-3">
+                <legend class="form-label fs-6 fw-semibold mb-1">@L["Feeding_Type"]</legend>
+                <div class="row g-2">
+                    @foreach (var type in Enum.GetValues<FeedingType>())
+                    {
+                        var id = "type-" + type;
+                        <div class="col-4">
+                            <input asp-for="Type" type="radio" class="btn-check" id="@id" value="@type" autocomplete="off" />
+                            <label class="btn btn-outline-primary w-100 py-3 fs-5" for="@id">@L["FeedingType_" + type]</label>
+                        </div>
+                    }
+                </div>
+                <span asp-validation-for="Type" class="text-danger"></span>
+            </fieldset>
+
+            <div data-feeding-fields="@FeedingType.Breast">
+                <fieldset class="mb-3">
+                    <legend class="form-label fs-6 fw-semibold mb-1">@L["Feeding_Side"]</legend>
+                    <div class="row g-2">
+                        @foreach (var side in Enum.GetValues<BreastSide>())
+                        {
+                            var id = "side-" + side;
+                            <div class="col-4">
+                                <input asp-for="BreastSide" type="radio" class="btn-check" id="@id" value="@side" autocomplete="off" />
+                                <label class="btn btn-outline-secondary w-100" for="@id">@L["BreastSide_" + side]</label>
+                            </div>
+                        }
+                    </div>
+                    @if (Model.LastBreastSide is not null)
+                    {
+                        <div class="form-text">@L["Feeding_LastSide", L["BreastSide_Short_" + Model.LastBreastSide]]</div>
+                    }
+                    <span asp-validation-for="BreastSide" class="text-danger"></span>
+                </fieldset>
+
+                <div class="mb-3">
+                    <label asp-for="Minutes" class="form-label fw-semibold"></label>
+                    <div class="d-flex flex-wrap gap-2 mb-2" role="group" aria-label="@L["Feeding_Minutes"]">
+                        @foreach (var minutes in FeedingRecord.QuickMinutes)
+                        {
+                            <button type="button" class="btn btn-outline-secondary" data-minutes="@minutes"
+                                    aria-pressed="@(Model.Minutes == minutes ? "true" : "false")">@minutes</button>
+                        }
+                    </div>
+                    <input asp-for="Minutes" type="number" class="form-control" min="@FeedingRecord.MinutesMin"
+                           max="@FeedingRecord.MinutesMax" step="1" inputmode="numeric" data-minutes-input />
+                    <span asp-validation-for="Minutes" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div data-feeding-fields="@FeedingType.Bottle">
+                <div class="mb-3">
+                    <label asp-for="AmountMl" class="form-label fw-semibold"></label>
+                    <input asp-for="AmountMl" type="number" class="form-control" min="@FeedingRecord.AmountMlMin"
+                           max="@FeedingRecord.AmountMlMax" step="1" inputmode="numeric" />
+                    <span asp-validation-for="AmountMl" class="text-danger"></span>
+                </div>
+
+                <fieldset class="mb-3">
+                    <legend class="form-label fs-6 fw-semibold mb-1">@L["Feeding_Content"]</legend>
+                    <div class="row g-2">
+                        @foreach (var content in Enum.GetValues<BottleContent>())
+                        {
+                            var id = "content-" + content;
+                            <div class="col-6">
+                                <input asp-for="BottleContent" type="radio" class="btn-check" id="@id" value="@content" autocomplete="off" />
+                                <label class="btn btn-outline-secondary w-100" for="@id">@L["BottleContent_" + content]</label>
+                            </div>
+                        }
+                    </div>
+                    <span asp-validation-for="BottleContent" class="text-danger"></span>
+                </fieldset>
+            </div>
+
+            @* Solids have no extra fields: what the baby ate goes in the note. No food list. *@
+            <div data-feeding-fields="@FeedingType.Solid">
+                <p class="form-text mb-3">@L["Feeding_SolidsHint"]</p>
+            </div>
+
+            <button class="btn btn-link px-0 mb-2" type="button" data-bs-toggle="collapse" data-bs-target="#feeding-details"
+                    aria-expanded="@(showDetails ? "true" : "false")" aria-controls="feeding-details">@L["Sleep_AddDetails"]</button>
+            <div class="collapse @(showDetails ? "show" : null)" id="feeding-details">
+                <div class="mb-3">
+                    <label asp-for="Note" class="form-label fw-semibold"></label>
+                    <textarea asp-for="Note" class="form-control" rows="3" maxlength="@FeedingRecord.NoteMaxLength"
+                              data-note-input data-solids-placeholder="@L["Feeding_SolidsHint"]"></textarea>
+                    <div class="form-text text-end" data-note-counter data-template="@L["CheckIn_NoteCounter"]"
+                         data-max="@FeedingRecord.NoteMaxLength" aria-live="polite"></div>
+                    <span asp-validation-for="Note" class="text-danger"></span>
+                </div>
+
+                <fieldset class="mb-3">
+                    <legend class="form-label fs-6 fw-semibold mb-1">@L["Feeding_Sharing"]</legend>
+                    @foreach (var shared in new[] { false, true })
+                    {
+                        var id = "shared-" + shared.ToString().ToLowerInvariant();
+                        <div class="form-check mb-2">
+                            <input asp-for="IsShared" class="form-check-input" type="radio" id="@id"
+                                   value="@shared.ToString().ToLowerInvariant()" />
+                            <label class="form-check-label" for="@id">
+                                <span class="fw-semibold">@L[shared ? "CheckIn_Sharing_Shared" : "CheckIn_Sharing_Private"]</span>
+                                <span class="d-block small text-body-secondary">@L[shared ? "CheckIn_Sharing_Shared_Hint" : "CheckIn_Sharing_Private_Hint"]</span>
+                            </label>
+                        </div>
+                    }
+                </fieldset>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100 mb-3">@L["Feeding_Save"]</button>
+        </form>
+
+        @if (Model.FeedId is not null)
+        {
+            <button type="button" class="btn btn-outline-secondary w-100 mb-3" data-bs-toggle="modal"
+                    data-bs-target="#delete-feed">@L["Feeding_Delete"]</button>
+
+            <div class="modal fade" id="delete-feed" tabindex="-1" aria-labelledby="delete-feed-title" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-body">
+                            <h2 class="h5 mb-0" id="delete-feed-title">@L["Feeding_DeleteQuestion"]</h2>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">@L["Feeding_Keep"]</button>
+                            <form asp-area="Mother" asp-controller="Feeding" asp-action="Delete" asp-route-id="@Model.FeedId" method="post"
+                                  data-submit-once>
+                                <button type="submit" class="btn btn-outline-danger">@L["Feeding_Delete"]</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <a asp-area="Mother" asp-controller="Baby" asp-action="Index" asp-route-id="@Model.BabyId">@L["Sleep_Back"]</a>
+    </div>
+</div>
+
+<partial name="_TimePickerSheet" />
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/note-counter.js" asp-append-version="true"></script>
+    <script src="~/js/time-picker.js" asp-append-version="true"></script>
+    <script src="~/js/feeding.js" asp-append-version="true"></script>
+}

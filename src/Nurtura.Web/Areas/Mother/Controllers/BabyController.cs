@@ -22,17 +22,20 @@ public class BabyController : Controller
 
     private readonly BabyService _babyService;
     private readonly SleepService _sleepService;
+    private readonly FeedingService _feedingService;
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly IStringLocalizer<SharedResource> _localizer;
 
     public BabyController(
         BabyService babyService,
         SleepService sleepService,
+        FeedingService feedingService,
         UserManager<ApplicationUser> userManager,
         IStringLocalizer<SharedResource> localizer)
     {
         _babyService = babyService;
         _sleepService = sleepService;
+        _feedingService = feedingService;
         _userManager = userManager;
         _localizer = localizer;
     }
@@ -59,9 +62,17 @@ public class BabyController : Controller
         }
 
         selected ??= BabyService.Youngest(babies);
-        var age = selected is null ? null : BabyAge.Calculate(selected.BirthDate, PolandTime.Today);
-        var sleep = selected is null ? null : await _sleepService.GetOverviewAsync(UserId, selected.Id);
-        return View(new BabySectionViewModel(babies, selected, age, sleep));
+        if (selected is null)
+        {
+            return View(new BabySectionViewModel(babies, null, null, null, null, []));
+        }
+
+        var age = BabyAge.Calculate(selected.BirthDate, PolandTime.Today);
+        var sleep = await _sleepService.GetOverviewAsync(UserId, selected.Id);
+        var lastFeed = await _feedingService.GetLastAsync(UserId, selected.Id);
+        var recentFeeds = await _feedingService.GetRecentAsync(UserId, selected.Id, BabyTimeline.SinceUtc());
+        var timeline = BabyTimeline.Build(sleep!.Recent, recentFeeds);
+        return View(new BabySectionViewModel(babies, selected, age, sleep, lastFeed, timeline));
     }
 
     [HttpGet]

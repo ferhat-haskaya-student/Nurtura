@@ -6,7 +6,7 @@ using Nurtura.Web.Localization;
 
 namespace Nurtura.Web.Areas.Mother;
 
-// How sleeps read on the baby page and the timer screen. Times in Warsaw, 24-hour clock.
+// How sleeps and feeds read on the baby page, the timer and the feeding screen. Times in Warsaw, 24-hour clock.
 public static class SleepText
 {
     // "7 h 13 min", "3 h", "45 min". wwwroot/js/sleep-timer.js follows the same rule.
@@ -29,21 +29,16 @@ public static class SleepText
     public static string Duration(IStringLocalizer localizer, SleepRecord sleep) =>
         Duration(localizer, sleep.EndTime!.Value - sleep.StartTime);
 
-    // "just now", "25 min ago", "4 hours ago", "2 days ago".
-    public static string Ago(IStringLocalizer localizer, TimeSpan elapsed)
+    // Both tiles: "just now", "25 min ago", "1 h 24 min ago", "2 h ago", then "2 days ago" from a day.
+    public static string AgoPrecise(IStringLocalizer localizer, TimeSpan elapsed)
     {
         if (elapsed.TotalMinutes < 1)
         {
             return localizer["Ago_JustNow"];
         }
 
-        if (elapsed.TotalHours < 1)
-        {
-            return Count(localizer, "Ago_Minutes", (int)elapsed.TotalMinutes);
-        }
-
         return elapsed.TotalDays < 1
-            ? Count(localizer, "Ago_Hours", (int)elapsed.TotalHours)
+            ? localizer["Ago_Precise", Duration(localizer, elapsed)]
             : Count(localizer, "Ago_Days", (int)elapsed.TotalDays);
     }
 
@@ -65,8 +60,42 @@ public static class SleepText
     public static string WithDate(IStringLocalizer localizer, SleepRecord sleep) =>
         localizer["Sleep_WithDate", PolandTime.ToLocal(sleep.StartTime).ToString(DateFormats.Display), Range(localizer, sleep)];
 
+    // Tile: "Bottle · 60 ml", "Breast · left", "Solids".
+    // Timeline (full): "13:06 · Bottle · 60 ml · formula", "08:30 · Breast · left · 15 min", "11:00 · Solids".
+    public static string FeedSummary(IStringLocalizer localizer, FeedingRecord feed, bool full)
+    {
+        var parts = new List<string>();
+        if (full)
+        {
+            parts.Add(Time(PolandTime.ToLocal(feed.Time)));
+        }
+
+        parts.Add(localizer["FeedingType_" + feed.Type]);
+        if (feed.BreastSide is not null)
+        {
+            parts.Add(localizer["BreastSide_Short_" + feed.BreastSide]);
+        }
+
+        if (feed.Minutes is not null && full)
+        {
+            parts.Add(localizer["Duration_Minutes", feed.Minutes]);
+        }
+
+        if (feed.AmountMl is not null)
+        {
+            parts.Add(localizer["Feeding_AmountMlValue", feed.AmountMl]);
+        }
+
+        if (feed.BottleContent is not null && full)
+        {
+            parts.Add(localizer["BottleContent_Short_" + feed.BottleContent]);
+        }
+
+        return string.Join(localizer["List_Separator"], parts);
+    }
+
     // ":" in a format string is the culture's time separator; the invariant one is always ":".
-    private static string Time(DateTime local) => local.ToString(TimeFormats.Display, CultureInfo.InvariantCulture);
+    public static string Time(DateTime local) => local.ToString(TimeFormats.Display, CultureInfo.InvariantCulture);
 
     private static string Count(IStringLocalizer localizer, string baseKey, int count) =>
         localizer[Plural.Key(baseKey, count), count];

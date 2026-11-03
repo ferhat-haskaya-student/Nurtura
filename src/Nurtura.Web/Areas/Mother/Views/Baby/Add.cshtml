@@ -7,7 +7,7 @@
     <div class="col-12 col-md-8 col-lg-6">
         <h1 class="h3 mb-3">@ViewData["Title"]</h1>
 
-        <form asp-area="Mother" asp-controller="Baby" asp-action="Add" method="post">
+        <form asp-area="Mother" asp-controller="Baby" asp-action="Add" method="post" data-submit-once>
             <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
 
             <partial name="_BabyFields" model="Model" />

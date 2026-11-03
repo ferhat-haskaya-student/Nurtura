@@ -29,3 +29,60 @@ body {
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
   text-align: start;
 }
+/* Time picker wheels (wwwroot/js/time-picker.js). Items are 40px high (ITEM_HEIGHT there); five show at once,
+   and the 80px padding lets the first and last item reach the middle band. */
+.time-wheels {
+  position: relative;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.time-wheels::before {
+  content: "";
+  position: absolute;
+  inset: 80px 0 auto 0;
+  height: 40px;
+  border-top: 1px solid var(--bs-border-color);
+  border-bottom: 1px solid var(--bs-border-color);
+  background: var(--bs-tertiary-bg);
+  pointer-events: none;
+}
+
+.time-wheel {
+  position: relative;
+  flex: 1 1 0;
+  height: 200px;
+  padding: 80px 0;
+  overflow-y: auto;
+  scroll-snap-type: y mandatory;
+  scrollbar-width: none;
+  overscroll-behavior: contain;
+}
+
+.time-wheel::-webkit-scrollbar {
+  display: none;
+}
+
+.time-wheel-day {
+  flex-grow: 2;
+}
+
+.time-wheel:focus-visible {
+  outline: 2px solid #258cfb;
+  outline-offset: 2px;
+}
+
+.time-wheel-item {
+  height: 40px;
+  line-height: 40px;
+  text-align: center;
+  white-space: nowrap;
+  scroll-snap-align: center;
+  cursor: pointer;
+  color: var(--bs-secondary-color);
+}
+
+.time-wheel-item[aria-selected="true"] {
+  color: var(--bs-body-color);
+  font-weight: 600;
+}

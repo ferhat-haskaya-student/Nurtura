@@ -10,7 +10,7 @@
         <p class="fw-semibold text-break mb-3">@Model.Name</p>
         <p class="mb-4">@L["Baby_RemoveText"]</p>
 
-        <form asp-area="Mother" asp-controller="Baby" asp-action="Remove" asp-route-id="@Model.Id" method="post">
+        <form asp-area="Mother" asp-controller="Baby" asp-action="Remove" asp-route-id="@Model.Id" method="post" data-submit-once>
             <button type="submit" class="btn btn-outline-danger w-100 mb-3">@L["Baby_RemoveConfirm"]</button>
         </form>
 

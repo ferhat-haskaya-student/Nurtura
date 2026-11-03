@@ -15,9 +15,6 @@ public class SleepRecord
     // Resume is for a baby who woke briefly: only the baby's latest sleep, and only this soon after it ended.
     public static readonly TimeSpan ResumeWindow = TimeSpan.FromHours(1);
 
-    // The baby page lists the sleeps that started today and the days before, this many days in all.
-    public const int RecentDays = 7;
-
     public int Id { get; set; }
 
     public int BabyId { get; set; }

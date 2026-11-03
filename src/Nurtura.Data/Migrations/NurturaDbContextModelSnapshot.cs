@@ -267,6 +267,66 @@ namespace Nurtura.Data.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Nurtura.Core.Entities.FeedingRecord", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("AmountMl")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("BabyId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("BottleContent")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<string>("BreastSide")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsShared")
+                        .HasColumnType("boolean");
+
+                    b.Property<int?>("Minutes")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTime>("Time")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BabyId", "Time");
+
+                    b.ToTable("FeedingRecords", t =>
+                        {
+                            t.HasCheckConstraint("CK_FeedingRecords_AmountMl", "\"AmountMl\" IS NULL OR \"AmountMl\" BETWEEN 1 AND 500");
+
+                            t.HasCheckConstraint("CK_FeedingRecords_Minutes", "\"Minutes\" IS NULL OR \"Minutes\" BETWEEN 1 AND 120");
+
+                            t.HasCheckConstraint("CK_FeedingRecords_TypeFields", "(\"Type\" = 'Breast' AND \"BreastSide\" IS NOT NULL AND \"AmountMl\" IS NULL AND \"BottleContent\" IS NULL)\nOR (\"Type\" = 'Bottle' AND \"BottleContent\" IS NOT NULL AND \"BreastSide\" IS NULL AND \"Minutes\" IS NULL)\nOR (\"Type\" = 'Solid' AND \"BreastSide\" IS NULL AND \"Minutes\" IS NULL AND \"AmountMl\" IS NULL AND \"BottleContent\" IS NULL)");
+                        });
+                });
+
             modelBuilder.Entity("Nurtura.Core.Entities.FeelingTag", b =>
                 {
                     b.Property<int>("Id")
@@ -702,6 +762,15 @@ namespace Nurtura.Data.Migrations
                     b.HasOne("Nurtura.Core.Entities.MotherProfile", null)
                         .WithMany()
                         .HasForeignKey("MotherProfileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Nurtura.Core.Entities.FeedingRecord", b =>
+                {
+                    b.HasOne("Nurtura.Core.Entities.Baby", null)
+                        .WithMany()
+                        .HasForeignKey("BabyId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

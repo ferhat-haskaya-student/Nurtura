@@ -33,47 +33,17 @@
             </div>
         }
 
-        <form asp-area="Mother" asp-controller="Sleep" asp-action="Save" method="post">
+        <form asp-area="Mother" asp-controller="Sleep" asp-action="Save" method="post" data-submit-once>
             <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
             <input type="hidden" name="babyId" value="@Model.BabyId" />
             <input type="hidden" name="sleepId" value="@Model.SleepId" />
             <input asp-for="DefaultStart" type="hidden" />
 
-            <fieldset class="mb-3">
-                <legend class="form-label fs-6 fw-semibold mb-1">@L["Sleep_FellAsleep"]</legend>
-                <div class="row g-2">
-                    <div class="col-7">
-                        <label asp-for="StartDate" class="visually-hidden"></label>
-                        <input asp-for="StartDate" asp-format="@DateFormats.DisplayPattern" type="text" class="form-control"
-                               placeholder="@L["Date_Placeholder"]" inputmode="numeric" autocomplete="off" data-date-input />
-                    </div>
-                    <div class="col-5">
-                        <label asp-for="StartTime" class="visually-hidden"></label>
-                        <input asp-for="StartTime" asp-format="@TimeFormats.DisplayPattern" type="text" class="form-control"
-                               placeholder="@L["Time_Placeholder"]" inputmode="numeric" autocomplete="off" data-time-input />
-                    </div>
-                </div>
-                <span asp-validation-for="StartDate" class="text-danger d-block"></span>
-                <span asp-validation-for="StartTime" class="text-danger d-block"></span>
-            </fieldset>
-
-            <fieldset class="mb-3" id="end">
-                <legend class="form-label fs-6 fw-semibold mb-1">@L["Sleep_WokeUp"]</legend>
-                <div class="row g-2">
-                    <div class="col-7">
-                        <label asp-for="EndDate" class="visually-hidden"></label>
-                        <input asp-for="EndDate" asp-format="@DateFormats.DisplayPattern" type="text" class="form-control"
-                               placeholder="@L["Date_Placeholder"]" inputmode="numeric" autocomplete="off" data-date-input />
-                    </div>
-                    <div class="col-5">
-                        <label asp-for="EndTime" class="visually-hidden"></label>
-                        <input asp-for="EndTime" asp-format="@TimeFormats.DisplayPattern" type="text" class="form-control"
-                               placeholder="@L["Time_Placeholder"]" inputmode="numeric" autocomplete="off" data-time-input />
-                    </div>
-                </div>
-                <span asp-validation-for="EndDate" class="text-danger d-block"></span>
-                <span asp-validation-for="EndTime" class="text-danger d-block"></span>
-            </fieldset>
+            <partial name="_TimePickerField" model="@(new TimePickerField("start", L["Sleep_FellAsleep"],
+                nameof(Model.StartDate), nameof(Model.StartTime), Model.StartDate, Model.StartTime))" />
+            @* id "end": the 12-hour note's "Set the end time" link jumps here. *@
+            <partial name="_TimePickerField" model="@(new TimePickerField("end", L["Sleep_WokeUp"],
+                nameof(Model.EndDate), nameof(Model.EndTime), Model.EndDate, Model.EndTime, Optional: true))" />
 
             <div class="text-center my-4">
                 @if (Model.RunningSince is not null)
@@ -145,7 +115,8 @@
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">@L["Sleep_Keep"]</button>
-                            <form asp-area="Mother" asp-controller="Sleep" asp-action="Reset" asp-route-id="@Model.SleepId" method="post">
+                            <form asp-area="Mother" asp-controller="Sleep" asp-action="Reset" asp-route-id="@Model.SleepId" method="post"
+                                  data-submit-once>
                                 <button type="submit" class="btn btn-outline-danger">@L["Sleep_Discard"]</button>
                             </form>
                         </div>
@@ -158,8 +129,11 @@
     </div>
 </div>
 
+<partial name="_TimePickerSheet" />
+
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <script src="~/js/note-counter.js" asp-append-version="true"></script>
     <script src="~/js/sleep-timer.js" asp-append-version="true"></script>
+    <script src="~/js/time-picker.js" asp-append-version="true"></script>
 }

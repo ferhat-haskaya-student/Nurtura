@@ -1,0 +1,59 @@
+@using System.Globalization
+@using System.Text.Json
+@using Nurtura.Core
+@using Nurtura.Web.Localization
+@*
+    The one wheel sheet for every _TimePickerField on the page (wwwroot/js/time-picker.js).
+    A bottom sheet (offcanvas) on a phone, a centered window from 768 px: the body moves into the right shell when it opens.
+    "Today" and "now" are the server's Warsaw time, so a wrong phone clock or time zone does not matter.
+*@
+@{
+    var now = PolandTime.Now;
+    var weekdays = Enum.GetValues<DayOfWeek>().Select(d => L["Weekday_Short_" + d].Value);
+}
+
+<div data-time-picker
+     data-now="@now.ToString("yyyy-MM-ddTHH:mm", CultureInfo.InvariantCulture)"
+     data-days-back="7"
+     data-label-today="@L["TimePicker_Today"]"
+     data-label-yesterday="@L["TimePicker_Yesterday"]"
+     data-label-day="@L["TimePicker_Day"]"
+     data-label-display="@L["TimePicker_Display"]"
+     data-label-not-set="@L["TimePicker_NotSet"]"
+     data-weekdays="@JsonSerializer.Serialize(weekdays)">
+
+    <div class="offcanvas offcanvas-bottom h-auto" tabindex="-1" id="time-picker-sheet" aria-labelledby="time-picker-sheet-title"
+         data-time-picker-offcanvas>
+        <div class="offcanvas-header pb-0">
+            <h2 class="offcanvas-title h5" id="time-picker-sheet-title" data-time-picker-title></h2>
+        </div>
+        <div class="offcanvas-body" data-time-picker-slot>
+            <div data-time-picker-body>
+                <div class="time-wheels">
+                    <div class="time-wheel time-wheel-day" role="listbox" tabindex="0" aria-label="@L["TimePicker_DayWheel"]" data-wheel="day"></div>
+                    <div class="time-wheel" role="listbox" tabindex="0" aria-label="@L["TimePicker_HourWheel"]" data-wheel="hour"></div>
+                    <div class="time-wheel" role="listbox" tabindex="0" aria-label="@L["TimePicker_MinuteWheel"]" data-wheel="minute"></div>
+                </div>
+                <div class="d-flex flex-wrap gap-2 mt-3">
+                    <button type="button" class="btn btn-outline-secondary" data-picker-now>@L["TimePicker_Now"]</button>
+                    <button type="button" class="btn btn-outline-secondary" data-picker-clear>@L["TimePicker_Clear"]</button>
+                    <span class="flex-grow-1"></span>
+                    <button type="button" class="btn btn-outline-secondary" data-picker-cancel>@L["TimePicker_Cancel"]</button>
+                    <button type="button" class="btn btn-primary" data-picker-save>@L["TimePicker_Save"]</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="time-picker-modal" tabindex="-1" aria-labelledby="time-picker-modal-title" aria-hidden="true"
+         data-time-picker-modal>
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header pb-0 border-0">
+                    <h2 class="modal-title h5" id="time-picker-modal-title" data-time-picker-title></h2>
+                </div>
+                <div class="modal-body" data-time-picker-slot></div>
+            </div>
+        </div>
+    </div>
+</div>

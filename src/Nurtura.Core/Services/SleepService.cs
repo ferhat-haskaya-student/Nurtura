@@ -29,19 +29,13 @@ public class SleepService
             .OrderByDescending(s => s.EndTime)
             .FirstOrDefaultAsync(cancellationToken);
 
-        // Midnight always exists in Warsaw; the clocks change at night but not at 00:00.
-        PolandTime.TryToUtc(PolandTime.Today.AddDays(1 - SleepRecord.RecentDays), TimeOnly.MinValue, out var since);
+        var since = BabyTimeline.SinceUtc();
         var recent = await sleeps
             .Where(s => s.EndTime != null && s.StartTime >= since)
             .OrderByDescending(s => s.StartTime)
             .ToListAsync(cancellationToken);
 
-        var days = recent
-            .GroupBy(s => DateOnly.FromDateTime(PolandTime.ToLocal(s.StartTime)))
-            .Select(g => new SleepDay(g.Key, g.ToList()))
-            .ToList();
-
-        return new SleepOverview(running, last, days);
+        return new SleepOverview(running, last, recent);
     }
 
     // Null when there is none, or the baby is not hers.

@@ -17,6 +17,8 @@ public interface INurturaDbContext
 
     DbSet<SleepRecord> SleepRecords { get; }
 
+    DbSet<FeedingRecord> FeedingRecords { get; }
+
     DbSet<ProfessionalProfile> ProfessionalProfiles { get; }
 
     DbSet<ProfessionalCategory> ProfessionalCategories { get; }

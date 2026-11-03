@@ -23,6 +23,8 @@ public class NurturaDbContext : IdentityDbContext<ApplicationUser>, INurturaDbCo
 
     public DbSet<SleepRecord> SleepRecords => Set<SleepRecord>();
 
+    public DbSet<FeedingRecord> FeedingRecords => Set<FeedingRecord>();
+
     public DbSet<ProfessionalProfile> ProfessionalProfiles => Set<ProfessionalProfile>();
 
     public DbSet<ProfessionalCategory> ProfessionalCategories => Set<ProfessionalCategory>();

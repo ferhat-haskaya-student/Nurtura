@@ -1,0 +1,37 @@
+@using System.Globalization
+@using Nurtura.Core
+@using Nurtura.Web.Localization
+@model Nurtura.Web.Areas.Mother.Models.TimePickerField
+@*
+    A time picker field. Without JavaScript the two plain inputs (dd-mm-yyyy and HH:mm) are what she types in.
+    wwwroot/js/time-picker.js hides them and shows the button, which opens the wheel sheet (_TimePickerSheet).
+    Either way the form posts the same two values. After a refused save, the values she sent are shown again.
+*@
+@{
+    var dateValue = ViewData.ModelState[Model.DateName]?.AttemptedValue
+        ?? Model.Date?.ToString(DateFormats.Display, CultureInfo.InvariantCulture);
+    var timeValue = ViewData.ModelState[Model.TimeName]?.AttemptedValue
+        ?? Model.Time?.ToString(TimeFormats.Display, CultureInfo.InvariantCulture);
+    var buttonId = Model.Id + "-button";
+}
+
+<div class="mb-3" id="@Model.Id" data-time-field data-optional="@(Model.Optional ? "true" : "false")"
+     data-label="@Model.Label">
+    <label class="form-label fw-semibold d-block" for="@buttonId">@Model.Label</label>
+    <button type="button" id="@buttonId" class="form-control text-start d-none" aria-haspopup="dialog"
+            data-time-field-button>@TimePickerText.Label(L, Model.Date, Model.Time, PolandTime.Today)</button>
+    <div class="row g-2" data-time-field-inputs>
+        <div class="col-7">
+            <input type="text" name="@Model.DateName" value="@dateValue" class="form-control" inputmode="numeric"
+                   autocomplete="off" placeholder="@L["Date_Placeholder"]" aria-label="@L["TimePicker_DateLabel", Model.Label]"
+                   data-time-field-date />
+        </div>
+        <div class="col-5">
+            <input type="text" name="@Model.TimeName" value="@timeValue" class="form-control" inputmode="numeric"
+                   autocomplete="off" placeholder="@L["Time_Placeholder"]" aria-label="@L["TimePicker_TimeLabel", Model.Label]"
+                   data-time-field-time />
+        </div>
+    </div>
+    @Html.ValidationMessage(Model.DateName, new { @class = "text-danger d-block" })
+    @Html.ValidationMessage(Model.TimeName, new { @class = "text-danger d-block" })
+</div>
