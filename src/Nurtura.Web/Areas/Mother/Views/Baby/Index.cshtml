@@ -139,6 +139,38 @@
                 </p>
             }
 
+            @* The last 7 days at a glance: what was logged, never compared with any reference figure. *@
+            @if (Model.Routine is { } routine)
+            {
+                <div class="card mt-3">
+                    <div class="card-body">
+                        <h2 class="h5 card-title mb-2">@L["Routine_Title"]</h2>
+                        @* Averages need a full routine day (07:00 to 07:00); today alone is not enough. *@
+                        @if (routine.HasFullDay)
+                        {
+                            var sleepLine = RoutineText.SleepLine(L, routine);
+                            var feedLine = RoutineText.FeedLine(L, routine);
+                            @if (sleepLine is not null)
+                            {
+                                <p class="card-text mb-1">@sleepLine</p>
+                            }
+                            @if (feedLine is not null)
+                            {
+                                <p class="card-text mb-1">@feedLine</p>
+                            }
+                        }
+                        else
+                        {
+                            <p class="card-text text-body-secondary mb-1">@L["Routine_Empty"]</p>
+                        }
+                        @if (routine.HasAny)
+                        {
+                            <a asp-area="Mother" asp-controller="Baby" asp-action="Routine" asp-route-id="@baby.Id">@L["Routine_SeeMore"]</a>
+                        }
+                    </div>
+                </div>
+            }
+
             @* One list of sleeps and feeds, newest first. A sleep sits at its start time; the running one is on its tile. *@
             @if (Model.Timeline.Count > 0)
             {

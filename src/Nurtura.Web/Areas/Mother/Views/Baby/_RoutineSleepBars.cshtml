@@ -1,0 +1,54 @@
+@using System.Globalization
+@using Nurtura.Core.Services
+@using Nurtura.Web.Areas.Mother
+@model BabyRoutine
+@{
+    // A bar per routine day, oldest on the left: night sleep at the base, naps stacked on top.
+    // Drawn in viewBox units and scaled to the column, so it fits a 375px phone. The dashed line is the average
+    // of the full days; there is no target or reference line.
+    const double plotLeft = 34, plotWidth = 322, plotTop = 10, plotHeight = 140;
+    var days = Model.Days.Reverse().ToList();
+    var tallest = days.Max(d => d.SleepTotal.TotalHours);
+    var maxHours = Math.Max(18, Math.Ceiling(tallest / 6) * 6);
+    var slot = plotWidth / days.Count;
+
+    string F(double value) => value.ToString("0.##", CultureInfo.InvariantCulture);
+    double Y(double hours) => plotTop + plotHeight - plotHeight * hours / maxHours;
+
+    var title = Model.AverageSleep is null
+        ? L["Routine_SleepBarsTitle"].Value
+        : L["Routine_SleepBarsTitleAverage", SleepText.Duration(L, Model.AverageSleep.Value)].Value;
+}
+
+<svg class="routine-chart d-block w-100" viewBox="0 0 360 190" role="img" aria-labelledby="routine-bars-title">
+    <title id="routine-bars-title">@title</title>
+    @for (var hours = 0; hours <= maxHours; hours += 6)
+    {
+        <line class="rc-grid" x1="@F(plotLeft)" x2="@F(plotLeft + plotWidth)" y1="@F(Y(hours))" y2="@F(Y(hours))" />
+        @:<text class="rc-label" x="@F(plotLeft - 6)" y="@F(Y(hours) + 4)" text-anchor="end">@L["Duration_Hours", hours]</text>
+    }
+    @for (var i = 0; i < days.Count; i++)
+    {
+        var day = days[i];
+        var x = plotLeft + slot * i + slot * 0.2;
+        var barWidth = slot * 0.6;
+        var nightHeight = plotHeight * day.NightTotal.TotalHours / maxHours;
+        var napHeight = plotHeight * day.NapTotal.TotalHours / maxHours;
+        @if (nightHeight > 0)
+        {
+            <rect class="rc-night" x="@F(x)" y="@F(plotTop + plotHeight - nightHeight)" width="@F(barWidth)" height="@F(nightHeight)" rx="3" />
+        }
+        @if (napHeight > 0)
+        {
+            <rect class="rc-nap" x="@F(x)" y="@F(plotTop + plotHeight - nightHeight - napHeight)" width="@F(barWidth)" height="@F(napHeight)" rx="3" />
+        }
+        @:<text class="rc-day @(day.IsToday ? "rc-today" : null)" x="@F(x + barWidth / 2)" y="@F(plotTop + plotHeight + 16)" text-anchor="middle">@L["Weekday_Short_" + day.Date.DayOfWeek]</text>
+        @:<text class="rc-label" x="@F(x + barWidth / 2)" y="@F(plotTop + plotHeight + 30)" text-anchor="middle">@RoutineText.DayMonth(day.Date)</text>
+    }
+    @if (Model.AverageSleep is { } average)
+    {
+        var y = Y(average.TotalHours);
+        <line class="rc-avg" x1="@F(plotLeft)" x2="@F(plotLeft + plotWidth)" y1="@F(y)" y2="@F(y)" />
+        @:<text class="rc-avg-label" x="@F(plotLeft + plotWidth)" y="@F(y - 5)" text-anchor="end">@L["Routine_AverageShort", SleepText.Duration(L, average)]</text>
+    }
+</svg>

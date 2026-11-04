@@ -23,6 +23,7 @@ public class BabyController : Controller
     private readonly BabyService _babyService;
     private readonly SleepService _sleepService;
     private readonly FeedingService _feedingService;
+    private readonly BabyRoutineService _routineService;
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly IStringLocalizer<SharedResource> _localizer;
 
@@ -30,12 +31,14 @@ public class BabyController : Controller
         BabyService babyService,
         SleepService sleepService,
         FeedingService feedingService,
+        BabyRoutineService routineService,
         UserManager<ApplicationUser> userManager,
         IStringLocalizer<SharedResource> localizer)
     {
         _babyService = babyService;
         _sleepService = sleepService;
         _feedingService = feedingService;
+        _routineService = routineService;
         _userManager = userManager;
         _localizer = localizer;
     }
@@ -64,7 +67,7 @@ public class BabyController : Controller
         selected ??= BabyService.Youngest(babies);
         if (selected is null)
         {
-            return View(new BabySectionViewModel(babies, null, null, null, null, []));
+            return View(new BabySectionViewModel(babies, null, null, null, null, [], null));
         }
 
         var age = BabyAge.Calculate(selected.BirthDate, PolandTime.Today);
@@ -72,7 +75,22 @@ public class BabyController : Controller
         var lastFeed = await _feedingService.GetLastAsync(UserId, selected.Id);
         var recentFeeds = await _feedingService.GetRecentAsync(UserId, selected.Id, BabyTimeline.SinceUtc());
         var timeline = BabyTimeline.Build(sleep!.Recent, recentFeeds);
-        return View(new BabySectionViewModel(babies, selected, age, sleep, lastFeed, timeline));
+        var routine = await _routineService.GetAsync(UserId, selected.Id);
+        return View(new BabySectionViewModel(babies, selected, age, sleep, lastFeed, timeline, routine));
+    }
+
+    // The full routine summary of one of her babies over the last 7 days.
+    [HttpGet]
+    public async Task<IActionResult> Routine(int id)
+    {
+        var baby = await _babyService.GetAsync(UserId, id);
+        var routine = baby is null ? null : await _routineService.GetAsync(UserId, id);
+        if (baby is null || routine is null)
+        {
+            return NotFound();
+        }
+
+        return View(new RoutineViewModel(baby, routine));
     }
 
     [HttpGet]

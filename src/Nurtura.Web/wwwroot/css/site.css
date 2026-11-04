@@ -86,3 +86,94 @@ body {
   color: var(--bs-body-color);
   font-weight: 600;
 }
+
+/* Baby routine summary (Areas/Mother/Views/Baby/Routine.cshtml and its chart partials). Colors only tell sleep
+   (primary blue) and feeds (warning orange) apart; nothing means good or bad. Chart sizes are in viewBox units. */
+.routine-chart .rc-night {
+  fill: var(--bs-primary);
+}
+
+.routine-chart .rc-nap {
+  fill: var(--bs-primary);
+  fill-opacity: 0.45;
+}
+
+.routine-chart .rc-feed {
+  fill: var(--bs-warning);
+}
+
+.routine-chart .rc-shade {
+  fill: var(--bs-tertiary-bg);
+}
+
+.routine-chart .rc-grid {
+  stroke: var(--bs-border-color);
+  stroke-width: 1;
+}
+
+.routine-chart .rc-avg {
+  stroke: var(--bs-body-color);
+  stroke-width: 1;
+  stroke-dasharray: 4 4;
+}
+
+.routine-chart .rc-label {
+  fill: var(--bs-secondary-color);
+  font-size: 10px;
+}
+
+.routine-chart .rc-day,
+.routine-chart .rc-avg-label {
+  fill: var(--bs-body-color);
+  font-size: 11px;
+}
+
+.routine-chart .rc-today {
+  font-weight: 600;
+}
+
+.routine-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.routine-dot-sleep {
+  background: var(--bs-primary);
+}
+
+.routine-dot-nap {
+  background: rgba(var(--bs-primary-rgb), 0.45);
+}
+
+.routine-dot-feed,
+.routine-type-breast {
+  background: var(--bs-warning);
+}
+
+.routine-type-bottle {
+  background: rgba(var(--bs-warning-rgb), 0.6);
+}
+
+.routine-type-solid {
+  background: rgba(var(--bs-warning-rgb), 0.3);
+}
+
+.routine-split {
+  height: 10px;
+  background: var(--bs-body-bg);
+}
+
+.routine-day > summary {
+  list-style: none;
+  cursor: pointer;
+}
+
+.routine-day > summary::-webkit-details-marker {
+  display: none;
+}
+
+.routine-day-name {
+  min-width: 5.5rem;
+}

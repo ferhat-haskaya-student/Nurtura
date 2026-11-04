@@ -95,6 +95,7 @@ builder.Services.AddScoped<MotherProfileService>();
 builder.Services.AddScoped<BabyService>();
 builder.Services.AddScoped<SleepService>();
 builder.Services.AddScoped<FeedingService>();
+builder.Services.AddScoped<BabyRoutineService>();
 
 var app = builder.Build();
 

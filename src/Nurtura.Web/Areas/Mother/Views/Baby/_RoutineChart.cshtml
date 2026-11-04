@@ -1,0 +1,71 @@
+@using System.Globalization
+@using Nurtura.Core
+@using Nurtura.Core.Services
+@using Nurtura.Web.Areas.Mother
+@model BabyRoutine
+@{
+    // One row per routine day, newest on top, from 07:00 to 07:00 the next morning (Warsaw time), the night half
+    // shaded. Sleep is a bar in the upper lane, a feed a dot in the lower lane, so they differ by shape, place and
+    // color. Drawn in viewBox units and scaled to the column, so it fits a 375px phone without scrolling.
+    const double plotLeft = 66, plotWidth = 290, top = 20, rowHeight = 34;
+    var height = top + rowHeight * Model.Days.Count;
+
+    string F(double value) => value.ToString("0.##", CultureInfo.InvariantCulture);
+
+    // Wall-clock hours since the day's 07:00; a night running past the next 07:00 is cut at the row's edge.
+    double X(RoutineDay day, DateTime utc)
+    {
+        var hours = (PolandTime.ToLocal(utc) - day.Date.ToDateTime(BabyRoutine.DayStarts)).TotalHours;
+        return plotLeft + plotWidth * Math.Clamp(hours, 0, 24) / 24;
+    }
+}
+
+<svg class="routine-chart d-block w-100" viewBox="0 0 360 @F(height)" role="img" aria-labelledby="routine-chart-title">
+    <title id="routine-chart-title">@L["Routine_ChartTitle"]</title>
+    @for (var i = 0; i < Model.Days.Count; i++)
+    {
+        <rect class="rc-shade" x="@F(plotLeft + plotWidth / 2)" y="@F(top + rowHeight * i + 1)" width="@F(plotWidth / 2)" height="@F(rowHeight - 4)" rx="3" />
+    }
+    @foreach (var (offset, label) in new[] { (0, "07"), (6, "13"), (12, "19"), (18, "01"), (24, "07") })
+    {
+        var x = plotLeft + plotWidth * offset / 24.0;
+        <line class="rc-grid" x1="@F(x)" y1="@F(top - 3)" x2="@F(x)" y2="@F(height - 2)" />
+        @:<text class="rc-label" x="@F(x)" y="11" text-anchor="@(offset == 24 ? "end" : "middle")">@label</text>
+    }
+    @for (var i = 0; i < Model.Days.Count; i++)
+    {
+        var day = Model.Days[i];
+        var rowTop = top + rowHeight * i;
+        @:<text class="rc-day @(day.IsToday ? "rc-today" : null)" x="0" y="@F(rowTop + 18)">@RoutineText.DayShort(L, day.Date)</text>
+        @foreach (var sleep in day.Naps.Concat(day.Nights))
+        {
+            var x1 = X(day, sleep.StartTime);
+            var x2 = X(day, sleep.EndTime!.Value);
+            <rect class="rc-night" x="@F(x1)" y="@F(rowTop + 5)" width="@F(Math.Max(x2 - x1, 2))" height="11" rx="3" />
+        }
+        @foreach (var feed in day.Feeds)
+        {
+            <circle class="rc-feed" cx="@F(X(day, feed.Time))" cy="@F(rowTop + 24)" r="3.6" />
+        }
+    }
+</svg>
+<div class="d-flex flex-wrap gap-3 small text-body-secondary mt-1">
+    <span>
+        <svg class="routine-chart" width="18" height="10" viewBox="0 0 18 10" aria-hidden="true"><rect class="rc-night" x="0" y="1" width="18" height="8" rx="3" /></svg>
+        @L["Routine_LegendSleep"]
+    </span>
+    <span>
+        <svg class="routine-chart" width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><circle class="rc-feed" cx="5" cy="5" r="4" /></svg>
+        @L["Routine_LegendFeed"]
+    </span>
+</div>
+
+<details class="small mt-2">
+    <summary>@L["Routine_ChartAsText"]</summary>
+    <ul class="list-unstyled mt-2 mb-0">
+        @foreach (var day in Model.Days)
+        {
+            <li class="mb-1"><span class="fw-semibold">@RoutineText.DayLong(L, day.Date)@(day.IsToday ? " (" + L["Routine_SoFar"] + ")" : ""):</span> @RoutineText.DayAsText(L, day)</li>
+        }
+    </ul>
+</details>
