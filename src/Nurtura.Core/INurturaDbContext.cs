@@ -31,6 +31,8 @@ public interface INurturaDbContext
 
     DbSet<CheckInFeelingTag> CheckInFeelingTags { get; }
 
+    DbSet<AvailabilitySlot> AvailabilitySlots { get; }
+
     // Identity's user table; implemented by IdentityDbContext.
     DbSet<ApplicationUser> Users { get; }
 

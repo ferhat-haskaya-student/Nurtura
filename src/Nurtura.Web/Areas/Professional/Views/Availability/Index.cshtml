@@ -1,0 +1,111 @@
+@using Nurtura.Core
+@using Nurtura.Web.Localization
+@model Nurtura.Core.Services.AvailabilityWeek
+@{
+    ViewData["Title"] = L["Availability_Title"];
+    var statusMessage = TempData["StatusMessage"] as string;
+    var weekStart = Model.WeekStart.ToString(DateFormats.Display);
+
+    // On a phone one day shows at a time: today when it is in this week, otherwise Monday.
+    var todayIndex = Model.Days.ToList().FindIndex(d => d.Date == PolandTime.Today);
+    var activeDay = todayIndex >= 0 ? todayIndex : 0;
+}
+
+<div class="row justify-content-center">
+    <div class="col-12 col-xl-10">
+        <h1 class="h3 mb-1">@ViewData["Title"]</h1>
+        <p class="text-body-secondary mb-3">@L["Availability_Intro"]</p>
+
+        @if (statusMessage is not null)
+        {
+            <div class="alert alert-success" role="status">@statusMessage</div>
+        }
+
+        <div class="d-flex align-items-center justify-content-between mb-3">
+            @if (Model.PreviousWeekStart is { } previous)
+            {
+                <a asp-action="Index" asp-route-date="@previous.ToString(DateFormats.Display)" class="btn btn-outline-primary"
+                   aria-label="@L["Availability_PreviousWeek"]" title="@L["Availability_PreviousWeek"]">&lsaquo;</a>
+            }
+            else
+            {
+                <span class="btn btn-outline-primary invisible" aria-hidden="true">&lsaquo;</span>
+            }
+            <span class="fw-semibold text-center">
+                @L["Availability_Range", weekStart, Model.WeekStart.AddDays(6).ToString(DateFormats.Display)]
+            </span>
+            @if (Model.NextWeekStart is { } next)
+            {
+                <a asp-action="Index" asp-route-date="@next.ToString(DateFormats.Display)" class="btn btn-outline-primary"
+                   aria-label="@L["Availability_NextWeek"]" title="@L["Availability_NextWeek"]">&rsaquo;</a>
+            }
+            else
+            {
+                <span class="btn btn-outline-primary invisible" aria-hidden="true">&rsaquo;</span>
+            }
+        </div>
+
+        @if (Model.IsCopied)
+        {
+            <div class="alert alert-info" role="status">@L["Availability_Copied"]</div>
+        }
+
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+            <span class="fw-semibold" id="availability-count" data-template="@L["Availability_OpenCount", "{0}"]">
+                @L["Availability_OpenCount", Model.OpenCount]
+            </span>
+            <a asp-action="Index" asp-route-date="@weekStart" asp-route-copy="true" class="btn btn-outline-secondary btn-sm">
+                @L["Availability_CopyLastWeek"]
+            </a>
+        </div>
+
+        <form asp-action="Index" method="post" data-submit-once id="availability-form">
+            <input type="hidden" name="weekStart" value="@weekStart" />
+
+            @* Phone: one day at a time, picked with these tabs. *@
+            <div class="d-flex d-md-none gap-1 mb-3" role="group" aria-label="@L["Availability_Days"]">
+                @for (var i = 0; i < Model.Days.Count; i++)
+                {
+                    var day = Model.Days[i];
+                    <button type="button" class="btn btn-sm flex-fill px-0 lh-sm @(i == activeDay ? "btn-primary" : "btn-outline-primary")"
+                            data-day-tab="@i" aria-pressed="@(i == activeDay ? "true" : "false")">
+                        <span class="d-block small">@L["Weekday_Short_" + day.Date.DayOfWeek]</span>
+                        <span class="d-block small">@day.Date.ToString("dd-MM")</span>
+                    </button>
+                }
+            </div>
+
+            @* Laptop: days across, hours down. *@
+            <div class="row g-2 mb-3">
+                @for (var i = 0; i < Model.Days.Count; i++)
+                {
+                    var day = Model.Days[i];
+                    var dayName = L["Weekday_Short_" + day.Date.DayOfWeek];
+                    <div class="col-12 col-md @(i == activeDay ? "" : "d-none d-md-block")" data-day="@i">
+                        <div class="text-center fw-semibold small mb-2">
+                            @dayName<br class="d-none d-md-inline" />
+                            <span class="fw-normal">@day.Date.ToString(DateFormats.Display)</span>
+                        </div>
+                        @foreach (var hour in day.Hours)
+                        {
+                            var id = $"slot-{i}-{hour.Hour}";
+                            var time = new TimeOnly(hour.Hour, 0).ToString(TimeFormats.Display);
+                            <input type="checkbox" class="btn-check" id="@id" name="open" value="@($"{i}-{hour.Hour}")"
+                                   autocomplete="off" checked="@hour.IsOpen" disabled="@hour.IsPast"
+                                   aria-label="@dayName @day.Date.ToString(DateFormats.Display) @time" />
+                            <label class="btn btn-outline-primary w-100 mb-1 py-2 py-md-1" for="@id">@time</label>
+                        }
+                    </div>
+                }
+            </div>
+
+            <p class="small text-body-secondary">@L["Availability_PastHint"]</p>
+
+            <button type="submit" class="btn btn-primary w-100 mb-4">@L["Availability_Save"]</button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/availability.js" asp-append-version="true"></script>
+}

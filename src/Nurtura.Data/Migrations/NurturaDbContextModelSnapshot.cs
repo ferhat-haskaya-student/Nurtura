@@ -154,6 +154,43 @@ namespace Nurtura.Data.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("Nurtura.Core.Entities.AvailabilitySlot", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateOnly>("Date")
+                        .HasColumnType("date");
+
+                    b.Property<bool>("IsOpen")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("ProfessionalProfileId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("StartHour")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProfessionalProfileId", "Date", "StartHour")
+                        .IsUnique();
+
+                    b.ToTable("AvailabilitySlots", t =>
+                        {
+                            t.HasCheckConstraint("CK_AvailabilitySlots_StartHour", "\"StartHour\" BETWEEN 8 AND 17");
+                        });
+                });
+
             modelBuilder.Entity("Nurtura.Core.Entities.Baby", b =>
                 {
                     b.Property<int>("Id")
@@ -729,6 +766,15 @@ namespace Nurtura.Data.Migrations
                     b.HasOne("Nurtura.Core.Identity.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Nurtura.Core.Entities.AvailabilitySlot", b =>
+                {
+                    b.HasOne("Nurtura.Core.Entities.ProfessionalProfile", null)
+                        .WithMany()
+                        .HasForeignKey("ProfessionalProfileId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

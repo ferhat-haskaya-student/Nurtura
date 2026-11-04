@@ -37,6 +37,8 @@ public class NurturaDbContext : IdentityDbContext<ApplicationUser>, INurturaDbCo
 
     public DbSet<CheckInFeelingTag> CheckInFeelingTags => Set<CheckInFeelingTag>();
 
+    public DbSet<AvailabilitySlot> AvailabilitySlots => Set<AvailabilitySlot>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
