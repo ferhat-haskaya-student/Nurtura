@@ -37,6 +37,8 @@ public interface INurturaDbContext
 
     DbSet<Notification> Notifications { get; }
 
+    DbSet<ChatMessage> ChatMessages { get; }
+
     // Identity's user table; implemented by IdentityDbContext.
     DbSet<ApplicationUser> Users { get; }
 

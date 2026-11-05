@@ -69,9 +69,18 @@
 
         @if (Model.State == AppointmentState.Now)
         {
-            <p class="fw-bold mb-0">@L["AppointmentState_Now"]</p>
+            <p class="fw-bold mb-2">@L["AppointmentState_Now"]</p>
         }
-        else if (showActions && Model.CanChange && Model.State == AppointmentState.Requested)
+
+        @if (showActions && Model.Chat != ChatAccess.None)
+        {
+            <div class="mb-2">
+                <partial name="_ChatButton" model="(Model.Id, Model.Chat, Model.ChatOpensAt)" />
+            </div>
+        }
+
+        @* Cancel goes when the chat room opens (5 minutes before the start). *@
+        @if (showActions && Model.CanCancel && Model.State == AppointmentState.Requested)
         {
             <div class="d-flex flex-wrap gap-2">
                 <form asp-action="Accept" asp-route-id="@Model.Id" method="post" data-submit-once>
@@ -80,7 +89,7 @@
                 <a asp-action="Reject" asp-route-id="@Model.Id" class="btn btn-outline-danger btn-sm">@L["Appointments_Reject"]</a>
             </div>
         }
-        else if (showActions && Model.CanChange && Model.State == AppointmentState.Confirmed)
+        else if (showActions && Model.CanCancel && Model.State == AppointmentState.Confirmed)
         {
             <a asp-action="Cancel" asp-route-id="@Model.Id" class="btn btn-outline-danger btn-sm">@L["Appointments_Cancel"]</a>
         }

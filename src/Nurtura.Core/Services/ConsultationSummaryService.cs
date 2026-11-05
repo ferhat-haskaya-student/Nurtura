@@ -19,7 +19,7 @@ public class ConsultationSummaryService
     public static bool IsCheckInTopic(Topic topic) => !BookingService.IsBabyTopic(topic);
 
     // Null unless the appointment is on a slot of her own approved profile, is requested or confirmed, and its
-    // session has not ended yet.
+    // session has not ended yet (end of the hour, or earlier after End session).
     public async Task<ConsultationSummary?> GetAsync(string userId, int appointmentId, CancellationToken cancellationToken = default)
     {
         await AppointmentExpiry.ExpireOverdueAsync(_db, cancellationToken);
@@ -33,11 +33,11 @@ public class ConsultationSummaryService
                 join m in _db.MotherProfiles on a.MotherProfileId equals m.Id
                 select new
                 {
-                    a.Id, s.Date, s.StartHour, a.Topic, a.ConcernText, a.BabyId,
+                    a.Id, s.Date, s.StartHour, a.Topic, a.ConcernText, a.BabyId, a.SessionEndedAt,
                     MotherId = m.Id, MotherName = m.DisplayName
                 })
             .SingleOrDefaultAsync(cancellationToken);
-        if (row is null || BookingService.SlotStart(row.Date, row.StartHour) + Appointment.Length <= PolandTime.Now)
+        if (row is null || ConsultationRoom.End(row.Date, row.StartHour, row.SessionEndedAt) <= PolandTime.Now)
         {
             return null;
         }

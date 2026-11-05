@@ -1,0 +1,80 @@
+@using System.Globalization
+@using Nurtura.Core.Entities
+@using Nurtura.Web.Localization
+@model Nurtura.Core.Services.ChatRoomInfo
+@* The consultation chat, filled in by wwwroot/js/chat.js over SignalR. The server decides who may join and
+   whether the room is open; this page only shows it. Texts are passed in data attributes, and the script puts
+   every message and name on the page with textContent, never as HTML. *@
+@{
+    var opensAt = Model.OpensAt.ToString(TimeFormats.Display, CultureInfo.InvariantCulture);
+}
+<div id="chat"
+     data-appointment-id="@Model.AppointmentId"
+     data-me="@Model.Me"
+     data-hub-url="@Url.Content("~/hubs/chat")"
+     data-text-other-here="@L["Chat_IsHere", Model.OtherName]"
+     data-text-other-away="@L["Chat_NotJoined", Model.OtherName]"
+     data-text-opens-at="@L["Chat_ChatOpensAt", opensAt]"
+     data-text-ended-by="@L["Chat_EndedBy"]"
+     data-text-ended-at="@L["Chat_EndedAt"]"
+     data-text-edited="@L["Chat_Edited"]"
+     data-text-edit="@L["Chat_Edit"]"
+     data-text-send="@L["Chat_Send"]"
+     data-text-save="@L["Chat_Save"]"
+     data-text-reconnecting="@L["Chat_Reconnecting"]"
+     data-text-disconnected="@L["Chat_Disconnected"]"
+     data-text-send-error="@L["Chat_SendError"]"
+     data-text-edit-error="@L["Chat_EditError"]"
+     data-text-end-error="@L["Chat_EndError"]"
+     data-text-load-error="@L["Chat_LoadError"]">
+
+    <p class="small fw-semibold mb-2 d-none" id="chat-presence" aria-live="polite"></p>
+
+    @* Before the room opens: "The chat opens at 13:55". After it closes: who ended it or when, and that it stays readable.
+       Filled in here for the first view; the script keeps it up to date. *@
+    <div class="alert alert-secondary py-2 small mb-2 @(Model.State == Nurtura.Core.Services.RoomState.NotYetOpen ? "" : "d-none")"
+         id="chat-status" role="status">
+        <div id="chat-status-main">@(Model.State == Nurtura.Core.Services.RoomState.NotYetOpen ? L["Chat_ChatOpensAt", opensAt] : string.Empty)</div>
+        <div id="chat-status-read-only" class="d-none">@L["Chat_ReadOnly"]</div>
+    </div>
+
+    <div class="alert alert-warning py-2 small mb-2 d-none" id="chat-connection" role="alert"></div>
+
+    <div class="border rounded p-2 mb-2 overflow-auto" id="chat-messages" style="height: 55vh; min-height: 16rem;"
+         aria-live="polite">
+        <p class="small text-body-secondary text-center my-3" id="chat-empty">@L["Chat_NoMessages"]</p>
+    </div>
+
+    <p class="small text-danger mb-2 d-none" id="chat-error" role="alert"></p>
+
+    <form id="chat-form" class="mb-3 d-none" autocomplete="off">
+        <div class="small text-body-secondary mb-1 d-none" id="chat-editing">@L["Chat_Editing"]</div>
+        <div>
+            <label for="chat-text" class="visually-hidden">@L["Chat_MessageLabel"]</label>
+            <textarea id="chat-text" class="form-control" rows="3" maxlength="@ChatMessage.TextMaxLength"
+                      data-note-input></textarea>
+            <div class="form-text text-end" data-note-counter data-template="@L["CheckIn_NoteCounter"]"
+                 data-max="@ChatMessage.TextMaxLength" aria-live="polite"></div>
+        </div>
+        <div class="d-flex flex-wrap gap-2 mt-1">
+            <button type="submit" class="btn btn-primary" id="chat-send">@L["Chat_Send"]</button>
+            <button type="button" class="btn btn-outline-secondary d-none" id="chat-cancel-edit">@L["Chat_CancelEdit"]</button>
+        </div>
+    </form>
+
+    @* End session: both sides, from the start time, after one confirmation. *@
+    <div id="chat-end" class="mb-3 d-none">
+        <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="collapse" data-bs-target="#chat-end-confirm"
+                aria-expanded="false" aria-controls="chat-end-confirm">@L["Chat_EndSession"]</button>
+        <div class="collapse" id="chat-end-confirm">
+            <div class="border rounded p-2 mt-2">
+                <p class="small mb-2">@L["Chat_EndQuestion"]</p>
+                <div class="d-flex flex-wrap gap-2">
+                    <button type="button" class="btn btn-danger btn-sm" id="chat-end-yes">@L["Chat_EndYes"]</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="collapse"
+                            data-bs-target="#chat-end-confirm">@L["Chat_EndNo"]</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

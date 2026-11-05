@@ -187,6 +187,13 @@ namespace Nurtura.Data.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
+                    b.Property<DateTime?>("SessionEndedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("SessionEndedBy")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(30)
@@ -291,6 +298,40 @@ namespace Nurtura.Data.Migrations
                     b.HasIndex("MotherProfileId");
 
                     b.ToTable("Babies");
+                });
+
+            modelBuilder.Entity("Nurtura.Core.Entities.ChatMessage", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AppointmentId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("EditedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Sender")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<DateTime>("SentAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AppointmentId", "SentAt");
+
+                    b.ToTable("ChatMessages");
                 });
 
             modelBuilder.Entity("Nurtura.Core.Entities.CheckInFeelingTag", b =>
@@ -920,6 +961,15 @@ namespace Nurtura.Data.Migrations
                     b.HasOne("Nurtura.Core.Entities.MotherProfile", null)
                         .WithMany()
                         .HasForeignKey("MotherProfileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Nurtura.Core.Entities.ChatMessage", b =>
+                {
+                    b.HasOne("Nurtura.Core.Entities.Appointment", null)
+                        .WithMany()
+                        .HasForeignKey("AppointmentId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

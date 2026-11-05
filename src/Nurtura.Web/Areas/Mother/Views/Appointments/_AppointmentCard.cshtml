@@ -61,16 +61,36 @@
 
         @if (Model.State == AppointmentState.Now)
         {
-            <p class="fw-bold mb-0">@L["AppointmentState_Now"]</p>
+            <p class="fw-bold mb-2">@L["AppointmentState_Now"]</p>
         }
-        else if (Model.CanChange)
+
+        @if (Model.Chat != ChatAccess.None)
+        {
+            <div class="mb-2">
+                <partial name="_ChatButton" model="(Model.Id, Model.Chat, Model.ChatOpensAt)" />
+            </div>
+        }
+
+        @* Cancel and Reschedule go when the chat room opens (5 minutes before the start); the note stays editable
+           until the start. *@
+        @if (Model.CanEditNote || Model.CanCancel)
         {
             <div class="d-flex flex-wrap gap-2">
-                <a asp-action="EditNote" asp-route-id="@Model.Id" class="btn btn-outline-primary btn-sm">@L["MyAppointments_EditNote"]</a>
-                <a asp-controller="Book" asp-action="Slots" asp-route-reschedule="@Model.Id" class="btn btn-outline-primary btn-sm">@L["MyAppointments_Reschedule"]</a>
-                <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="collapse" data-bs-target="#@collapseId"
-                        aria-expanded="false" aria-controls="@collapseId">@L["MyAppointments_Cancel"]</button>
+                @if (Model.CanEditNote)
+                {
+                    <a asp-action="EditNote" asp-route-id="@Model.Id" class="btn btn-outline-primary btn-sm">@L["MyAppointments_EditNote"]</a>
+                }
+                @if (Model.CanCancel)
+                {
+                    <a asp-controller="Book" asp-action="Slots" asp-route-reschedule="@Model.Id" class="btn btn-outline-primary btn-sm">@L["MyAppointments_Reschedule"]</a>
+                    <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="collapse" data-bs-target="#@collapseId"
+                            aria-expanded="false" aria-controls="@collapseId">@L["MyAppointments_Cancel"]</button>
+                }
             </div>
+        }
+
+        @if (Model.CanCancel)
+        {
             @* The one confirmation before cancelling. *@
             <div class="collapse" id="@collapseId">
                 <div class="border rounded p-2 mt-2">

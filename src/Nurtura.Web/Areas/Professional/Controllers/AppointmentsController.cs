@@ -9,7 +9,7 @@ using Nurtura.Web.Areas.Professional.Models;
 
 namespace Nurtura.Web.Areas.Professional.Controllers;
 
-// "Appointments": requests, upcoming and past, with accept, reject and cancel.
+// "Appointments": requests, upcoming and past, with accept, reject, cancel and the consultation chat.
 [Area(Roles.Professional)]
 [Authorize(Roles = Roles.Professional)]
 public class AppointmentsController : Controller
@@ -19,17 +19,20 @@ public class AppointmentsController : Controller
 
     private readonly AppointmentService _appointmentService;
     private readonly ConsultationSummaryService _summaryService;
+    private readonly ChatService _chatService;
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly IStringLocalizer<SharedResource> _localizer;
 
     public AppointmentsController(
         AppointmentService appointmentService,
         ConsultationSummaryService summaryService,
+        ChatService chatService,
         UserManager<ApplicationUser> userManager,
         IStringLocalizer<SharedResource> localizer)
     {
         _appointmentService = appointmentService;
         _summaryService = summaryService;
+        _chatService = chatService;
         _userManager = userManager;
         _localizer = localizer;
     }
@@ -54,6 +57,20 @@ public class AppointmentsController : Controller
     {
         var summary = await _summaryService.GetAsync(_userManager.GetUserId(User)!, id);
         return summary is null ? NotFound() : View(summary);
+    }
+
+    // The chat of one of her confirmed appointments, with the summary as a second tab (until the session ends).
+    [HttpGet]
+    public async Task<IActionResult> Chat(int id)
+    {
+        var userId = _userManager.GetUserId(User)!;
+        var room = await _chatService.GetRoomAsync(userId, id);
+        if (room is null)
+        {
+            return NotFound();
+        }
+
+        return View(new ChatPageViewModel(room.Info, await _summaryService.GetAsync(userId, id)));
     }
 
     // One tap: Requested -> Confirmed.

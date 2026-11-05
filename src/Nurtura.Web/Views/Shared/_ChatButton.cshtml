@@ -1,0 +1,27 @@
+@using System.Globalization
+@using Nurtura.Core.Identity
+@using Nurtura.Core.Services
+@using Nurtura.Web.Localization
+@model (int AppointmentId, ChatAccess Access, DateTime OpensAt)
+@* "Open chat" on the banner and on a confirmed appointment in both lists: greyed with "Opens at 13:55" until the
+   room opens, "View chat" (read-only) after the session. The server checks all of this again on the chat page. *@
+@{
+    var area = User.IsInRole(Roles.Mother) ? Roles.Mother : Roles.Professional;
+}
+@switch (Model.Access)
+{
+    case ChatAccess.Open:
+        <a asp-area="@area" asp-controller="Appointments" asp-action="Chat" asp-route-id="@Model.AppointmentId"
+           class="btn btn-primary btn-sm">@L["Chat_Open"]</a>
+        break;
+    case ChatAccess.NotYetOpen:
+        <span class="d-inline-flex flex-wrap align-items-center gap-2">
+            <button type="button" class="btn btn-primary btn-sm" disabled aria-disabled="true">@L["Chat_Open"]</button>
+            <span class="small text-body-secondary">@L["Chat_OpensAt", Model.OpensAt.ToString(TimeFormats.Display, CultureInfo.InvariantCulture)]</span>
+        </span>
+        break;
+    case ChatAccess.ViewOnly:
+        <a asp-area="@area" asp-controller="Appointments" asp-action="Chat" asp-route-id="@Model.AppointmentId"
+           class="btn btn-outline-secondary btn-sm">@L["Chat_View"]</a>
+        break;
+}

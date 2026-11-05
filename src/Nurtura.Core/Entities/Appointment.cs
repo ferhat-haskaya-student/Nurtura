@@ -26,6 +26,9 @@ public class Appointment
     // "Mark ... from the last 2 weeks as shared": today and the 13 days before it.
     public const int ShareDays = 14;
 
+    // The chat room opens this long before the start.
+    public static readonly TimeSpan RoomOpensBefore = TimeSpan.FromMinutes(5);
+
     // Only one active appointment per slot (also enforced by a partial unique index).
     public static readonly AppointmentStatus[] ActiveStatuses = [AppointmentStatus.Requested, AppointmentStatus.Confirmed];
 
@@ -51,6 +54,12 @@ public class Appointment
 
     // Optional, written by the professional when she rejects a request or cancels an appointment.
     public string? ProfessionalMessage { get; set; }
+
+    // UTC. Set only when either side used End session; the session then ended here instead of at the end of the hour.
+    public DateTime? SessionEndedAt { get; set; }
+
+    // Who used End session. Set together with SessionEndedAt.
+    public AppointmentParty? SessionEndedBy { get; set; }
 
     // UTC.
     public DateTime CreatedAt { get; set; }

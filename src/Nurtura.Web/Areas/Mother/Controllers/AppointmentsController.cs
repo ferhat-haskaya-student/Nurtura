@@ -8,7 +8,7 @@ using Nurtura.Web.Areas.Mother.Models;
 
 namespace Nurtura.Web.Areas.Mother.Controllers;
 
-// "My appointments": upcoming and past, with cancel and edit note. Rescheduling goes through Book.
+// "My appointments": upcoming and past, with cancel, edit note and the consultation chat. Rescheduling goes through Book.
 [Area(Roles.Mother)]
 [Authorize(Roles = Roles.Mother)]
 public class AppointmentsController : Controller
@@ -17,15 +17,18 @@ public class AppointmentsController : Controller
     private const string ProblemMessageKey = "ProblemMessage";
 
     private readonly AppointmentService _appointmentService;
+    private readonly ChatService _chatService;
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly IStringLocalizer<SharedResource> _localizer;
 
     public AppointmentsController(
         AppointmentService appointmentService,
+        ChatService chatService,
         UserManager<ApplicationUser> userManager,
         IStringLocalizer<SharedResource> localizer)
     {
         _appointmentService = appointmentService;
+        _chatService = chatService;
         _userManager = userManager;
         _localizer = localizer;
     }
@@ -42,6 +45,14 @@ public class AppointmentsController : Controller
 
         ViewData["Banners"] = await _appointmentService.GetMotherBannersAsync(userId);
         return View(appointments);
+    }
+
+    // The chat of one of her confirmed appointments: before the room opens, while open, and read-only after.
+    [HttpGet]
+    public async Task<IActionResult> Chat(int id)
+    {
+        var room = await _chatService.GetRoomAsync(_userManager.GetUserId(User)!, id);
+        return room is null ? NotFound() : View(room.Info);
     }
 
     [HttpPost]

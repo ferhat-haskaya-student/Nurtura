@@ -10,6 +10,7 @@ using Nurtura.Data;
 using Nurtura.Web;
 using Nurtura.Web.Areas.Mother;
 using Nurtura.Web.Areas.Professional;
+using Nurtura.Web.Hubs;
 using Nurtura.Web.Identity;
 using Nurtura.Web.Localization;
 using Nurtura.Web.ModelBinding;
@@ -101,6 +102,11 @@ builder.Services.AddScoped<BookingService>();
 builder.Services.AddScoped<AppointmentService>();
 builder.Services.AddScoped<NotificationService>();
 builder.Services.AddScoped<ConsultationSummaryService>();
+builder.Services.AddScoped<ChatService>();
+
+// The consultation chat. Presence (who has the chat open) is kept in memory for the whole app.
+builder.Services.AddSignalR();
+builder.Services.AddSingleton<ChatPresence>();
 
 var app = builder.Build();
 
@@ -159,5 +165,6 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}")
     .WithStaticAssets();
 
+app.MapHub<ChatHub>("/hubs/chat");
 
 app.Run();

@@ -1,0 +1,59 @@
+@using Nurtura.Web.Areas.Mother
+@model Nurtura.Web.Areas.Professional.Models.ChatPageViewModel
+@{
+    var room = Model.Room;
+    ViewData["Title"] = L["Chat_Title", room.OtherName];
+    var showCharts = Model.Summary?.CheckIns is { Chart.CheckInCount: > 0 };
+}
+
+@* The professional's chat page: Chat and Summary as tabs on one page, so switching never drops the connection.
+   A dot on Chat shows a new message while she is reading the summary. *@
+<div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6">
+        <a asp-action="Index" class="d-inline-block mb-2">&lsaquo; @L["Appointments_Back"]</a>
+        <h1 class="h4 mb-1">@ViewData["Title"]</h1>
+        <p class="small text-body-secondary mb-3">@BookText.Day(L, room.Date), @BookText.HourRange(room.Hour)</p>
+
+        <ul class="nav nav-tabs mb-3" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="chat-tab" data-bs-toggle="tab" data-bs-target="#chat-pane" type="button"
+                        role="tab" aria-controls="chat-pane" aria-selected="true">
+                    @L["Chat_TabChat"]
+                    <span class="d-none d-inline-block bg-primary rounded-circle align-middle ms-1" id="chat-dot"
+                          style="width: .5rem; height: .5rem;"><span class="visually-hidden">@L["Chat_NewMessage"]</span></span>
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="summary-tab" data-bs-toggle="tab" data-bs-target="#summary-pane" type="button"
+                        role="tab" aria-controls="summary-pane" aria-selected="false">@L["Chat_TabSummary"]</button>
+            </li>
+        </ul>
+
+        <div class="tab-content">
+            <div class="tab-pane fade show active" id="chat-pane" role="tabpanel" aria-labelledby="chat-tab" tabindex="0">
+                <partial name="_ChatRoom" model="room" />
+            </div>
+            <div class="tab-pane fade" id="summary-pane" role="tabpanel" aria-labelledby="summary-tab" tabindex="0">
+                @* The summary is shown only until the session ends; when it ends live, the script swaps it for this line. *@
+                <p class="text-body-secondary @(Model.Summary is null ? "" : "d-none")" id="summary-ended">@L["Chat_SummaryEnded"]</p>
+                @if (Model.Summary is not null)
+                {
+                    <div id="summary-content">
+                        <partial name="_SummaryContent" model="Model.Summary" />
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @if (showCharts)
+    {
+        <script src="~/lib/chart.js/dist/chart.umd.js"></script>
+        <script src="~/js/wellbeing-charts.js" asp-append-version="true"></script>
+    }
+    <script src="~/lib/microsoft-signalr/dist/browser/signalr.min.js"></script>
+    <script src="~/js/note-counter.js" asp-append-version="true"></script>
+    <script src="~/js/chat.js" asp-append-version="true"></script>
+}

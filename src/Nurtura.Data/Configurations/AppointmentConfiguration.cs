@@ -24,6 +24,10 @@ public class AppointmentConfiguration : IEntityTypeConfiguration<Appointment>
             .HasConversion<string>()
             .HasMaxLength(30);
 
+        builder.Property(a => a.SessionEndedBy)
+            .HasConversion<string>()
+            .HasMaxLength(30);
+
         builder.Property(a => a.ProfessionalMessage)
             .HasMaxLength(Appointment.MessageMaxLength);
 

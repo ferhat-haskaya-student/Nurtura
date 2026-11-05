@@ -1,0 +1,22 @@
+@using Nurtura.Web.Areas.Mother
+@model Nurtura.Core.Services.ChatRoomInfo
+@{
+    ViewData["Title"] = L["Chat_Title", Model.OtherName];
+}
+
+@* The mother's chat page: the chat only. *@
+<div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6">
+        <a asp-action="Index" class="d-inline-block mb-2">&lsaquo; @L["MyAppointments_Back"]</a>
+        <h1 class="h4 mb-1">@ViewData["Title"]</h1>
+        <p class="small text-body-secondary mb-3">@BookText.Day(L, Model.Date), @BookText.HourRange(Model.Hour)</p>
+
+        <partial name="_ChatRoom" model="Model" />
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/lib/microsoft-signalr/dist/browser/signalr.min.js"></script>
+    <script src="~/js/note-counter.js" asp-append-version="true"></script>
+    <script src="~/js/chat.js" asp-append-version="true"></script>
+}

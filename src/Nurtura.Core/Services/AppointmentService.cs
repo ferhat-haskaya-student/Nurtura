@@ -5,8 +5,10 @@ namespace Nurtura.Core.Services;
 
 // Appointment lists and status changes for both sides. Every method takes the logged-in user's id and
 // works only on her own appointments: a mother's through her profile, a professional's through her slots.
-// Each change is one conditional UPDATE (owner, expected status, not yet started), so a change that is no
+// Each change is one conditional UPDATE (owner, expected status, still in time), so a change that is no
 // longer allowed, or that the other side made first, changes nothing and returns false.
+// Cancelling and rescheduling stop when the chat room opens (5 minutes before the start); the note stays
+// editable until the start.
 public class AppointmentService
 {
     private readonly INurturaDbContext _db;
@@ -37,7 +39,8 @@ public class AppointmentService
             items.Where(a => !IsUpcoming(a)).OrderByDescending(a => a.Date).ThenByDescending(a => a.Hour).ToList());
     }
 
-    // One of her appointments that has not started and is still requested or confirmed; null otherwise.
+    // One of her appointments that has not started and is still requested or confirmed (her note can still be
+    // edited); null otherwise.
     public async Task<MotherAppointment?> GetChangeableAsync(string userId, int id, CancellationToken cancellationToken = default)
     {
         var motherId = await GetMotherIdAsync(userId, cancellationToken);
@@ -51,10 +54,10 @@ public class AppointmentService
         var now = PolandTime.Now;
         var row = await QueryMine(motherId.Value).Where(r => r.Id == id).SingleOrDefaultAsync(cancellationToken);
         var item = row is null ? null : ToMother(row, now);
-        return item is { CanChange: true } ? item : null;
+        return item is { CanEditNote: true } ? item : null;
     }
 
-    // She cancels a requested or confirmed appointment that has not started. Frees the slot.
+    // She cancels a requested or confirmed appointment whose chat room has not opened. Frees the slot.
     public async Task<bool> CancelByMotherAsync(string userId, int id, CancellationToken cancellationToken = default)
     {
         var motherId = await GetMotherIdAsync(userId, cancellationToken);
@@ -80,7 +83,7 @@ public class AppointmentService
         }
 
         await using var transaction = await _db.Database.BeginTransactionAsync(cancellationToken);
-        var (today, hour) = NowParts();
+        var (today, hour) = ConsultationRoom.OpeningCutoff(PolandTime.Now);
         var utcNow = DateTime.UtcNow;
         var changed = await _db.Appointments
             .Where(a => a.Id == id && a.MotherProfileId == motherId && Appointment.ActiveStatuses.Contains(a.Status)
@@ -160,7 +163,7 @@ public class AppointmentService
                 .OrderByDescending(a => a.Date).ThenByDescending(a => a.Hour).ToList());
     }
 
-    // One of her appointments in the given stored status that has not started; null otherwise.
+    // One of her appointments in the given stored status whose chat room has not opened; null otherwise.
     public async Task<ProfessionalAppointment?> GetForProfessionalAsync(
         string userId,
         int id,
@@ -180,7 +183,7 @@ public class AppointmentService
             .Where(r => r.Id == id && r.Status == status)
             .SingleOrDefaultAsync(cancellationToken);
         var item = row is null ? null : ToProfessional(row, now);
-        return item is { CanChange: true } ? item : null;
+        return item is { CanCancel: true } ? item : null;
     }
 
     // Requested -> Confirmed. An expired request can't be accepted: the expiry sweep runs first.
@@ -237,7 +240,7 @@ public class AppointmentService
         }
 
         await using var transaction = await _db.Database.BeginTransactionAsync(cancellationToken);
-        var (today, hour) = NowParts();
+        var (today, hour) = ConsultationRoom.OpeningCutoff(PolandTime.Now);
         var utcNow = DateTime.UtcNow;
         AppointmentParty? cancelledBy = to == AppointmentStatus.Cancelled ? AppointmentParty.Professional : null;
         var changed = await _db.Appointments
@@ -270,7 +273,7 @@ public class AppointmentService
     }
 
     // The banner on her dashboard and My appointments: her confirmed consultations from 24 hours before
-    // the start until the end. Worked out from the clock, never stored.
+    // the start until the end (end of the hour, or End session). Worked out from the clock, never stored.
     public async Task<IReadOnlyList<ConsultationBanner>> GetMotherBannersAsync(string userId, CancellationToken cancellationToken = default)
     {
         var motherId = await GetMotherIdAsync(userId, cancellationToken);
@@ -296,10 +299,12 @@ public class AppointmentService
             .ToListAsync(cancellationToken);
 
         return candidates
-            .Select(r => (Row: r, Start: BookingService.SlotStart(r.Date, r.Hour)))
-            .Where(x => x.Start - TimeSpan.FromHours(24) <= now && now < x.Start + Appointment.Length)
+            .Select(r => (Row: r, Start: ConsultationRoom.Start(r.Date, r.Hour), OpensAt: ConsultationRoom.OpensAt(r.Date, r.Hour)))
+            .Where(x => x.Start - TimeSpan.FromHours(24) <= now
+                && now < ConsultationRoom.End(x.Row.Date, x.Row.Hour, x.Row.SessionEndedAt))
             .OrderBy(x => x.Start)
-            .Select(x => new ConsultationBanner(x.Row.Id, x.Row.OtherName, x.Row.Hour, x.Start <= now, x.Row.Date == today))
+            .Select(x => new ConsultationBanner(
+                x.Row.Id, x.Row.OtherName, x.Row.Hour, x.Start <= now, x.Row.Date == today, x.OpensAt <= now, x.OpensAt))
             .ToList();
     }
 
@@ -314,13 +319,14 @@ public class AppointmentService
         return (DateOnly.FromDateTime(now), now.Hour);
     }
 
-    private static AppointmentState StateOf(AppointmentStatus status, DateOnly date, int hour, DateTime now)
+    // A confirmed appointment is Done from its real end: the end of the hour, or earlier after End session.
+    private static AppointmentState StateOf(Row r, DateTime now)
     {
-        var start = BookingService.SlotStart(date, hour);
-        return status switch
+        var start = ConsultationRoom.Start(r.Date, r.Hour);
+        return r.Status switch
         {
             AppointmentStatus.Requested => AppointmentState.Requested,
-            AppointmentStatus.Confirmed when start + Appointment.Length <= now => AppointmentState.Done,
+            AppointmentStatus.Confirmed when ConsultationRoom.End(r.Date, r.Hour, r.SessionEndedAt) <= now => AppointmentState.Done,
             AppointmentStatus.Confirmed when start <= now => AppointmentState.Now,
             AppointmentStatus.Confirmed => AppointmentState.Confirmed,
             AppointmentStatus.Completed => AppointmentState.Done,
@@ -330,23 +336,43 @@ public class AppointmentService
         };
     }
 
-    private static bool CanChange(AppointmentState state, DateOnly date, int hour, DateTime now) =>
-        state is AppointmentState.Requested or AppointmentState.Confirmed && BookingService.SlotStart(date, hour) > now;
+    // Cancel and Reschedule: until the chat room opens.
+    private static bool CanCancel(AppointmentState state, Row r, DateTime now) =>
+        state is AppointmentState.Requested or AppointmentState.Confirmed && ConsultationRoom.BeforeOpening(r.Date, r.Hour, now);
+
+    // Edit note: until the start.
+    private static bool CanEditNote(AppointmentState state, Row r, DateTime now) =>
+        state is AppointmentState.Requested or AppointmentState.Confirmed && ConsultationRoom.Start(r.Date, r.Hour) > now;
+
+    // Only a confirmed appointment has a room. After the session (or once completed) it is read-only.
+    private static ChatAccess ChatOf(Row r, DateTime now) => r.Status switch
+    {
+        AppointmentStatus.Confirmed => ConsultationRoom.StateOf(r.Date, r.Hour, r.SessionEndedAt, now) switch
+        {
+            RoomState.NotYetOpen => ChatAccess.NotYetOpen,
+            RoomState.Open => ChatAccess.Open,
+            _ => ChatAccess.ViewOnly
+        },
+        AppointmentStatus.Completed => ChatAccess.ViewOnly,
+        _ => ChatAccess.None
+    };
 
     private static MotherAppointment ToMother(Row r, DateTime now)
     {
-        var state = StateOf(r.Status, r.Date, r.Hour, now);
+        var state = StateOf(r, now);
         return new MotherAppointment(
             r.Id, r.Date, r.Hour, r.Topic, r.OtherName, r.Concern, state, r.CancelledBy, r.Message,
-            BookingService.ConfirmBy(r.Date, r.Hour), CanChange(state, r.Date, r.Hour, now));
+            BookingService.ConfirmBy(r.Date, r.Hour), CanCancel(state, r, now), CanEditNote(state, r, now),
+            ChatOf(r, now), ConsultationRoom.OpensAt(r.Date, r.Hour));
     }
 
     private static ProfessionalAppointment ToProfessional(Row r, DateTime now)
     {
-        var state = StateOf(r.Status, r.Date, r.Hour, now);
+        var state = StateOf(r, now);
         return new ProfessionalAppointment(
             r.Id, r.Date, r.Hour, r.Topic, r.OtherName, r.Concern, state, r.CancelledBy, r.Message,
-            BookingService.ConfirmBy(r.Date, r.Hour), CanChange(state, r.Date, r.Hour, now));
+            BookingService.ConfirmBy(r.Date, r.Hour), CanCancel(state, r, now), CanEditNote(state, r, now),
+            ChatOf(r, now), ConsultationRoom.OpensAt(r.Date, r.Hour));
     }
 
     // Her appointments with the professional's display name.
@@ -358,7 +384,8 @@ public class AppointmentService
         select new Row
         {
             Id = a.Id, Date = s.Date, Hour = s.StartHour, Topic = a.Topic, OtherName = p.DisplayName,
-            Concern = a.ConcernText, Status = a.Status, CancelledBy = a.CancelledBy, Message = a.ProfessionalMessage
+            Concern = a.ConcernText, Status = a.Status, CancelledBy = a.CancelledBy, Message = a.ProfessionalMessage,
+            SessionEndedAt = a.SessionEndedAt
         };
 
     // Appointments on her slots with only the mother's display name.
@@ -370,7 +397,8 @@ public class AppointmentService
         select new Row
         {
             Id = a.Id, Date = s.Date, Hour = s.StartHour, Topic = a.Topic, OtherName = m.DisplayName,
-            Concern = a.ConcernText, Status = a.Status, CancelledBy = a.CancelledBy, Message = a.ProfessionalMessage
+            Concern = a.ConcernText, Status = a.Status, CancelledBy = a.CancelledBy, Message = a.ProfessionalMessage,
+            SessionEndedAt = a.SessionEndedAt
         };
 
     // Object-initializer form, so EF can still filter on it after the projection.
@@ -385,6 +413,7 @@ public class AppointmentService
         public AppointmentStatus Status { get; init; }
         public AppointmentParty? CancelledBy { get; init; }
         public string? Message { get; init; }
+        public DateTime? SessionEndedAt { get; init; }
     }
 
     private async Task<int?> GetMotherIdAsync(string userId, CancellationToken cancellationToken)

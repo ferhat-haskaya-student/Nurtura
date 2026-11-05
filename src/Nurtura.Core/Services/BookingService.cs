@@ -54,7 +54,7 @@ public class BookingService
             .ToList();
     }
 
-    // Her appointment to reschedule: requested or confirmed and not started. Null otherwise.
+    // Her appointment to reschedule: requested or confirmed and its chat room not yet open. Null otherwise.
     public async Task<RescheduleInfo?> GetRescheduleAsync(string userId, int appointmentId, CancellationToken cancellationToken = default)
     {
         var motherId = await GetMotherIdAsync(userId, cancellationToken);
@@ -72,7 +72,7 @@ public class BookingService
                 join p in _db.ProfessionalProfiles on s.ProfessionalProfileId equals p.Id
                 select new { a.Id, s.Date, s.StartHour, a.Topic, ProfessionalId = p.Id, p.DisplayName, a.Status, a.ConcernText, a.BabyId })
             .SingleOrDefaultAsync(cancellationToken);
-        if (row is null || SlotStart(row.Date, row.StartHour) <= PolandTime.Now)
+        if (row is null || !ConsultationRoom.BeforeOpening(row.Date, row.StartHour, PolandTime.Now))
         {
             return null;
         }
@@ -229,7 +229,7 @@ public class BookingService
             .SingleAsync(cancellationToken);
 
         // Rescheduling: the old appointment is cancelled in the same transaction, only if it is still hers,
-        // requested or confirmed, for the same topic and not started. If the new request then fails, the
+        // requested or confirmed, for the same topic and its chat room not yet open. If the new request then fails, the
         // transaction is rolled back and the old appointment stays as it was.
         var old = request.RescheduleId is { } rescheduleId
             ? await (
@@ -247,8 +247,7 @@ public class BookingService
                 return new BookingResult(BookingStatus.RescheduleGone);
             }
 
-            var today = DateOnly.FromDateTime(now);
-            var hour = now.Hour;
+            var (today, hour) = ConsultationRoom.OpeningCutoff(now);
             var cancelled = await _db.Appointments
                 .Where(a => a.Id == oldId && a.MotherProfileId == motherId && a.Topic == request.Topic
                     && Appointment.ActiveStatuses.Contains(a.Status)
