@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Localization;
 using Nurtura.Core;
+using Nurtura.Core.Entities;
 using Nurtura.Core.Identity;
 using Nurtura.Core.Services;
 using Nurtura.Web.Localization;
@@ -56,7 +57,7 @@ public class AvailabilityController : Controller
             if (parts.Length == 2
                 && int.TryParse(parts[0], NumberStyles.None, CultureInfo.InvariantCulture, out var offset)
                 && int.TryParse(parts[1], NumberStyles.None, CultureInfo.InvariantCulture, out var hour)
-                && offset is >= 0 and < 7)
+                && offset is >= 0 and < AvailabilitySlot.WorkDaysPerWeek)
             {
                 hours.Add((weekStart.Value.AddDays(offset), hour));
             }

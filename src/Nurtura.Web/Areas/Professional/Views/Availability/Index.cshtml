@@ -32,7 +32,7 @@
                 <span class="btn btn-outline-primary invisible" aria-hidden="true">&lsaquo;</span>
             }
             <span class="fw-semibold text-center">
-                @L["Availability_Range", weekStart, Model.WeekStart.AddDays(6).ToString(DateFormats.Display)]
+                @L["Availability_Range", weekStart, Model.Days[^1].Date.ToString(DateFormats.Display)]
             </span>
             @if (Model.NextWeekStart is { } next)
             {

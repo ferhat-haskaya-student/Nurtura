@@ -12,6 +12,11 @@ public class AvailabilitySlot
     // She can set the current week and this many weeks after it.
     public const int WeeksAhead = 4;
 
+    // Monday to Saturday. Sunday is a day off: never shown, opened or booked.
+    public const int WorkDaysPerWeek = 6;
+
+    public static bool IsDayOff(DateOnly date) => date.DayOfWeek == DayOfWeek.Sunday;
+
     public int Id { get; set; }
 
     public int ProfessionalProfileId { get; set; }

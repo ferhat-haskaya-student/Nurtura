@@ -69,7 +69,8 @@ public class AvailabilityService
             .ToHashSet();
         var booked = await GetBookedAsync(profileId.Value, weekStart, weekEnd, cancellationToken);
 
-        var days = Enumerable.Range(0, DaysInWeek)
+        // Monday to Saturday; Sunday is a day off and is not shown.
+        var days = Enumerable.Range(0, AvailabilitySlot.WorkDaysPerWeek)
             .Select(offset =>
             {
                 var day = weekStart.AddDays(offset);
@@ -97,7 +98,7 @@ public class AvailabilityService
     }
 
     // Saves the whole week at once: the given hours are open, every other hour of the week is closed.
-    // Hours that have already started are never changed, booked hours are never closed, and entries outside the week or outside
+    // Hours that have already started are never changed, booked hours are never closed, Sundays are ignored, and entries outside the week or outside
     // 08:00–17:00 are ignored. Returns the number of open hours in the week, or null when the user
     // has no approved professional profile or the week is outside the current week to WeeksAhead.
     public async Task<int?> SaveWeekAsync(
@@ -135,6 +136,11 @@ public class AvailabilityService
         var utcNow = DateTime.UtcNow;
         for (var day = weekStart; day <= weekEnd; day = day.AddDays(1))
         {
+            if (AvailabilitySlot.IsDayOff(day))
+            {
+                continue;
+            }
+
             for (var hour = AvailabilitySlot.FirstHour; hour <= AvailabilitySlot.LastHour; hour++)
             {
                 if (IsPast(day, hour, now))
@@ -169,7 +175,7 @@ public class AvailabilityService
         }
 
         await _db.SaveChangesAsync(cancellationToken);
-        return slots.Count(s => s.IsOpen);
+        return slots.Count(s => s.IsOpen && !AvailabilitySlot.IsDayOff(s.Date));
     }
 
     // Her slots in the date range that have an active (requested or confirmed) appointment.

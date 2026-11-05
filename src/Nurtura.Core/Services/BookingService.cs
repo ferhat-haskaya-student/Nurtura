@@ -134,7 +134,8 @@ public class BookingService
         BookingRequest request,
         CancellationToken cancellationToken = default)
     {
-        var concern = request.Concern.Trim();
+        // Same as the form: "\r\n" counts as one character and is stored as "\n".
+        var concern = request.Concern.ReplaceLineEndings("\n").Trim();
         if (concern.Length == 0 || concern.Length > Appointment.ConcernMaxLength)
         {
             return new BookingResult(BookingStatus.Invalid);
@@ -256,7 +257,7 @@ public class BookingService
             .ToList();
     }
 
-    // Slots that can be requested now for the topic (optionally one slot, optionally a language),
+    // Slots that can be requested now for the topic (optionally one slot, optionally a language), never on a Sunday,
     // ordered by time and professional name.
     private async Task<List<FreeSlot>> GetCandidateSlotsAsync(
         Topic topic,
@@ -294,7 +295,8 @@ public class BookingService
             .ToListAsync(cancellationToken);
 
         rows = rows
-            .Where(r => SlotStart(r.Date, r.StartHour) >= earliest && SlotStart(r.Date, r.StartHour) <= latest)
+            .Where(r => !AvailabilitySlot.IsDayOff(r.Date)
+                && SlotStart(r.Date, r.StartHour) >= earliest && SlotStart(r.Date, r.StartHour) <= latest)
             .ToList();
 
         var languages = await GetLanguagesAsync(rows.Select(r => r.ProfessionalId).Distinct().ToList(), cancellationToken);
