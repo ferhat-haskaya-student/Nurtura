@@ -39,6 +39,8 @@ public class NurturaDbContext : IdentityDbContext<ApplicationUser>, INurturaDbCo
 
     public DbSet<AvailabilitySlot> AvailabilitySlots => Set<AvailabilitySlot>();
 
+    public DbSet<Appointment> Appointments => Set<Appointment>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);

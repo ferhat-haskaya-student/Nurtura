@@ -1,0 +1,42 @@
+@using Nurtura.Core.Entities
+@using Nurtura.Web.Areas.Mother
+@model Nurtura.Core.Services.ProfessionalDetails
+@{
+    ViewData["Title"] = Model.DisplayName;
+    var topic = ViewData["Topic"] as Topic?;
+    var language = ViewData["Language"] as Language?;
+}
+
+<div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6">
+        @if (topic is not null)
+        {
+            <a asp-action="Slots" asp-route-topic="@topic" asp-route-language="@language" class="d-inline-block mb-2">&lsaquo; @L["Book_BackToSlots"]</a>
+        }
+        else
+        {
+            <a asp-action="Index" class="d-inline-block mb-2">&lsaquo; @L["Book_Title"]</a>
+        }
+
+        <h1 class="h3 mb-1">@Model.DisplayName</h1>
+        <p class="text-body-secondary mb-3">@L["ProfessionalType_" + Model.Type]</p>
+
+        <div class="card mb-4">
+            <div class="card-body">
+                <h2 class="h6 fw-semibold">@L["Book_Topics"]</h2>
+                <div class="d-flex flex-wrap gap-1 mb-3">
+                    @foreach (var covered in Model.Topics)
+                    {
+                        <span class="badge rounded-pill text-bg-light border">@L["Topic_" + covered]</span>
+                    }
+                </div>
+
+                <h2 class="h6 fw-semibold">@L["Book_Languages"]</h2>
+                <p>@BookText.Languages(L, Model.Languages)</p>
+
+                <h2 class="h6 fw-semibold">@L["Book_About"]</h2>
+                <p class="mb-0" style="white-space: pre-wrap">@Model.Bio</p>
+            </div>
+        </div>
+    </div>
+</div>

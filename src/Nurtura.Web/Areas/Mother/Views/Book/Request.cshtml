@@ -1,0 +1,105 @@
+@using Nurtura.Core.Entities
+@using Nurtura.Core.Services
+@using Nurtura.Web.Areas.Mother
+@model Nurtura.Web.Areas.Mother.Models.BookRequestViewModel
+@{
+    ViewData["Title"] = L["Book_RequestTitle"];
+    var page = Model.Page!;
+    var slot = page.Slot;
+    var professional = slot.Professional;
+    var topic = Model.Topic!.Value;
+    var problem = Model.Problem ?? page.Problem;
+}
+
+<div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6">
+        <a asp-action="Slots" asp-route-topic="@topic" class="d-inline-block mb-2">&lsaquo; @L["Book_BackToSlots"]</a>
+        <h1 class="h3 mb-3">@ViewData["Title"]</h1>
+
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="fw-semibold">@BookText.Day(L, slot.Date)</div>
+                <div class="fs-5 mb-2">@BookText.HourRange(slot.Hour)</div>
+                <div class="small text-body-secondary mb-2">@L["Book_TopicLabel", L["Topic_" + topic]]</div>
+                <a asp-action="Professional" asp-route-id="@professional.Id" asp-route-topic="@topic" class="fw-semibold">@professional.DisplayName</a>
+                <div class="small text-body-secondary">
+                    @L["ProfessionalType_" + professional.Type] · @BookText.Languages(L, professional.Languages)
+                </div>
+            </div>
+        </div>
+
+        @if (problem is not null)
+        {
+            <div class="alert alert-warning" role="alert">
+                @L["Book_Problem_" + problem]
+                <div class="mt-2">
+                    <a asp-action="Slots" asp-route-topic="@topic" class="alert-link">@L["Book_SeeOtherSlots"]</a>
+                </div>
+            </div>
+        }
+        else
+        {
+            <form asp-action="Request" method="post" data-submit-once>
+                <input type="hidden" asp-for="SlotId" />
+                <input type="hidden" asp-for="Topic" />
+
+                <div class="mb-4">
+                    <label asp-for="Concern" class="form-label fw-semibold"></label>
+                    <textarea asp-for="Concern" class="form-control" rows="4" maxlength="@Appointment.ConcernMaxLength"
+                              data-note-input></textarea>
+                    <div class="form-text text-end" data-note-counter data-template="@L["CheckIn_NoteCounter"]"
+                         data-max="@Appointment.ConcernMaxLength" aria-live="polite"></div>
+                    <span asp-validation-for="Concern" class="text-danger"></span>
+                </div>
+
+                <fieldset class="mb-4">
+                    <legend class="form-label fs-6 fw-semibold mb-1">@L["Book_Sharing"]</legend>
+                    <p class="small text-body-secondary">@L["Book_SharingExplained"]</p>
+
+                    <div class="form-check mb-2">
+                        <input asp-for="ShareCheckIns" class="form-check-input" type="checkbox" />
+                        <label asp-for="ShareCheckIns" class="form-check-label">@L["Book_ShareCheckIns"]</label>
+                    </div>
+
+                    @if (BookingService.IsBabyTopic(topic) && page.Babies.Count == 1)
+                    {
+                        var baby = page.Babies[0];
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="share-baby-@baby.Id" name="ShareBabyId"
+                                   value="@baby.Id" checked="@(Model.ShareBabyId == baby.Id)" />
+                            <label class="form-check-label" for="share-baby-@baby.Id">@L["Book_ShareBaby", baby.Name]</label>
+                        </div>
+                    }
+                    else if (BookingService.IsBabyTopic(topic) && page.Babies.Count > 1)
+                    {
+                        @* Several babies: she chooses one, or none. *@
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="radio" id="share-baby-none" name="ShareBabyId" value=""
+                                   checked="@(Model.ShareBabyId is null)" />
+                            <label class="form-check-label" for="share-baby-none">@L["Book_ShareNoBaby"]</label>
+                        </div>
+                        @foreach (var baby in page.Babies)
+                        {
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="radio" id="share-baby-@baby.Id" name="ShareBabyId"
+                                       value="@baby.Id" checked="@(Model.ShareBabyId == baby.Id)" />
+                                <label class="form-check-label" for="share-baby-@baby.Id">@L["Book_ShareBaby", baby.Name]</label>
+                            </div>
+                        }
+                    }
+                </fieldset>
+
+                <p class="small text-body-secondary">
+                    @L["Book_ConfirmByHint", professional.DisplayName, BookText.Moment(L, BookingService.ConfirmBy(slot.Date, slot.Hour))]
+                </p>
+
+                <button type="submit" class="btn btn-primary w-100 mb-4">@L["Book_Send"]</button>
+            </form>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/note-counter.js" asp-append-version="true"></script>
+}

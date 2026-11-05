@@ -13,8 +13,9 @@
             var index = tab.getAttribute('data-day-tab');
             tabs.forEach(function (other) {
                 var isActive = other === tab;
-                other.classList.toggle('btn-primary', isActive);
-                other.classList.toggle('btn-outline-primary', !isActive);
+                var variant = other.getAttribute('data-variant');
+                other.classList.toggle('btn-' + variant, isActive);
+                other.classList.toggle('btn-outline-' + variant, !isActive);
                 other.setAttribute('aria-pressed', isActive ? 'true' : 'false');
             });
             // d-none hides a day on a phone only; d-md-block shows every day from md up.
@@ -30,7 +31,10 @@
     var template = count ? count.getAttribute('data-template') : null;
     function updateCount() {
         if (count && template) {
-            count.textContent = template.replace('{0}', form.querySelectorAll('input[name="open"]:checked').length);
+            // Past hours that were open and booked hours still count; they are shown, not checkboxes.
+            var open = form.querySelectorAll('input[name="open"]:checked').length
+                + form.querySelectorAll('[data-fixed-open]').length;
+            count.textContent = template.replace('{0}', open);
         }
     }
 

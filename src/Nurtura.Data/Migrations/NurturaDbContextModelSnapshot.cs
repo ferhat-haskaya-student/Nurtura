@@ -154,6 +154,53 @@ namespace Nurtura.Data.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("Nurtura.Core.Entities.Appointment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AvailabilitySlotId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ConcernText")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("MotherProfileId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<string>("Topic")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AvailabilitySlotId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_Appointments_AvailabilitySlotId_Active")
+                        .HasFilter("\"Status\" IN ('Requested', 'Confirmed')");
+
+                    b.HasIndex("MotherProfileId");
+
+                    b.ToTable("Appointments");
+                });
+
             modelBuilder.Entity("Nurtura.Core.Entities.AvailabilitySlot", b =>
                 {
                     b.Property<int>("Id")
@@ -766,6 +813,21 @@ namespace Nurtura.Data.Migrations
                     b.HasOne("Nurtura.Core.Identity.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Nurtura.Core.Entities.Appointment", b =>
+                {
+                    b.HasOne("Nurtura.Core.Entities.AvailabilitySlot", null)
+                        .WithMany()
+                        .HasForeignKey("AvailabilitySlotId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Nurtura.Core.Entities.MotherProfile", null)
+                        .WithMany()
+                        .HasForeignKey("MotherProfileId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

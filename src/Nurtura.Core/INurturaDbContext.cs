@@ -33,6 +33,8 @@ public interface INurturaDbContext
 
     DbSet<AvailabilitySlot> AvailabilitySlots { get; }
 
+    DbSet<Appointment> Appointments { get; }
+
     // Identity's user table; implemented by IdentityDbContext.
     DbSet<ApplicationUser> Users { get; }
 

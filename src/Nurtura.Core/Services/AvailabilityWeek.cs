@@ -14,4 +14,5 @@ public sealed record AvailabilityWeek(
 public sealed record AvailabilityDay(DateOnly Date, IReadOnlyList<AvailabilityHour> Hours);
 
 // IsPast: the hour has already started (Poland time) and can no longer be changed.
-public sealed record AvailabilityHour(int Hour, bool IsOpen, bool IsPast);
+// IsBooked: the slot has an active (requested or confirmed) appointment, so it stays open and cannot be closed.
+public sealed record AvailabilityHour(int Hour, bool IsOpen, bool IsPast, bool IsBooked);

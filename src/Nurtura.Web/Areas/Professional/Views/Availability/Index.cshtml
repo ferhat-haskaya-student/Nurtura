@@ -67,8 +67,10 @@
                 @for (var i = 0; i < Model.Days.Count; i++)
                 {
                     var day = Model.Days[i];
-                    <button type="button" class="btn btn-sm flex-fill px-0 lh-sm @(i == activeDay ? "btn-primary" : "btn-outline-primary")"
-                            data-day-tab="@i" aria-pressed="@(i == activeDay ? "true" : "false")">
+                    // A day that is completely past gets grey tabs, like its grey header.
+                    var variant = day.Hours.All(h => h.IsPast) ? "secondary" : "primary";
+                    <button type="button" class="btn btn-sm flex-fill px-0 lh-sm @(i == activeDay ? "btn-" + variant : "btn-outline-" + variant)"
+                            data-day-tab="@i" data-variant="@variant" aria-pressed="@(i == activeDay ? "true" : "false")">
                         <span class="d-block small">@L["Weekday_Short_" + day.Date.DayOfWeek]</span>
                         <span class="d-block small">@day.Date.ToString("dd-MM")</span>
                     </button>
@@ -82,16 +84,48 @@
                     var day = Model.Days[i];
                     var dayName = L["Weekday_Short_" + day.Date.DayOfWeek];
                     <div class="col-12 col-md @(i == activeDay ? "" : "d-none d-md-block")" data-day="@i">
-                        <div class="text-center fw-semibold small mb-2">
-                            @dayName<br class="d-none d-md-inline" />
+                        <div class="text-center fw-semibold small mb-2 @(day.Hours.All(h => h.IsPast) ? "text-body-secondary" : "")">
+                            @* Today's column says "Today" in place of the weekday, so every header keeps the same height. *@
+                            @if (day.Date == PolandTime.Today)
+                            {
+                                <span class="fw-bold">@L["Availability_Today"]</span>
+                            }
+                            else
+                            {
+                                @dayName
+                            }
+                            <br class="d-none d-md-inline" />
                             <span class="fw-normal">@day.Date.ToString(DateFormats.Display)</span>
                         </div>
                         @foreach (var hour in day.Hours)
                         {
-                            var id = $"slot-{i}-{hour.Hour}";
                             var time = new TimeOnly(hour.Hour, 0).ToString(TimeFormats.Display);
+                            if (hour.IsPast)
+                            {
+                                // Already started: not a control, only shows whether the hour was open
+                                // (dark grey fill) or closed (light grey).
+                                <div class="w-100 mb-1 py-2 py-md-1 border rounded text-center user-select-none @(hour.IsOpen ? "bg-secondary border-secondary text-white" : "bg-body-secondary border-secondary-subtle text-body-secondary")"
+                                     data-fixed-open="@(hour.IsOpen ? "true" : null)">
+                                    @time
+                                    <span class="visually-hidden">@L[hour.IsOpen ? "Availability_PastOpen" : "Availability_PastClosed"]</span>
+                                </div>
+                                continue;
+                            }
+
+                            if (hour.IsBooked)
+                            {
+                                // A request or appointment holds this hour: it stays open and cannot be closed.
+                                <div class="w-100 mb-1 py-2 py-md-1 border border-primary rounded text-center user-select-none bg-primary-subtle text-primary-emphasis fw-semibold"
+                                     data-fixed-open="true">
+                                    @time
+                                    <span class="visually-hidden">@L["Availability_Booked"]</span>
+                                </div>
+                                continue;
+                            }
+
+                            var id = $"slot-{i}-{hour.Hour}";
                             <input type="checkbox" class="btn-check" id="@id" name="open" value="@($"{i}-{hour.Hour}")"
-                                   autocomplete="off" checked="@hour.IsOpen" disabled="@hour.IsPast"
+                                   autocomplete="off" checked="@hour.IsOpen"
                                    aria-label="@dayName @day.Date.ToString(DateFormats.Display) @time" />
                             <label class="btn btn-outline-primary w-100 mb-1 py-2 py-md-1" for="@id">@time</label>
                         }
@@ -99,7 +133,11 @@
                 }
             </div>
 
-            <p class="small text-body-secondary">@L["Availability_PastHint"]</p>
+            <p class="small text-body-secondary mb-1">@L["Availability_PastHint"]</p>
+            <p class="small text-body-secondary">
+                <span class="d-inline-block align-middle border border-primary rounded bg-primary-subtle me-1 px-2" aria-hidden="true">&nbsp;</span>
+                @L["Availability_BookedHint"]
+            </p>
 
             <button type="submit" class="btn btn-primary w-100 mb-4">@L["Availability_Save"]</button>
         </form>

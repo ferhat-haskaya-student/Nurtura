@@ -1,0 +1,26 @@
+@using Nurtura.Core.Entities
+@{
+    ViewData["Title"] = L["Book_Title"];
+    var statusMessage = TempData["StatusMessage"] as string;
+}
+
+<div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6">
+        <h1 class="h3 mb-1">@ViewData["Title"]</h1>
+        <p class="text-body-secondary mb-3">@L["Book_TopicIntro"]</p>
+
+        @if (statusMessage is not null)
+        {
+            <div class="alert alert-success" role="status">@statusMessage</div>
+        }
+
+        <div class="d-grid gap-2 mb-4">
+            @foreach (var topic in Enum.GetValues<Topic>())
+            {
+                <a asp-action="Slots" asp-route-topic="@topic" class="btn btn-outline-primary btn-lg text-start py-3">
+                    @L["Topic_" + topic]
+                </a>
+            }
+        </div>
+    </div>
+</div>

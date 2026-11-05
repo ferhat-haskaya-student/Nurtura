@@ -27,7 +27,7 @@ public class AvailabilityService
 
     // The week containing the date, kept between the current week and WeeksAhead weeks after it.
     // With copyLastWeek, every hour not yet started takes the open or closed state of the same
-    // hour a week earlier; nothing is saved until she saves the week.
+    // hour a week earlier, except booked hours, which stay open; nothing is saved until she saves the week.
     // Null when the user has no approved professional profile.
     public async Task<AvailabilityWeek?> GetWeekAsync(
         string userId,
@@ -40,6 +40,8 @@ public class AvailabilityService
         {
             return null;
         }
+
+        await AppointmentExpiry.ExpireOverdueAsync(_db, cancellationToken);
 
         var now = PolandTime.Now;
         var today = DateOnly.FromDateTime(now);
@@ -65,6 +67,7 @@ public class AvailabilityService
                 .ToListAsync(cancellationToken))
             .Select(s => (s.Date, s.StartHour))
             .ToHashSet();
+        var booked = await GetBookedAsync(profileId.Value, weekStart, weekEnd, cancellationToken);
 
         var days = Enumerable.Range(0, DaysInWeek)
             .Select(offset =>
@@ -75,8 +78,9 @@ public class AvailabilityService
                     .Select(hour =>
                     {
                         var isPast = IsPast(day, hour, now);
+                        var isBooked = booked.Contains((day, hour));
                         var source = copyLastWeek && !isPast ? day.AddDays(-DaysInWeek) : day;
-                        return new AvailabilityHour(hour, open.Contains((source, hour)), isPast);
+                        return new AvailabilityHour(hour, isBooked || open.Contains((source, hour)), isPast, isBooked);
                     })
                     .ToList();
                 return new AvailabilityDay(day, hours);
@@ -93,7 +97,7 @@ public class AvailabilityService
     }
 
     // Saves the whole week at once: the given hours are open, every other hour of the week is closed.
-    // Hours that have already started are never changed, and entries outside the week or outside
+    // Hours that have already started are never changed, booked hours are never closed, and entries outside the week or outside
     // 08:00–17:00 are ignored. Returns the number of open hours in the week, or null when the user
     // has no approved professional profile or the week is outside the current week to WeeksAhead.
     public async Task<int?> SaveWeekAsync(
@@ -117,8 +121,11 @@ public class AvailabilityService
             return null;
         }
 
+        await AppointmentExpiry.ExpireOverdueAsync(_db, cancellationToken);
+
         var weekEnd = weekStart.AddDays(DaysInWeek - 1);
         var wanted = openHours.ToHashSet();
+        var booked = await GetBookedAsync(profileId.Value, weekStart, weekEnd, cancellationToken);
 
         var slots = await _db.AvailabilitySlots
             .Where(s => s.ProfessionalProfileId == profileId && s.Date >= weekStart && s.Date <= weekEnd)
@@ -135,7 +142,7 @@ public class AvailabilityService
                     continue;
                 }
 
-                var isOpen = wanted.Contains((day, hour));
+                var isOpen = booked.Contains((day, hour)) || wanted.Contains((day, hour));
                 if (existing.TryGetValue((day, hour), out var slot))
                 {
                     if (slot.IsOpen != isOpen)
@@ -163,6 +170,22 @@ public class AvailabilityService
 
         await _db.SaveChangesAsync(cancellationToken);
         return slots.Count(s => s.IsOpen);
+    }
+
+    // Her slots in the date range that have an active (requested or confirmed) appointment.
+    private async Task<HashSet<(DateOnly, int)>> GetBookedAsync(
+        int profileId,
+        DateOnly from,
+        DateOnly to,
+        CancellationToken cancellationToken)
+    {
+        return (await _db.AvailabilitySlots
+                .Where(s => s.ProfessionalProfileId == profileId && s.Date >= from && s.Date <= to
+                    && _db.Appointments.Any(a => a.AvailabilitySlotId == s.Id && Appointment.ActiveStatuses.Contains(a.Status)))
+                .Select(s => new { s.Date, s.StartHour })
+                .ToListAsync(cancellationToken))
+            .Select(s => (s.Date, s.StartHour))
+            .ToHashSet();
     }
 
     private async Task<int?> GetProfileIdAsync(string userId, CancellationToken cancellationToken)
