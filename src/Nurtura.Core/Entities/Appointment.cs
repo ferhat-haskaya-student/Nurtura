@@ -5,6 +5,12 @@ public class Appointment
 {
     public const int ConcernMaxLength = 500;
 
+    // The professional's optional message to the mother when she rejects or cancels.
+    public const int MessageMaxLength = 500;
+
+    // Every session is one hour.
+    public static readonly TimeSpan Length = TimeSpan.FromHours(1);
+
     // A slot can be requested from this long before its start...
     public static readonly TimeSpan MinNotice = TimeSpan.FromHours(12);
 
@@ -35,6 +41,12 @@ public class Appointment
     public string ConcernText { get; set; } = string.Empty;
 
     public AppointmentStatus Status { get; set; }
+
+    // Set only when Status is Cancelled.
+    public AppointmentParty? CancelledBy { get; set; }
+
+    // Optional, written by the professional when she rejects a request or cancels an appointment.
+    public string? ProfessionalMessage { get; set; }
 
     // UTC.
     public DateTime CreatedAt { get; set; }

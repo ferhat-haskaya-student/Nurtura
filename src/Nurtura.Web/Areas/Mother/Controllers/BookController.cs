@@ -10,11 +10,14 @@ using Nurtura.Web.Areas.Mother.Models;
 namespace Nurtura.Web.Areas.Mother.Controllers;
 
 // Booking: topic, free slots for the topic, a professional's profile, and the request.
+// With "reschedule" (one of her appointments), the same pages pick a new time for that appointment:
+// the topic is the appointment's, and it is cancelled only when the new request is sent.
 [Area(Roles.Mother)]
 [Authorize(Roles = Roles.Mother)]
 public class BookController : Controller
 {
     private const string StatusMessageKey = "StatusMessage";
+    private const string ProblemMessageKey = "ProblemMessage";
 
     private readonly BookingService _bookingService;
     private readonly UserManager<ApplicationUser> _userManager;
@@ -39,8 +42,21 @@ public class BookController : Controller
 
     // Step 2: free slots for the topic, grouped by day. No language means any language.
     [HttpGet]
-    public async Task<IActionResult> Slots(Topic? topic, Language? language)
+    public async Task<IActionResult> Slots(Topic? topic, Language? language, int? reschedule)
     {
+        var userId = _userManager.GetUserId(User)!;
+        RescheduleInfo? info = null;
+        if (reschedule is not null)
+        {
+            info = await _bookingService.GetRescheduleAsync(userId, reschedule.Value);
+            if (info is null)
+            {
+                return CantChange();
+            }
+
+            topic = info.Topic;
+        }
+
         if (!IsDefined(topic))
         {
             return RedirectToAction(nameof(Index));
@@ -51,20 +67,28 @@ public class BookController : Controller
             language = null;
         }
 
-        var days = await _bookingService.GetFreeSlotsAsync(_userManager.GetUserId(User)!, topic!.Value, language);
+        var days = await _bookingService.GetFreeSlotsAsync(userId, topic!.Value, language, info?.AppointmentId);
         if (days is null)
         {
             return NotFound();
         }
 
-        ViewData["Topic"] = topic.Value;
-        ViewData["Language"] = language;
-        return View(days);
+        var model = info is null
+            ? new BookSlotsViewModel { Topic = topic.Value, Language = language, Days = days }
+            : new BookSlotsViewModel
+            {
+                Topic = topic.Value,
+                Language = language,
+                Reschedule = info,
+                SameProfessional = Split(days, s => s.Professional.Id == info.ProfessionalId),
+                Days = Split(days, s => s.Professional.Id != info.ProfessionalId)
+            };
+        return View(model);
     }
 
     // An approved professional's profile, opened from a slot.
     [HttpGet]
-    public async Task<IActionResult> Professional(int id, Topic? topic, Language? language)
+    public async Task<IActionResult> Professional(int id, Topic? topic, Language? language, int? reschedule)
     {
         var professional = await _bookingService.GetProfessionalAsync(id);
         if (professional is null)
@@ -74,26 +98,51 @@ public class BookController : Controller
 
         ViewData["Topic"] = IsDefined(topic) ? topic : null;
         ViewData["Language"] = language is not null && Enum.IsDefined(language.Value) ? language : null;
+        ViewData["Reschedule"] = reschedule;
         return View(professional);
     }
 
     // Step 3: the request page for a slot. (Named RequestPage because Controller already has a Request property.)
     [HttpGet]
     [ActionName("Request")]
-    public async Task<IActionResult> RequestPage(int slotId, Topic? topic)
+    public async Task<IActionResult> RequestPage(int slotId, Topic? topic, int? reschedule)
     {
+        var userId = _userManager.GetUserId(User)!;
+        RescheduleInfo? info = null;
+        if (reschedule is not null)
+        {
+            info = await _bookingService.GetRescheduleAsync(userId, reschedule.Value);
+            if (info is null)
+            {
+                return CantChange();
+            }
+
+            topic = info.Topic;
+
+            // The form shows the appointment's topic, not whatever came in the URL.
+            ModelState.Remove(nameof(topic));
+        }
+
         if (!IsDefined(topic))
         {
             return RedirectToAction(nameof(Index));
         }
 
-        var page = await _bookingService.GetRequestPageAsync(_userManager.GetUserId(User)!, slotId, topic!.Value);
+        var page = await _bookingService.GetRequestPageAsync(userId, slotId, topic!.Value, info?.AppointmentId);
         if (page is null)
         {
             return NotFound();
         }
 
-        return View(new BookRequestViewModel { SlotId = slotId, Topic = topic, Page = page });
+        return View(new BookRequestViewModel
+        {
+            SlotId = slotId,
+            Topic = topic,
+            Concern = info?.Concern,
+            RescheduleId = info?.AppointmentId,
+            Reschedule = info,
+            Page = page
+        });
     }
 
     [HttpPost]
@@ -102,6 +151,18 @@ public class BookController : Controller
     public async Task<IActionResult> SendRequest(BookRequestViewModel model)
     {
         var userId = _userManager.GetUserId(User)!;
+        if (model.RescheduleId is not null)
+        {
+            model.Reschedule = await _bookingService.GetRescheduleAsync(userId, model.RescheduleId.Value);
+            if (model.Reschedule is null)
+            {
+                return CantChange();
+            }
+
+            model.Topic = model.Reschedule.Topic;
+            ModelState.Remove(nameof(model.Topic));
+        }
+
         if (!IsDefined(model.Topic))
         {
             return RedirectToAction(nameof(Index));
@@ -111,7 +172,8 @@ public class BookController : Controller
         {
             var result = await _bookingService.RequestAsync(
                 userId,
-                new BookingRequest(model.SlotId, model.Topic!.Value, model.Concern!, model.ShareCheckIns, model.ShareBabyId));
+                new BookingRequest(
+                    model.SlotId, model.Topic!.Value, model.Concern!, model.ShareCheckIns, model.ShareBabyId, model.RescheduleId));
 
             if (result.Status == BookingStatus.Sent)
             {
@@ -119,7 +181,12 @@ public class BookController : Controller
                     "Book_Sent",
                     result.ProfessionalName!,
                     BookText.Moment(_localizer, result.ConfirmBy!.Value)].Value;
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction(nameof(AppointmentsController.Index), "Appointments");
+            }
+
+            if (result.Status == BookingStatus.RescheduleGone)
+            {
+                return CantChange();
             }
 
             if (result.Status == BookingStatus.Invalid)
@@ -130,7 +197,7 @@ public class BookController : Controller
             model.Problem = result.Status;
         }
 
-        model.Page = await _bookingService.GetRequestPageAsync(userId, model.SlotId, model.Topic!.Value);
+        model.Page = await _bookingService.GetRequestPageAsync(userId, model.SlotId, model.Topic!.Value, model.RescheduleId);
         if (model.Page is null)
         {
             return NotFound();
@@ -138,6 +205,18 @@ public class BookController : Controller
 
         return View(model);
     }
+
+    // The appointment being rescheduled can no longer be changed: back to My appointments with a message.
+    private RedirectToActionResult CantChange()
+    {
+        TempData[ProblemMessageKey] = _localizer["Book_Problem_RescheduleGone"].Value;
+        return RedirectToAction(nameof(AppointmentsController.Index), "Appointments");
+    }
+
+    private static List<FreeSlotDay> Split(IReadOnlyList<FreeSlotDay> days, Func<FreeSlot, bool> keep) =>
+        days.Select(d => new FreeSlotDay(d.Date, d.Slots.Where(keep).ToList()))
+            .Where(d => d.Slots.Count > 0)
+            .ToList();
 
     private static bool IsDefined(Topic? topic) => topic is not null && Enum.IsDefined(topic.Value);
 }

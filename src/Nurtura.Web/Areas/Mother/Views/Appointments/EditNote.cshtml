@@ -1,0 +1,42 @@
+@using Nurtura.Core.Entities
+@using Nurtura.Web.Areas.Mother
+@model Nurtura.Web.Areas.Mother.Models.EditNoteViewModel
+@{
+    ViewData["Title"] = L["MyAppointments_EditNoteTitle"];
+    var item = Model.Item!;
+}
+
+<div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6">
+        <a asp-action="Index" class="d-inline-block mb-2">&lsaquo; @L["MyAppointments_Back"]</a>
+        <h1 class="h3 mb-3">@ViewData["Title"]</h1>
+
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="fw-semibold">@BookText.Day(L, item.Date)</div>
+                <div class="mb-1">@BookText.HourRange(item.Hour)</div>
+                <div class="small text-body-secondary">
+                    @L["Book_TopicLabel", L["Topic_" + item.Topic]] · @L["MyAppointments_With", item.ProfessionalName]
+                </div>
+            </div>
+        </div>
+
+        <form asp-action="EditNote" method="post" data-submit-once>
+            <input type="hidden" asp-for="Id" />
+            <div class="mb-4">
+                <label asp-for="Concern" class="form-label fw-semibold"></label>
+                <textarea asp-for="Concern" class="form-control" rows="5" maxlength="@Appointment.ConcernMaxLength"
+                          data-note-input></textarea>
+                <div class="form-text text-end" data-note-counter data-template="@L["CheckIn_NoteCounter"]"
+                     data-max="@Appointment.ConcernMaxLength" aria-live="polite"></div>
+                <span asp-validation-for="Concern" class="text-danger"></span>
+            </div>
+            <button type="submit" class="btn btn-primary w-100 mb-4">@L["MyAppointments_Save"]</button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/note-counter.js" asp-append-version="true"></script>
+}

@@ -20,6 +20,13 @@ public class AppointmentConfiguration : IEntityTypeConfiguration<Appointment>
             .HasConversion<string>()
             .HasMaxLength(30);
 
+        builder.Property(a => a.CancelledBy)
+            .HasConversion<string>()
+            .HasMaxLength(30);
+
+        builder.Property(a => a.ProfessionalMessage)
+            .HasMaxLength(Appointment.MessageMaxLength);
+
         // Deleting the mother's profile deletes her appointments.
         builder.HasOne<MotherProfile>()
             .WithMany()

@@ -1,0 +1,87 @@
+@using Nurtura.Core.Entities
+@using Nurtura.Core.Services
+@using Nurtura.Web.Areas.Mother
+@model Nurtura.Core.Services.MotherAppointment
+@{
+    var badge = Model.State switch
+    {
+        AppointmentState.Requested => "bg-warning-subtle text-warning-emphasis",
+        AppointmentState.Confirmed or AppointmentState.Now => "bg-success-subtle text-success-emphasis",
+        _ => "bg-secondary-subtle text-secondary-emphasis"
+    };
+    // During its hour the badge still says Confirmed; "Now" is shown in place of the actions.
+    var badgeState = Model.State == AppointmentState.Now ? AppointmentState.Confirmed : Model.State;
+    var collapseId = $"cancel-{Model.Id}";
+}
+
+<div class="card mb-3">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start gap-2 mb-1">
+            <div>
+                <div class="fw-semibold">@BookText.Day(L, Model.Date)</div>
+                <div>@BookText.HourRange(Model.Hour)</div>
+            </div>
+            <span class="badge @badge">@L["AppointmentState_" + badgeState]</span>
+        </div>
+        <div class="small text-body-secondary mb-2">
+            @L["Book_TopicLabel", L["Topic_" + Model.Topic]] · @L["MyAppointments_With", Model.ProfessionalName]
+        </div>
+
+        @switch (Model.State)
+        {
+            case AppointmentState.Requested:
+                <p class="small mb-2">@L["MyAppointments_Waiting", Model.ProfessionalName, BookText.Moment(L, Model.ConfirmBy)]</p>
+                break;
+            case AppointmentState.Cancelled when Model.CancelledBy == AppointmentParty.Professional:
+                <p class="small mb-2">@L["MyAppointments_CancelledByProfessional", Model.ProfessionalName]</p>
+                break;
+            case AppointmentState.Cancelled:
+                <p class="small mb-2">@L["MyAppointments_CancelledByYou"]</p>
+                break;
+            case AppointmentState.Rejected:
+                <p class="small mb-2">@L["MyAppointments_Rejected", Model.ProfessionalName]</p>
+                break;
+            case AppointmentState.Expired:
+                <p class="small mb-2">@L["MyAppointments_Expired"]</p>
+                break;
+        }
+
+        @if (Model.Message is not null && Model.State is AppointmentState.Cancelled or AppointmentState.Rejected)
+        {
+            <div class="small border-start border-3 ps-2 mb-2">
+                <div class="fw-semibold">@L["MyAppointments_MessageFrom", Model.ProfessionalName]</div>
+                <div class="text-break" style="white-space: pre-line">@Model.Message</div>
+            </div>
+        }
+
+        <div class="small mb-2">
+            <div class="fw-semibold">@L["MyAppointments_YourNote"]</div>
+            <div class="text-break text-body-secondary" style="white-space: pre-line">@Model.Concern</div>
+        </div>
+
+        @if (Model.State == AppointmentState.Now)
+        {
+            <p class="fw-bold mb-0">@L["AppointmentState_Now"]</p>
+        }
+        else if (Model.CanChange)
+        {
+            <div class="d-flex flex-wrap gap-2">
+                <a asp-action="EditNote" asp-route-id="@Model.Id" class="btn btn-outline-primary btn-sm">@L["MyAppointments_EditNote"]</a>
+                <a asp-controller="Book" asp-action="Slots" asp-route-reschedule="@Model.Id" class="btn btn-outline-primary btn-sm">@L["MyAppointments_Reschedule"]</a>
+                <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="collapse" data-bs-target="#@collapseId"
+                        aria-expanded="false" aria-controls="@collapseId">@L["MyAppointments_Cancel"]</button>
+            </div>
+            @* The one confirmation before cancelling. *@
+            <div class="collapse" id="@collapseId">
+                <div class="border rounded p-2 mt-2">
+                    <p class="small mb-2">@L["MyAppointments_CancelQuestion"]</p>
+                    <form asp-action="Cancel" asp-route-id="@Model.Id" method="post" data-submit-once class="d-flex flex-wrap gap-2">
+                        <button type="submit" class="btn btn-danger btn-sm">@L["MyAppointments_CancelYes"]</button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="collapse"
+                                data-bs-target="#@collapseId">@L["MyAppointments_CancelNo"]</button>
+                    </form>
+                </div>
+            </div>
+        }
+    </div>
+</div>

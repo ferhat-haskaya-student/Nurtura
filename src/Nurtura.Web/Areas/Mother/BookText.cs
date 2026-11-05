@@ -27,6 +27,22 @@ public static class BookText
             polandTime.ToString(DateFormats.Display, CultureInfo.InvariantCulture),
             polandTime.ToString(TimeFormats.Display, CultureInfo.InvariantCulture)];
 
+    // "2 d 5 h left", "5 h 20 min left" or "20 min left" (never below 0).
+    public static string TimeLeft(IStringLocalizer localizer, TimeSpan left)
+    {
+        var minutes = Math.Max(0, (int)left.TotalMinutes);
+        var days = minutes / (24 * 60);
+        var hours = minutes / 60 % 24;
+        if (days > 0)
+        {
+            return localizer["Appointments_LeftDays", days, hours];
+        }
+
+        return minutes >= 60
+            ? localizer["Appointments_LeftHours", minutes / 60, minutes % 60]
+            : localizer["Appointments_LeftMinutes", minutes];
+    }
+
     // "Polish, English".
     public static string Languages(IStringLocalizer localizer, IEnumerable<Language> languages) =>
         string.Join(", ", languages.Select(l => localizer["Language_" + l].Value));

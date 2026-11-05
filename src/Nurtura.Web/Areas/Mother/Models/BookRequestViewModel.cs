@@ -33,8 +33,14 @@ public class BookRequestViewModel
     // The baby whose sleeps and feeds she chose to mark as shared; empty for none.
     public int? ShareBabyId { get; set; }
 
+    // Her appointment that this request replaces, when rescheduling.
+    public int? RescheduleId { get; set; }
+
     // Filled in by the controller for display; not posted.
     public BookingRequestPage? Page { get; set; }
+
+    // Filled in by the controller when rescheduling; not posted.
+    public RescheduleInfo? Reschedule { get; set; }
 
     // Why the request was not sent, when it was refused on the server.
     public BookingStatus? Problem { get; set; }

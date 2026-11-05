@@ -1,0 +1,82 @@
+@using Nurtura.Core
+@using Nurtura.Core.Entities
+@using Nurtura.Core.Services
+@using Nurtura.Web.Areas.Mother
+@model Nurtura.Core.Services.ProfessionalAppointment
+@{
+    // Shows only what she may see of the mother: display name, topic and note.
+    var showActions = ViewData["HideActions"] is not true;
+    var badge = Model.State switch
+    {
+        AppointmentState.Requested => "bg-warning-subtle text-warning-emphasis",
+        AppointmentState.Confirmed or AppointmentState.Now => "bg-success-subtle text-success-emphasis",
+        _ => "bg-secondary-subtle text-secondary-emphasis"
+    };
+    // During its hour the badge still says Confirmed; "Now" is shown in place of the actions.
+    var badgeState = Model.State == AppointmentState.Now ? AppointmentState.Confirmed : Model.State;
+}
+
+<div class="card mb-3">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start gap-2 mb-1">
+            <div>
+                <div class="fw-semibold">@BookText.Day(L, Model.Date)</div>
+                <div>@BookText.HourRange(Model.Hour)</div>
+            </div>
+            <span class="badge @badge">@L["AppointmentState_" + badgeState]</span>
+        </div>
+        <div class="small text-body-secondary mb-2">
+            @L["Book_TopicLabel", L["Topic_" + Model.Topic]] · <span class="fw-semibold text-body">@Model.MotherName</span>
+        </div>
+
+        @if (Model.State == AppointmentState.Requested)
+        {
+            <p class="small mb-2">
+                @L["Appointments_ConfirmBy", BookText.Moment(L, Model.ConfirmBy), BookText.TimeLeft(L, Model.ConfirmBy - PolandTime.Now)]
+            </p>
+        }
+        else if (Model.State == AppointmentState.Cancelled)
+        {
+            <p class="small mb-2">
+                @(Model.CancelledBy == AppointmentParty.Professional
+                    ? L["Appointments_CancelledByYou"]
+                    : L["Appointments_CancelledByMother", Model.MotherName])
+            </p>
+        }
+        else if (Model.State == AppointmentState.Expired)
+        {
+            <p class="small mb-2">@L["Appointments_Expired"]</p>
+        }
+
+        <div class="small mb-2">
+            <div class="fw-semibold">@L["Appointments_Note"]</div>
+            <div class="text-break text-body-secondary" style="white-space: pre-line">@Model.Concern</div>
+        </div>
+
+        @if (Model.Message is not null && Model.State is AppointmentState.Cancelled or AppointmentState.Rejected)
+        {
+            <div class="small border-start border-3 ps-2 mb-2">
+                <div class="fw-semibold">@L["Appointments_YourMessage"]</div>
+                <div class="text-break" style="white-space: pre-line">@Model.Message</div>
+            </div>
+        }
+
+        @if (Model.State == AppointmentState.Now)
+        {
+            <p class="fw-bold mb-0">@L["AppointmentState_Now"]</p>
+        }
+        else if (showActions && Model.CanChange && Model.State == AppointmentState.Requested)
+        {
+            <div class="d-flex flex-wrap gap-2">
+                <form asp-action="Accept" asp-route-id="@Model.Id" method="post" data-submit-once>
+                    <button type="submit" class="btn btn-primary btn-sm">@L["Appointments_Accept"]</button>
+                </form>
+                <a asp-action="Reject" asp-route-id="@Model.Id" class="btn btn-outline-danger btn-sm">@L["Appointments_Reject"]</a>
+            </div>
+        }
+        else if (showActions && Model.CanChange && Model.State == AppointmentState.Confirmed)
+        {
+            <a asp-action="Cancel" asp-route-id="@Model.Id" class="btn btn-outline-danger btn-sm">@L["Appointments_Cancel"]</a>
+        }
+    </div>
+</div>

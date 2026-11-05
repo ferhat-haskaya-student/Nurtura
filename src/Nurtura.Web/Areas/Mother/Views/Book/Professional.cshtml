@@ -5,13 +5,14 @@
     ViewData["Title"] = Model.DisplayName;
     var topic = ViewData["Topic"] as Topic?;
     var language = ViewData["Language"] as Language?;
+    var reschedule = ViewData["Reschedule"] as int?;
 }
 
 <div class="row justify-content-center">
     <div class="col-12 col-md-8 col-lg-6">
         @if (topic is not null)
         {
-            <a asp-action="Slots" asp-route-topic="@topic" asp-route-language="@language" class="d-inline-block mb-2">&lsaquo; @L["Book_BackToSlots"]</a>
+            <a asp-action="Slots" asp-route-topic="@topic" asp-route-language="@language" asp-route-reschedule="@reschedule" class="d-inline-block mb-2">&lsaquo; @L["Book_BackToSlots"]</a>
         }
         else
         {

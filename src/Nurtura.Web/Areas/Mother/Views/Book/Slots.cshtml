@@ -1,10 +1,13 @@
 @using Nurtura.Core.Entities
+@using Nurtura.Core.Services
 @using Nurtura.Web.Areas.Mother
-@model IReadOnlyList<Nurtura.Core.Services.FreeSlotDay>
+@model Nurtura.Web.Areas.Mother.Models.BookSlotsViewModel
 @{
-    var topic = (Topic)ViewData["Topic"]!;
-    var language = ViewData["Language"] as Language?;
-    ViewData["Title"] = L["Book_SlotsTitle", L["Topic_" + topic]];
+    var topic = Model.Topic;
+    var language = Model.Language;
+    var reschedule = Model.Reschedule;
+    var rescheduleId = reschedule?.AppointmentId;
+    ViewData["Title"] = reschedule is null ? L["Book_SlotsTitle", L["Topic_" + topic]] : L["Book_RescheduleTitle"];
     var filters = new (Language? Value, string Key)[]
     {
         (null, "Book_AnyLanguage"),
@@ -13,30 +16,13 @@
     };
 }
 
-<div class="row justify-content-center">
-    <div class="col-12 col-md-8 col-lg-6">
-        <a asp-action="Index" class="d-inline-block mb-2">&lsaquo; @L["Book_ChangeTopic"]</a>
-        <h1 class="h3 mb-1">@ViewData["Title"]</h1>
-        <p class="text-body-secondary mb-3">@L["Book_SlotsIntro"]</p>
-
-        <div class="btn-group w-100 mb-4" role="group" aria-label="@L["Book_LanguageFilter"]">
-            @foreach (var filter in filters)
-            {
-                var isActive = filter.Value == language;
-                <a asp-action="Slots" asp-route-topic="@topic" asp-route-language="@filter.Value"
-                   class="btn btn-sm @(isActive ? "btn-primary" : "btn-outline-primary")"
-                   aria-current="@(isActive ? "true" : null)">@L[filter.Key]</a>
-            }
-        </div>
-
-        @if (Model.Count == 0)
+@functions {
+    // One day's heading and its free times.
+    private async Task Days(IReadOnlyList<FreeSlotDay> days, Topic topic, Language? language, int? rescheduleId)
+    {
+        foreach (var day in days)
         {
-            <p class="mb-4">@L["Book_NoSlots"]</p>
-        }
-
-        @foreach (var day in Model)
-        {
-            <h2 class="h6 fw-semibold mt-3 mb-2">@BookText.Day(L, day.Date)</h2>
+            <h3 class="h6 fw-semibold mt-3 mb-2">@BookText.Day(L, day.Date)</h3>
             <div class="list-group mb-3">
                 @foreach (var slot in day.Slots)
                 {
@@ -46,17 +32,70 @@
                             <div class="text-break">
                                 <div class="fw-semibold">@BookText.HourRange(slot.Hour)</div>
                                 <a asp-action="Professional" asp-route-id="@professional.Id" asp-route-topic="@topic"
-                                   asp-route-language="@language">@professional.DisplayName</a>
+                                   asp-route-language="@language" asp-route-reschedule="@rescheduleId">@professional.DisplayName</a>
                                 <div class="small text-body-secondary">
                                     @L["ProfessionalType_" + professional.Type] · @BookText.Languages(L, professional.Languages)
                                 </div>
                             </div>
                             <a asp-action="Request" asp-route-slotId="@slot.SlotId" asp-route-topic="@topic"
+                               asp-route-reschedule="@rescheduleId"
                                class="btn btn-primary btn-sm flex-shrink-0">@L["Book_RequestButton"]</a>
                         </div>
                     </div>
                 }
             </div>
         }
+        await Task.CompletedTask;
+    }
+}
+
+<div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6">
+        @if (reschedule is null)
+        {
+            <a asp-action="Index" class="d-inline-block mb-2">&lsaquo; @L["Book_ChangeTopic"]</a>
+        }
+        else
+        {
+            <a asp-controller="Appointments" asp-action="Index" class="d-inline-block mb-2">&lsaquo; @L["MyAppointments_Back"]</a>
+        }
+        <h1 class="h3 mb-1">@ViewData["Title"]</h1>
+        @if (reschedule is not null)
+        {
+            <p class="mb-2">
+                @L["Book_RescheduleIntro",
+                    BookText.Day(L, reschedule.Date) + ", " + BookText.HourRange(reschedule.Hour),
+                    reschedule.ProfessionalName]
+            </p>
+        }
+        <p class="text-body-secondary mb-3">@L["Book_SlotsIntro"]</p>
+
+        <div class="btn-group w-100 mb-4" role="group" aria-label="@L["Book_LanguageFilter"]">
+            @foreach (var filter in filters)
+            {
+                var isActive = filter.Value == language;
+                <a asp-action="Slots" asp-route-topic="@topic" asp-route-language="@filter.Value" asp-route-reschedule="@rescheduleId"
+                   class="btn btn-sm @(isActive ? "btn-primary" : "btn-outline-primary")"
+                   aria-current="@(isActive ? "true" : null)">@L[filter.Key]</a>
+            }
+        </div>
+
+        @if (reschedule is not null)
+        {
+            <h2 class="h5 mb-2">@L["Book_RescheduleSame", reschedule.ProfessionalName]</h2>
+            @if (Model.SameProfessional.Count == 0)
+            {
+                <p class="text-body-secondary mb-4">@L["Book_RescheduleNoSame", reschedule.ProfessionalName]</p>
+            }
+            await Days(Model.SameProfessional, topic, language, rescheduleId);
+
+            <h2 class="h5 mt-4 mb-2">@L["Book_RescheduleOthers"]</h2>
+        }
+
+        @if (Model.Days.Count == 0)
+        {
+            <p class="mb-4">@L["Book_NoSlots"]</p>
+        }
+        @{ await Days(Model.Days, topic, language, rescheduleId); }
     </div>
 </div>

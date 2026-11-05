@@ -165,6 +165,10 @@ namespace Nurtura.Data.Migrations
                     b.Property<int>("AvailabilitySlotId")
                         .HasColumnType("integer");
 
+                    b.Property<string>("CancelledBy")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
                     b.Property<string>("ConcernText")
                         .IsRequired()
                         .HasMaxLength(500)
@@ -175,6 +179,10 @@ namespace Nurtura.Data.Migrations
 
                     b.Property<int>("MotherProfileId")
                         .HasColumnType("integer");
+
+                    b.Property<string>("ProfessionalMessage")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
 
                     b.Property<string>("Status")
                         .IsRequired()

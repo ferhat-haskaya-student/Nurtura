@@ -1,0 +1,43 @@
+@model Nurtura.Core.Services.MotherAppointments
+@{
+    ViewData["Title"] = L["MyAppointments_Title"];
+    var statusMessage = TempData["StatusMessage"] as string;
+    var problemMessage = TempData["ProblemMessage"] as string;
+}
+
+<div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6">
+        <h1 class="h3 mb-3">@ViewData["Title"]</h1>
+
+        @if (statusMessage is not null)
+        {
+            <div class="alert alert-success" role="status">@statusMessage</div>
+        }
+
+        @if (problemMessage is not null)
+        {
+            <div class="alert alert-warning" role="alert">@problemMessage</div>
+        }
+
+        <h2 class="h5 mt-2 mb-2">@L["MyAppointments_Upcoming"]</h2>
+        @if (Model.Upcoming.Count == 0)
+        {
+            <p class="text-body-secondary mb-2">@L["MyAppointments_NoUpcoming"]</p>
+            <a asp-controller="Book" asp-action="Index" class="btn btn-primary mb-4">@L["MyAppointments_BookLink"]</a>
+        }
+        @foreach (var item in Model.Upcoming)
+        {
+            <partial name="_AppointmentCard" model="item" />
+        }
+
+        <h2 class="h5 mt-4 mb-2">@L["MyAppointments_Past"]</h2>
+        @if (Model.Past.Count == 0)
+        {
+            <p class="text-body-secondary mb-4">@L["MyAppointments_NoPast"]</p>
+        }
+        @foreach (var item in Model.Past)
+        {
+            <partial name="_AppointmentCard" model="item" />
+        }
+    </div>
+</div>

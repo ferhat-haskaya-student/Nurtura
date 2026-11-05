@@ -24,11 +24,13 @@ public class BookingService
     // Free slots for the topic, grouped by day: open, of an approved professional who covers the topic
     // (and speaks the language, when one is chosen), starting 12 hours to 4 weeks from now, with no
     // active appointment, and not at an hour where she already has an appointment.
+    // When rescheduling, the hour of the appointment being replaced does not count as taken.
     // Null when the user has no mother profile.
     public async Task<IReadOnlyList<FreeSlotDay>?> GetFreeSlotsAsync(
         string userId,
         Topic topic,
         Language? language,
+        int? rescheduleId = null,
         CancellationToken cancellationToken = default)
     {
         var motherId = await GetMotherIdAsync(userId, cancellationToken);
@@ -40,7 +42,9 @@ public class BookingService
         await AppointmentExpiry.ExpireOverdueAsync(_db, cancellationToken);
 
         var now = PolandTime.Now;
-        var busy = (await GetActiveAsync(motherId.Value, cancellationToken)).Select(a => (a.Date, a.Hour)).ToHashSet();
+        var busy = (await GetActiveAsync(motherId.Value, rescheduleId, cancellationToken))
+            .Select(a => (a.Date, a.Hour))
+            .ToHashSet();
         var slots = await GetCandidateSlotsAsync(topic, language, null, now, cancellationToken);
 
         return slots
@@ -48,6 +52,34 @@ public class BookingService
             .GroupBy(s => s.Date)
             .Select(g => new FreeSlotDay(g.Key, g.ToList()))
             .ToList();
+    }
+
+    // Her appointment to reschedule: requested or confirmed and not started. Null otherwise.
+    public async Task<RescheduleInfo?> GetRescheduleAsync(string userId, int appointmentId, CancellationToken cancellationToken = default)
+    {
+        var motherId = await GetMotherIdAsync(userId, cancellationToken);
+        if (motherId is null)
+        {
+            return null;
+        }
+
+        await AppointmentExpiry.ExpireOverdueAsync(_db, cancellationToken);
+
+        var row = await (
+                from a in _db.Appointments
+                where a.Id == appointmentId && a.MotherProfileId == motherId && Appointment.ActiveStatuses.Contains(a.Status)
+                join s in _db.AvailabilitySlots on a.AvailabilitySlotId equals s.Id
+                join p in _db.ProfessionalProfiles on s.ProfessionalProfileId equals p.Id
+                select new { a.Id, s.Date, s.StartHour, a.Topic, ProfessionalId = p.Id, p.DisplayName, a.Status, a.ConcernText })
+            .SingleOrDefaultAsync(cancellationToken);
+        if (row is null || SlotStart(row.Date, row.StartHour) <= PolandTime.Now)
+        {
+            return null;
+        }
+
+        return new RescheduleInfo(
+            row.Id, row.Date, row.StartHour, row.Topic, row.ProfessionalId, row.DisplayName,
+            row.Status == AppointmentStatus.Confirmed, row.ConcernText);
     }
 
     // An approved professional's profile; null for any other id.
@@ -87,6 +119,7 @@ public class BookingService
         string userId,
         int slotId,
         Topic topic,
+        int? rescheduleId = null,
         CancellationToken cancellationToken = default)
     {
         var motherId = await GetMotherIdAsync(userId, cancellationToken);
@@ -113,7 +146,7 @@ public class BookingService
         }
         else
         {
-            problem = await CheckMotherAsync(motherId.Value, slot, now, cancellationToken);
+            problem = await CheckMotherAsync(motherId.Value, slot, now, rescheduleId, cancellationToken);
         }
 
         var babies = IsBabyTopic(topic)
@@ -167,12 +200,36 @@ public class BookingService
             return new BookingResult(BookingStatus.SlotTaken);
         }
 
-        if (await CheckMotherAsync(motherId.Value, slot, now, cancellationToken) is { } problem)
+        if (await CheckMotherAsync(motherId.Value, slot, now, request.RescheduleId, cancellationToken) is { } problem)
         {
             return new BookingResult(problem);
         }
 
         var utcNow = DateTime.UtcNow;
+
+        // Rescheduling: the old appointment is cancelled in the same transaction, only if it is still hers,
+        // requested or confirmed, for the same topic and not started. If the new request then fails, the
+        // transaction is rolled back and the old appointment stays as it was.
+        if (request.RescheduleId is { } oldId)
+        {
+            var today = DateOnly.FromDateTime(now);
+            var hour = now.Hour;
+            var cancelled = await _db.Appointments
+                .Where(a => a.Id == oldId && a.MotherProfileId == motherId && a.Topic == request.Topic
+                    && Appointment.ActiveStatuses.Contains(a.Status)
+                    && _db.AvailabilitySlots.Any(s => s.Id == a.AvailabilitySlotId
+                        && (s.Date > today || (s.Date == today && s.StartHour > hour))))
+                .ExecuteUpdateAsync(
+                    set => set
+                        .SetProperty(a => a.Status, AppointmentStatus.Cancelled)
+                        .SetProperty(a => a.CancelledBy, AppointmentParty.Mother)
+                        .SetProperty(a => a.UpdatedAt, utcNow),
+                    cancellationToken);
+            if (cancelled != 1)
+            {
+                return new BookingResult(BookingStatus.RescheduleGone);
+            }
+        }
         _db.Appointments.Add(new Appointment
         {
             MotherProfileId = motherId.Value,
@@ -226,13 +283,15 @@ public class BookingService
     }
 
     // The mother-side limits: at most MaxUpcoming upcoming appointments, and none already at that date and hour.
+    // The appointment being rescheduled (if any) does not count for either.
     private async Task<BookingStatus?> CheckMotherAsync(
         int motherId,
         FreeSlot slot,
         DateTime now,
+        int? rescheduleId,
         CancellationToken cancellationToken)
     {
-        var active = await GetActiveAsync(motherId, cancellationToken);
+        var active = await GetActiveAsync(motherId, rescheduleId, cancellationToken);
         if (active.Any(a => a.Date == slot.Date && a.Hour == slot.Hour))
         {
             return BookingStatus.SameTime;
@@ -246,11 +305,11 @@ public class BookingService
         return null;
     }
 
-    // Her requested and confirmed appointments, as slot date and hour.
-    private async Task<List<(DateOnly Date, int Hour)>> GetActiveAsync(int motherId, CancellationToken cancellationToken)
+    // Her requested and confirmed appointments, as slot date and hour, leaving out the one with exceptId.
+    private async Task<List<(DateOnly Date, int Hour)>> GetActiveAsync(int motherId, int? exceptId, CancellationToken cancellationToken)
     {
         return (await _db.Appointments
-                .Where(a => a.MotherProfileId == motherId && Appointment.ActiveStatuses.Contains(a.Status))
+                .Where(a => a.MotherProfileId == motherId && Appointment.ActiveStatuses.Contains(a.Status) && a.Id != exceptId)
                 .Join(_db.AvailabilitySlots, a => a.AvailabilitySlotId, s => s.Id, (a, s) => new { s.Date, s.StartHour })
                 .ToListAsync(cancellationToken))
             .Select(s => (s.Date, s.StartHour))

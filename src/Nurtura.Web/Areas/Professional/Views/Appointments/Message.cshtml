@@ -1,0 +1,39 @@
+@using Nurtura.Core.Entities
+@model Nurtura.Web.Areas.Professional.Models.MessageViewModel
+@{
+    // The reject page (for a request) or the cancel page (for a confirmed appointment).
+    var action = (string)ViewData["Action"]!;
+    var isReject = action == "Reject";
+    ViewData["Title"] = L[isReject ? "Appointments_RejectTitle" : "Appointments_CancelTitle"];
+    var item = Model.Item!;
+}
+
+<div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6">
+        <a asp-action="Index" class="d-inline-block mb-2">&lsaquo; @L["Appointments_Back"]</a>
+        <h1 class="h3 mb-3">@ViewData["Title"]</h1>
+
+        <partial name="_AppointmentCard" model="item" view-data='new ViewDataDictionary(ViewData) { ["HideActions"] = true }' />
+
+        <form asp-action="@action" method="post" data-submit-once>
+            <input type="hidden" asp-for="Id" />
+            <div class="mb-3">
+                <label asp-for="Message" class="form-label fw-semibold">@L["Appointments_Message", item.MotherName]</label>
+                <textarea asp-for="Message" class="form-control" rows="4" maxlength="@Appointment.MessageMaxLength"
+                          data-note-input></textarea>
+                <div class="form-text text-end" data-note-counter data-template="@L["CheckIn_NoteCounter"]"
+                     data-max="@Appointment.MessageMaxLength" aria-live="polite"></div>
+                <span asp-validation-for="Message" class="text-danger"></span>
+            </div>
+            <p class="small text-body-secondary">@L["Appointments_FreedHint"]</p>
+            <button type="submit" class="btn btn-danger w-100 mb-4">
+                @L[isReject ? "Appointments_RejectConfirm" : "Appointments_CancelConfirm"]
+            </button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/note-counter.js" asp-append-version="true"></script>
+}

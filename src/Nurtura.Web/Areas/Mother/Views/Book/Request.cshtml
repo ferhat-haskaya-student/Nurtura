@@ -9,11 +9,13 @@
     var professional = slot.Professional;
     var topic = Model.Topic!.Value;
     var problem = Model.Problem ?? page.Problem;
+    var reschedule = Model.Reschedule;
+    var rescheduleId = reschedule?.AppointmentId;
 }
 
 <div class="row justify-content-center">
     <div class="col-12 col-md-8 col-lg-6">
-        <a asp-action="Slots" asp-route-topic="@topic" class="d-inline-block mb-2">&lsaquo; @L["Book_BackToSlots"]</a>
+        <a asp-action="Slots" asp-route-topic="@topic" asp-route-reschedule="@rescheduleId" class="d-inline-block mb-2">&lsaquo; @L["Book_BackToSlots"]</a>
         <h1 class="h3 mb-3">@ViewData["Title"]</h1>
 
         <div class="card mb-3">
@@ -21,7 +23,7 @@
                 <div class="fw-semibold">@BookText.Day(L, slot.Date)</div>
                 <div class="fs-5 mb-2">@BookText.HourRange(slot.Hour)</div>
                 <div class="small text-body-secondary mb-2">@L["Book_TopicLabel", L["Topic_" + topic]]</div>
-                <a asp-action="Professional" asp-route-id="@professional.Id" asp-route-topic="@topic" class="fw-semibold">@professional.DisplayName</a>
+                <a asp-action="Professional" asp-route-id="@professional.Id" asp-route-topic="@topic" asp-route-reschedule="@rescheduleId" class="fw-semibold">@professional.DisplayName</a>
                 <div class="small text-body-secondary">
                     @L["ProfessionalType_" + professional.Type] · @BookText.Languages(L, professional.Languages)
                 </div>
@@ -33,7 +35,7 @@
             <div class="alert alert-warning" role="alert">
                 @L["Book_Problem_" + problem]
                 <div class="mt-2">
-                    <a asp-action="Slots" asp-route-topic="@topic" class="alert-link">@L["Book_SeeOtherSlots"]</a>
+                    <a asp-action="Slots" asp-route-topic="@topic" asp-route-reschedule="@rescheduleId" class="alert-link">@L["Book_SeeOtherSlots"]</a>
                 </div>
             </div>
         }
@@ -42,6 +44,7 @@
             <form asp-action="Request" method="post" data-submit-once>
                 <input type="hidden" asp-for="SlotId" />
                 <input type="hidden" asp-for="Topic" />
+                <input type="hidden" asp-for="RescheduleId" />
 
                 <div class="mb-4">
                     <label asp-for="Concern" class="form-label fw-semibold"></label>
@@ -92,6 +95,16 @@
                 <p class="small text-body-secondary">
                     @L["Book_ConfirmByHint", professional.DisplayName, BookText.Moment(L, BookingService.ConfirmBy(slot.Date, slot.Hour))]
                 </p>
+
+                @if (reschedule is not null)
+                {
+                    @* Rescheduling: the current one is cancelled only when this request is sent. *@
+                    <div class="alert alert-warning small" role="note">
+                        @(reschedule.WasConfirmed
+                            ? L["Book_RescheduleWarning", reschedule.ProfessionalName]
+                            : L["Book_RescheduleRequestedNote"])
+                    </div>
+                }
 
                 <button type="submit" class="btn btn-primary w-100 mb-4">@L["Book_Send"]</button>
             </form>

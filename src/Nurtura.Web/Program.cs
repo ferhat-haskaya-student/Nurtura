@@ -98,6 +98,7 @@ builder.Services.AddScoped<FeedingService>();
 builder.Services.AddScoped<BabyRoutineService>();
 builder.Services.AddScoped<AvailabilityService>();
 builder.Services.AddScoped<BookingService>();
+builder.Services.AddScoped<AppointmentService>();
 
 var app = builder.Build();
 
