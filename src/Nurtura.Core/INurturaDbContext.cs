@@ -35,6 +35,8 @@ public interface INurturaDbContext
 
     DbSet<Appointment> Appointments { get; }
 
+    DbSet<Notification> Notifications { get; }
+
     // Identity's user table; implemented by IdentityDbContext.
     DbSet<ApplicationUser> Users { get; }
 

@@ -47,6 +47,10 @@ public sealed record ProfessionalAppointment(
     DateTime ConfirmBy,
     bool CanChange);
 
+// A confirmed consultation from 24 hours before its start until its end. Hour is Poland time.
+// IsNow: during its hour. IsToday: today, otherwise tomorrow.
+public sealed record ConsultationBanner(int AppointmentId, string OtherName, int Hour, bool IsNow, bool IsToday);
+
 // Requests: soonest start first. Upcoming: confirmed and not yet ended. Past: newest first.
 public sealed record ProfessionalAppointments(
     IReadOnlyList<ProfessionalAppointment> Requests,

@@ -1,0 +1,20 @@
+@using Nurtura.Web.Areas.Mother
+@model IReadOnlyList<Nurtura.Core.Services.ConsultationBanner>?
+@* From 24 hours before a confirmed consultation until its end; worked out from the clock, never stored. *@
+@if (Model is { Count: > 0 })
+{
+    foreach (var banner in Model)
+    {
+        <div class="alert alert-info" role="status">
+            @if (banner.IsNow)
+            {
+                <span class="fw-bold">@L["Banner_Now"]</span>
+                @L["Banner_NowText", banner.OtherName, BookText.HourRange(banner.Hour)]
+            }
+            else
+            {
+                @L[banner.IsToday ? "Banner_Today" : "Banner_Tomorrow", banner.OtherName, BookText.Hour(banner.Hour)]
+            }
+        </div>
+    }
+}

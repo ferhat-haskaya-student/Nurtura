@@ -1,0 +1,40 @@
+namespace Nurtura.Core.Entities;
+
+// An in-app notification. Only the details are stored; the sentence is built when it is shown,
+// in the reader's current language.
+public class Notification
+{
+    // Read notifications older than this are deleted.
+    public const int KeepReadDays = 30;
+
+    public int Id { get; set; }
+
+    // The user who receives it.
+    public string UserId { get; set; } = string.Empty;
+
+    public NotificationType Type { get; set; }
+
+    // For Rescheduled, the new appointment.
+    public int AppointmentId { get; set; }
+
+    // The other side's display name when it happened.
+    public string OtherName { get; set; } = string.Empty;
+
+    // The slot, Poland time.
+    public DateOnly Date { get; set; }
+
+    public int Hour { get; set; }
+
+    // Rescheduled only: the old slot, Poland time.
+    public DateOnly? PreviousDate { get; set; }
+
+    public int? PreviousHour { get; set; }
+
+    // The professional's optional message (rejected or cancelled).
+    public string? Message { get; set; }
+
+    // UTC.
+    public DateTime CreatedAt { get; set; }
+
+    public bool IsRead { get; set; }
+}

@@ -1,0 +1,57 @@
+@using System.Globalization
+@using Nurtura.Core
+@using Nurtura.Web.Localization
+@model IReadOnlyList<Nurtura.Core.Entities.Notification>
+@{
+    ViewData["Title"] = L["Notifications_Title"];
+    var hasUnread = Model.Any(n => !n.IsRead);
+}
+
+<div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+            <h1 class="h3 mb-0">@ViewData["Title"]</h1>
+            @if (hasUnread)
+            {
+                <form asp-action="MarkAllRead" method="post" data-submit-once>
+                    <button type="submit" class="btn btn-outline-secondary btn-sm">@L["Notifications_MarkAllRead"]</button>
+                </form>
+            }
+        </div>
+
+        @if (Model.Count == 0)
+        {
+            <p class="text-body-secondary">@L["Notifications_Empty"]</p>
+        }
+        else
+        {
+            <div class="list-group mb-4">
+                @foreach (var notification in Model)
+                {
+                    var received = PolandTime.ToLocal(notification.CreatedAt);
+                    <a asp-action="Open" asp-route-id="@notification.Id"
+                       class="list-group-item list-group-item-action py-3 @(notification.IsRead ? "" : "fw-semibold")">
+                        <div class="d-flex gap-2">
+                            @if (!notification.IsRead)
+                            {
+                                <span class="flex-shrink-0 mt-2 rounded-circle bg-primary" style="width: .5rem; height: .5rem;" aria-hidden="true"></span>
+                                <span class="visually-hidden">@L["Notifications_Unread"]</span>
+                            }
+                            <div class="text-break">
+                                <div>@NotificationText.Sentence(L, notification)</div>
+                                @if (notification.Message is not null)
+                                {
+                                    <div class="small fw-normal border-start border-3 ps-2 mt-1" style="white-space: pre-line">@notification.Message</div>
+                                }
+                                <div class="small fw-normal text-body-secondary mt-1">
+                                    @received.ToString(DateFormats.Display, CultureInfo.InvariantCulture)
+                                    @received.ToString(TimeFormats.Display, CultureInfo.InvariantCulture)
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                }
+            </div>
+        }
+    </div>
+</div>

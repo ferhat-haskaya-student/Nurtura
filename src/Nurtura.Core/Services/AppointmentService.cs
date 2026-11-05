@@ -65,6 +65,21 @@ public class AppointmentService
 
         await AppointmentExpiry.ExpireOverdueAsync(_db, cancellationToken);
 
+        // Who to tell: the professional of the slot.
+        var details = await (
+                from a in _db.Appointments
+                where a.Id == id && a.MotherProfileId == motherId
+                join s in _db.AvailabilitySlots on a.AvailabilitySlotId equals s.Id
+                join p in _db.ProfessionalProfiles on s.ProfessionalProfileId equals p.Id
+                join m in _db.MotherProfiles on a.MotherProfileId equals m.Id
+                select new { p.UserId, MotherName = m.DisplayName, s.Date, s.StartHour })
+            .SingleOrDefaultAsync(cancellationToken);
+        if (details is null)
+        {
+            return false;
+        }
+
+        await using var transaction = await _db.Database.BeginTransactionAsync(cancellationToken);
         var (today, hour) = NowParts();
         var utcNow = DateTime.UtcNow;
         var changed = await _db.Appointments
@@ -77,7 +92,16 @@ public class AppointmentService
                     .SetProperty(a => a.CancelledBy, AppointmentParty.Mother)
                     .SetProperty(a => a.UpdatedAt, utcNow),
                 cancellationToken);
-        return changed == 1;
+        if (changed != 1)
+        {
+            return false;
+        }
+
+        NotificationWriter.Add(
+            _db, details.UserId, NotificationType.CancelledByMother, id, details.MotherName, details.Date, details.StartHour);
+        await _db.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+        return true;
     }
 
     // She edits her note on a requested or confirmed appointment until it starts.
@@ -197,6 +221,22 @@ public class AppointmentService
 
         await AppointmentExpiry.ExpireOverdueAsync(_db, cancellationToken);
 
+        // Who to tell: the mother.
+        var details = await (
+                from a in _db.Appointments
+                where a.Id == id
+                join s in _db.AvailabilitySlots on a.AvailabilitySlotId equals s.Id
+                where s.ProfessionalProfileId == professionalId
+                join p in _db.ProfessionalProfiles on s.ProfessionalProfileId equals p.Id
+                join m in _db.MotherProfiles on a.MotherProfileId equals m.Id
+                select new { m.UserId, ProfessionalName = p.DisplayName, s.Date, s.StartHour })
+            .SingleOrDefaultAsync(cancellationToken);
+        if (details is null)
+        {
+            return false;
+        }
+
+        await using var transaction = await _db.Database.BeginTransactionAsync(cancellationToken);
         var (today, hour) = NowParts();
         var utcNow = DateTime.UtcNow;
         AppointmentParty? cancelledBy = to == AppointmentStatus.Cancelled ? AppointmentParty.Professional : null;
@@ -211,7 +251,56 @@ public class AppointmentService
                     .SetProperty(a => a.ProfessionalMessage, text)
                     .SetProperty(a => a.UpdatedAt, utcNow),
                 cancellationToken);
-        return changed == 1;
+        if (changed != 1)
+        {
+            return false;
+        }
+
+        var type = to switch
+        {
+            AppointmentStatus.Confirmed => NotificationType.RequestAccepted,
+            AppointmentStatus.Rejected => NotificationType.RequestRejected,
+            _ => NotificationType.CancelledByProfessional
+        };
+        NotificationWriter.Add(
+            _db, details.UserId, type, id, details.ProfessionalName, details.Date, details.StartHour, text);
+        await _db.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+        return true;
+    }
+
+    // The banner on her dashboard and My appointments: her confirmed consultations from 24 hours before
+    // the start until the end. Worked out from the clock, never stored.
+    public async Task<IReadOnlyList<ConsultationBanner>> GetMotherBannersAsync(string userId, CancellationToken cancellationToken = default)
+    {
+        var motherId = await GetMotherIdAsync(userId, cancellationToken);
+        return motherId is null ? [] : await BannersAsync(QueryMine(motherId.Value), cancellationToken);
+    }
+
+    // The same for a professional: confirmed consultations on her slots.
+    public async Task<IReadOnlyList<ConsultationBanner>> GetProfessionalBannersAsync(
+        string userId,
+        CancellationToken cancellationToken = default)
+    {
+        var professionalId = await GetProfessionalIdAsync(userId, cancellationToken);
+        return professionalId is null ? [] : await BannersAsync(QueryProfessional(professionalId.Value), cancellationToken);
+    }
+
+    private static async Task<IReadOnlyList<ConsultationBanner>> BannersAsync(IQueryable<Row> rows, CancellationToken cancellationToken)
+    {
+        var now = PolandTime.Now;
+        var today = DateOnly.FromDateTime(now);
+        var tomorrow = today.AddDays(1);
+        var candidates = await rows
+            .Where(r => r.Status == AppointmentStatus.Confirmed && r.Date >= today && r.Date <= tomorrow)
+            .ToListAsync(cancellationToken);
+
+        return candidates
+            .Select(r => (Row: r, Start: BookingService.SlotStart(r.Date, r.Hour)))
+            .Where(x => x.Start - TimeSpan.FromHours(24) <= now && now < x.Start + Appointment.Length)
+            .OrderBy(x => x.Start)
+            .Select(x => new ConsultationBanner(x.Row.Id, x.Row.OtherName, x.Row.Hour, x.Start <= now, x.Row.Date == today))
+            .ToList();
     }
 
     private static bool IsUpcoming(MotherAppointment a) =>

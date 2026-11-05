@@ -556,5 +556,22 @@
   "Weekday_InText_Thursday": "Thursday",
   "Weekday_InText_Friday": "Friday",
   "Weekday_InText_Saturday": "Saturday",
-  "Weekday_InText_Sunday": "Sunday"
+  "Weekday_InText_Sunday": "Sunday",
+  "Nav_Notifications": "Notifications",
+  "Nav_NotificationsUnread": "Notifications, {0} unread",
+  "Notifications_Title": "Notifications",
+  "Notifications_Empty": "You have no notifications.",
+  "Notifications_MarkAllRead": "Mark all as read",
+  "Notifications_Unread": "Unread",
+  "Notification_RequestAccepted": "{0} accepted your request for {1}.",
+  "Notification_RequestRejected": "{0} could not take your request for {1}.",
+  "Notification_CancelledByProfessional": "{0} cancelled your consultation on {1}.",
+  "Notification_RequestExpired": "Your request for {1} with {0} was not confirmed in time.",
+  "Notification_NewRequest": "New request from {0} for {1}.",
+  "Notification_CancelledByMother": "{0} cancelled the consultation on {1}.",
+  "Notification_Rescheduled": "{0} moved the consultation from {1} to {2}.",
+  "Banner_Today": "Your consultation with {0} is today at {1}.",
+  "Banner_Tomorrow": "Your consultation with {0} is tomorrow at {1}.",
+  "Banner_Now": "Now:",
+  "Banner_NowText": "your consultation with {0}, {1}."
 }

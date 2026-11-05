@@ -15,6 +15,8 @@
     <div class="col-12 col-md-8 col-lg-6">
         <h1 class="h3 mb-3">@ViewData["Title"]</h1>
 
+        @await Html.PartialAsync("_ConsultationBanner", ViewData["Banners"])
+
         @if (statusMessage is not null)
         {
             <div class="alert alert-success" role="status">@statusMessage</div>

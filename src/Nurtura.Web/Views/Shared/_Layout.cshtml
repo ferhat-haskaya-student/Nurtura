@@ -22,6 +22,14 @@
         <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
             <div class="container-fluid">
                 <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">@L["AppName"]</a>
+                @if (User.IsInRole(Roles.Mother) || User.IsInRole(Roles.Professional))
+                {
+                    @* Outside the folding menu, so it is always visible: on a phone next to the menu button,
+                       on wide screens at the right end of the bar. *@
+                    <div class="ms-auto me-2 ms-sm-2 me-sm-0 order-sm-last">
+                        @await Component.InvokeAsync("NotificationBell")
+                    </div>
+                }
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
                         aria-expanded="false" aria-label="@L["Nav_ToggleNavigation"]">
                     <span class="navbar-toggler-icon"></span>

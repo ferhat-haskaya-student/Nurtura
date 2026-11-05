@@ -207,11 +207,35 @@ public class BookingService
 
         var utcNow = DateTime.UtcNow;
 
+        // For the notifications: her name, and the user behind each professional.
+        var motherName = await _db.MotherProfiles
+            .Where(m => m.Id == motherId)
+            .Select(m => m.DisplayName)
+            .SingleAsync(cancellationToken);
+        var professionalUserId = await _db.ProfessionalProfiles
+            .Where(p => p.Id == slot.Professional.Id)
+            .Select(p => p.UserId)
+            .SingleAsync(cancellationToken);
+
         // Rescheduling: the old appointment is cancelled in the same transaction, only if it is still hers,
         // requested or confirmed, for the same topic and not started. If the new request then fails, the
         // transaction is rolled back and the old appointment stays as it was.
+        var old = request.RescheduleId is { } rescheduleId
+            ? await (
+                    from a in _db.Appointments
+                    where a.Id == rescheduleId && a.MotherProfileId == motherId
+                    join s in _db.AvailabilitySlots on a.AvailabilitySlotId equals s.Id
+                    join p in _db.ProfessionalProfiles on s.ProfessionalProfileId equals p.Id
+                    select new { a.Id, s.Date, s.StartHour, ProfessionalId = p.Id, p.UserId })
+                .SingleOrDefaultAsync(cancellationToken)
+            : null;
         if (request.RescheduleId is { } oldId)
         {
+            if (old is null)
+            {
+                return new BookingResult(BookingStatus.RescheduleGone);
+            }
+
             var today = DateOnly.FromDateTime(now);
             var hour = now.Hour;
             var cancelled = await _db.Appointments
@@ -230,7 +254,8 @@ public class BookingService
                 return new BookingResult(BookingStatus.RescheduleGone);
             }
         }
-        _db.Appointments.Add(new Appointment
+
+        var appointment = new Appointment
         {
             MotherProfileId = motherId.Value,
             AvailabilitySlotId = slot.SlotId,
@@ -239,7 +264,8 @@ public class BookingService
             Status = AppointmentStatus.Requested,
             CreatedAt = utcNow,
             UpdatedAt = utcNow
-        });
+        };
+        _db.Appointments.Add(appointment);
 
         try
         {
@@ -250,6 +276,28 @@ public class BookingService
             // Another mother's request for this slot was saved first.
             return new BookingResult(BookingStatus.SlotTaken);
         }
+
+        // The professional hears about it. Moving to another time with the same professional is one
+        // "moved" notification; moving to another professional is a cancel for the old one and a request for the new one.
+        if (old is not null && old.ProfessionalId == slot.Professional.Id)
+        {
+            NotificationWriter.Add(
+                _db, professionalUserId, NotificationType.Rescheduled, appointment.Id, motherName, slot.Date, slot.Hour,
+                previousDate: old.Date, previousHour: old.StartHour);
+        }
+        else
+        {
+            if (old is not null)
+            {
+                NotificationWriter.Add(
+                    _db, old.UserId, NotificationType.CancelledByMother, old.Id, motherName, old.Date, old.StartHour);
+            }
+
+            NotificationWriter.Add(
+                _db, professionalUserId, NotificationType.NewRequest, appointment.Id, motherName, slot.Date, slot.Hour);
+        }
+
+        await _db.SaveChangesAsync(cancellationToken);
 
         // One-tap sharing sets the same shared switch the records already have.
         if (request.ShareCheckIns)

@@ -5,6 +5,8 @@
     <div class="col-12 col-md-8 col-lg-6">
         <h1 class="h3 mb-3">@ViewData["Title"]</h1>
 
+        @await Html.PartialAsync("_ConsultationBanner", ViewData["Banners"])
+
         <a asp-area="Professional" asp-controller="Availability" asp-action="Index" class="card text-decoration-none mb-3">
             <div class="card-body">
                 <h2 class="h5 card-title mb-1">@L["Professional_Home_AvailabilityLink"]</h2>

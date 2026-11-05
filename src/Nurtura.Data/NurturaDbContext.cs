@@ -41,6 +41,8 @@ public class NurturaDbContext : IdentityDbContext<ApplicationUser>, INurturaDbCo
 
     public DbSet<Appointment> Appointments => Set<Appointment>();
 
+    public DbSet<Notification> Notifications => Set<Notification>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);

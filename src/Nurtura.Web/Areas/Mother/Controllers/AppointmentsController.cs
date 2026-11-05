@@ -33,8 +33,15 @@ public class AppointmentsController : Controller
     [HttpGet]
     public async Task<IActionResult> Index()
     {
-        var appointments = await _appointmentService.GetMineAsync(_userManager.GetUserId(User)!);
-        return appointments is null ? NotFound() : View(appointments);
+        var userId = _userManager.GetUserId(User)!;
+        var appointments = await _appointmentService.GetMineAsync(userId);
+        if (appointments is null)
+        {
+            return NotFound();
+        }
+
+        ViewData["Banners"] = await _appointmentService.GetMotherBannersAsync(userId);
+        return View(appointments);
     }
 
     [HttpPost]

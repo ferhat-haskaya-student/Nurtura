@@ -14,15 +14,18 @@ public class HomeController : Controller
 {
     private readonly DailyCheckInService _checkInService;
     private readonly MotherProfileService _profileService;
+    private readonly AppointmentService _appointmentService;
     private readonly UserManager<ApplicationUser> _userManager;
 
     public HomeController(
         DailyCheckInService checkInService,
         MotherProfileService profileService,
+        AppointmentService appointmentService,
         UserManager<ApplicationUser> userManager)
     {
         _checkInService = checkInService;
         _profileService = profileService;
+        _appointmentService = appointmentService;
         _userManager = userManager;
     }
 
@@ -35,6 +38,8 @@ public class HomeController : Controller
             return NotFound();
         }
 
+        // The consultation banner, from 24 hours before a confirmed consultation until its end.
+        ViewData["Banners"] = await _appointmentService.GetMotherBannersAsync(userId);
         return View(new DashboardViewModel(displayName, await _checkInService.GetChartAsync(userId)));
     }
 }

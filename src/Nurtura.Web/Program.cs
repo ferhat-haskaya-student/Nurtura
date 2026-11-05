@@ -99,6 +99,7 @@ builder.Services.AddScoped<BabyRoutineService>();
 builder.Services.AddScoped<AvailabilityService>();
 builder.Services.AddScoped<BookingService>();
 builder.Services.AddScoped<AppointmentService>();
+builder.Services.AddScoped<NotificationService>();
 
 var app = builder.Build();
 
