@@ -165,6 +165,9 @@ namespace Nurtura.Data.Migrations
                     b.Property<int>("AvailabilitySlotId")
                         .HasColumnType("integer");
 
+                    b.Property<int?>("BabyId")
+                        .HasColumnType("integer");
+
                     b.Property<string>("CancelledBy")
                         .HasMaxLength(30)
                         .HasColumnType("character varying(30)");
@@ -203,6 +206,8 @@ namespace Nurtura.Data.Migrations
                         .IsUnique()
                         .HasDatabaseName("IX_Appointments_AvailabilitySlotId_Active")
                         .HasFilter("\"Status\" IN ('Requested', 'Confirmed')");
+
+                    b.HasIndex("BabyId");
 
                     b.HasIndex("MotherProfileId");
 
@@ -888,6 +893,11 @@ namespace Nurtura.Data.Migrations
                         .HasForeignKey("AvailabilitySlotId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.HasOne("Nurtura.Core.Entities.Baby", null)
+                        .WithMany()
+                        .HasForeignKey("BabyId")
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("Nurtura.Core.Entities.MotherProfile", null)
                         .WithMany()

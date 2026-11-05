@@ -37,6 +37,10 @@ public class Appointment
 
     public Topic Topic { get; set; }
 
+    // The baby the consultation is about: her own baby, baby sleep and baby feeding topics only.
+    // Cleared when that baby's profile is removed.
+    public int? BabyId { get; set; }
+
     // "What would you like to talk about?"
     public string ConcernText { get; set; } = string.Empty;
 

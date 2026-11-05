@@ -20,11 +20,21 @@ public sealed record FreeSlot(int SlotId, DateOnly Date, int Hour, ProfessionalC
 public sealed record FreeSlotDay(DateOnly Date, IReadOnlyList<FreeSlot> Slots);
 
 // The request page. Problem is set when she cannot request this slot (it is then shown instead of the form).
-// Babies are hers, filled only for the baby sleep and baby feeding topics.
+// Babies are all of hers, youngest last: for baby topics she picks the one the consultation is about;
+// for other topics they only tell whether a postpartum stage exists.
 public sealed record BookingRequestPage(FreeSlot Slot, BookingStatus? Problem, IReadOnlyList<Baby> Babies);
 
-// RescheduleId: her appointment that this request replaces; it is cancelled when the request is sent.
-public sealed record BookingRequest(int SlotId, Topic Topic, string Concern, bool ShareCheckIns, int? ShareBabyId, int? RescheduleId = null);
+// BabyId: for baby topics, the baby the consultation is about (required when she has babies); null otherwise.
+// ShareBaby: also share that baby's sleeps and feeds. RescheduleId: her appointment that this request replaces;
+// it is cancelled when the request is sent.
+public sealed record BookingRequest(
+    int SlotId,
+    Topic Topic,
+    string Concern,
+    bool ShareCheckIns,
+    int? BabyId,
+    bool ShareBaby,
+    int? RescheduleId = null);
 
 // The appointment she is rescheduling: requested or confirmed, not started yet. Date and Hour are Poland time.
 public sealed record RescheduleInfo(
@@ -35,7 +45,8 @@ public sealed record RescheduleInfo(
     int ProfessionalId,
     string ProfessionalName,
     bool WasConfirmed,
-    string Concern);
+    string Concern,
+    int? BabyId);
 
 public enum BookingStatus
 {

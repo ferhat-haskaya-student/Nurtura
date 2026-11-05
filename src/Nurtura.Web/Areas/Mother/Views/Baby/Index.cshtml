@@ -9,37 +9,6 @@
     var baby = Model.Selected;
     var sleep = Model.Sleep!;
     var now = DateTime.UtcNow;
-
-    // "3 months, 2 weeks": the two units BabyAge kept, leaving out a zero second part.
-    string AgeText(BabyAge age)
-    {
-        var parts = new List<string>();
-        void Add(string unit, int count, bool always = false)
-        {
-            if (count > 0 || always)
-            {
-                parts.Add(L[Plural.Key("Baby_Age_" + unit, count), count]);
-            }
-        }
-
-        if (age.Years > 0)
-        {
-            Add("Years", age.Years);
-            Add("Months", age.Months);
-        }
-        else if (age.Months > 0)
-        {
-            Add("Months", age.Months);
-            Add("Weeks", age.Weeks);
-        }
-        else
-        {
-            Add("Weeks", age.Weeks);
-            Add("Days", age.Days, always: age.Weeks == 0);
-        }
-
-        return parts.Count == 2 ? L["Baby_Age_Join", parts[0], parts[1]] : parts[0];
-    }
 }
 
 <div class="row justify-content-center" data-server-now="@(new DateTimeOffset(now).ToUnixTimeMilliseconds())">
@@ -73,7 +42,7 @@
                         <dt class="col-5">@L["Baby_BirthDate"]</dt>
                         <dd class="col-7">@baby.BirthDate.ToString(DateFormats.Display)</dd>
                         <dt class="col-5">@L["Baby_Age"]</dt>
-                        <dd class="col-7">@AgeText(Model.Age!)</dd>
+                        <dd class="col-7">@BabyText.Age(L, Model.Age!)</dd>
                         <dt class="col-5">@L["Baby_FeedingType"]</dt>
                         <dd class="col-7 mb-0">@L["BabyFeedingType_" + baby.FeedingType]</dd>
                     </dl>

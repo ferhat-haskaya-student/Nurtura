@@ -93,8 +93,14 @@ public class DailyCheckInService
             .Where(c => c.Date >= from && c.Date <= today)
             .Select(c => new CheckInChartDay(c.Date, c.Mood, c.SleepQuality, c.Energy, c.Stress))
             .ToListAsync(cancellationToken);
+        return BuildChart(checkIns, from, ChartDays);
+    }
 
-        var days = Enumerable.Range(0, ChartDays)
+    // One entry per day from "from", this many days, oldest first; a day without a check-in has null ratings.
+    // Also used by the pre-consultation summary (14 days of shared check-ins).
+    public static CheckInChart BuildChart(IReadOnlyCollection<CheckInChartDay> checkIns, DateOnly from, int dayCount)
+    {
+        var days = Enumerable.Range(0, dayCount)
             .Select(offset => from.AddDays(offset))
             .Select(day => checkIns.SingleOrDefault(c => c.Date == day) ?? new CheckInChartDay(day, null, null, null, null))
             .ToList();
@@ -130,7 +136,7 @@ public class DailyCheckInService
         _db.DailyCheckIns.Where(c => _db.MotherProfiles.Any(p => p.Id == c.MotherProfileId && p.UserId == userId));
 
     // Only the days she checked in. Null when she has none.
-    private static RatingAverages? Average(IReadOnlyCollection<DailyCheckIn> checkIns)
+    public static RatingAverages? Average(IReadOnlyCollection<DailyCheckIn> checkIns)
     {
         if (checkIns.Count == 0)
         {
@@ -148,7 +154,7 @@ public class DailyCheckInService
 
     // Her three most ticked tags with the number of days each. Tags tied with the third are kept,
     // and equal counts are sorted by tag order.
-    private static IReadOnlyList<FeelingCount> TopFeelings(
+    public static IReadOnlyList<FeelingCount> TopFeelings(
         IReadOnlyCollection<DailyCheckIn> checkIns,
         IReadOnlyList<FeelingTag> tags)
     {

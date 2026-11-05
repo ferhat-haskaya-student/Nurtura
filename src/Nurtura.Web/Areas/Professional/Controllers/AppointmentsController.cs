@@ -18,15 +18,18 @@ public class AppointmentsController : Controller
     private const string ProblemMessageKey = "ProblemMessage";
 
     private readonly AppointmentService _appointmentService;
+    private readonly ConsultationSummaryService _summaryService;
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly IStringLocalizer<SharedResource> _localizer;
 
     public AppointmentsController(
         AppointmentService appointmentService,
+        ConsultationSummaryService summaryService,
         UserManager<ApplicationUser> userManager,
         IStringLocalizer<SharedResource> localizer)
     {
         _appointmentService = appointmentService;
+        _summaryService = summaryService;
         _userManager = userManager;
         _localizer = localizer;
     }
@@ -43,6 +46,14 @@ public class AppointmentsController : Controller
 
         ViewData["Banners"] = await _appointmentService.GetProfessionalBannersAsync(userId);
         return View(appointments);
+    }
+
+    // The pre-consultation summary: only for her own requested or confirmed appointment, until the session ends.
+    [HttpGet]
+    public async Task<IActionResult> Summary(int id)
+    {
+        var summary = await _summaryService.GetAsync(_userManager.GetUserId(User)!, id);
+        return summary is null ? NotFound() : View(summary);
     }
 
     // One tap: Requested -> Confirmed.

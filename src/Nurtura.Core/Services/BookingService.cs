@@ -70,7 +70,7 @@ public class BookingService
                 where a.Id == appointmentId && a.MotherProfileId == motherId && Appointment.ActiveStatuses.Contains(a.Status)
                 join s in _db.AvailabilitySlots on a.AvailabilitySlotId equals s.Id
                 join p in _db.ProfessionalProfiles on s.ProfessionalProfileId equals p.Id
-                select new { a.Id, s.Date, s.StartHour, a.Topic, ProfessionalId = p.Id, p.DisplayName, a.Status, a.ConcernText })
+                select new { a.Id, s.Date, s.StartHour, a.Topic, ProfessionalId = p.Id, p.DisplayName, a.Status, a.ConcernText, a.BabyId })
             .SingleOrDefaultAsync(cancellationToken);
         if (row is null || SlotStart(row.Date, row.StartHour) <= PolandTime.Now)
         {
@@ -79,7 +79,7 @@ public class BookingService
 
         return new RescheduleInfo(
             row.Id, row.Date, row.StartHour, row.Topic, row.ProfessionalId, row.DisplayName,
-            row.Status == AppointmentStatus.Confirmed, row.ConcernText);
+            row.Status == AppointmentStatus.Confirmed, row.ConcernText, row.BabyId);
     }
 
     // An approved professional's profile; null for any other id.
@@ -149,13 +149,11 @@ public class BookingService
             problem = await CheckMotherAsync(motherId.Value, slot, now, rescheduleId, cancellationToken);
         }
 
-        var babies = IsBabyTopic(topic)
-            ? await _db.Babies
-                .Where(b => b.MotherProfileId == motherId)
-                .OrderBy(b => b.BirthDate)
-                .ThenBy(b => b.Id)
-                .ToListAsync(cancellationToken)
-            : [];
+        var babies = await _db.Babies
+            .Where(b => b.MotherProfileId == motherId)
+            .OrderBy(b => b.BirthDate)
+            .ThenBy(b => b.Id)
+            .ToListAsync(cancellationToken);
 
         return new BookingRequestPage(slot, problem, babies);
     }
@@ -180,14 +178,27 @@ public class BookingService
             return new BookingResult(BookingStatus.Invalid);
         }
 
+        // The baby the consultation is about: for baby topics one of hers, required when she has any;
+        // for other topics none, and nothing of a baby's is shared.
         Baby? baby = null;
-        if (request.ShareBabyId is { } babyId)
+        if (IsBabyTopic(request.Topic))
         {
-            baby = await _db.Babies.SingleOrDefaultAsync(b => b.Id == babyId && b.MotherProfileId == motherId, cancellationToken);
-            if (baby is null || !IsBabyTopic(request.Topic))
+            if (request.BabyId is { } babyId)
+            {
+                baby = await _db.Babies.SingleOrDefaultAsync(b => b.Id == babyId && b.MotherProfileId == motherId, cancellationToken);
+                if (baby is null)
+                {
+                    return new BookingResult(BookingStatus.Invalid);
+                }
+            }
+            else if (await _db.Babies.AnyAsync(b => b.MotherProfileId == motherId, cancellationToken) || request.ShareBaby)
             {
                 return new BookingResult(BookingStatus.Invalid);
             }
+        }
+        else if (request.BabyId is not null || request.ShareBaby)
+        {
+            return new BookingResult(BookingStatus.Invalid);
         }
 
         await using var transaction = await _db.Database.BeginTransactionAsync(cancellationToken);
@@ -260,6 +271,7 @@ public class BookingService
             MotherProfileId = motherId.Value,
             AvailabilitySlotId = slot.SlotId,
             Topic = request.Topic,
+            BabyId = baby?.Id,
             ConcernText = concern,
             Status = AppointmentStatus.Requested,
             CreatedAt = utcNow,
@@ -311,7 +323,7 @@ public class BookingService
                     cancellationToken);
         }
 
-        if (baby is not null)
+        if (baby is not null && request.ShareBaby)
         {
             var from = utcNow.AddDays(-Appointment.ShareDays);
             await _db.SleepRecords

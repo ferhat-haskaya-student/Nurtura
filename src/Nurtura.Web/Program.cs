@@ -100,6 +100,7 @@ builder.Services.AddScoped<AvailabilityService>();
 builder.Services.AddScoped<BookingService>();
 builder.Services.AddScoped<AppointmentService>();
 builder.Services.AddScoped<NotificationService>();
+builder.Services.AddScoped<ConsultationSummaryService>();
 
 var app = builder.Build();
 

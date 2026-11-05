@@ -1,0 +1,62 @@
+@using Nurtura.Web.Areas.Mother
+@model Nurtura.Core.Services.BabyRoutine
+@{
+    // The sleep part of the routine summary: the sleep bars and the four averages. The heading and the
+    // "based on" line come from the page. Used on the baby routine page and in the pre-consultation summary.
+    var routine = Model;
+}
+
+@if (routine.HasSleep)
+{
+    <div class="card mt-2 mb-2">
+        <div class="card-body p-3">
+            <p class="small text-body-secondary mb-2">@L["Routine_SleepBarsExplain"]</p>
+            <partial name="~/Areas/Mother/Views/Baby/_RoutineSleepBars.cshtml" model="routine" />
+            <div class="d-flex flex-wrap gap-3 small text-body-secondary mt-1">
+                <span><span class="routine-dot routine-dot-sleep" aria-hidden="true"></span> @L["Routine_LegendNight"]</span>
+                <span><span class="routine-dot routine-dot-nap" aria-hidden="true"></span> @L["Routine_LegendNaps"]</span>
+                <span><span aria-hidden="true">– –</span> @L["Routine_LegendAverage"]</span>
+            </div>
+        </div>
+    </div>
+}
+@if (routine.SleepDays > 0)
+{
+    <div class="row g-2">
+        <div class="col-6">
+            <div class="h-100 rounded-3 bg-primary-subtle p-3">
+                <div class="small text-body-secondary">@L["Routine_SleepADay"]</div>
+                <div class="fs-5 fw-semibold">@RoutineText.Duration(L, routine.AverageSleep)</div>
+                <div class="small text-body-secondary">@L["Routine_OnAverage"]</div>
+            </div>
+        </div>
+        <div class="col-6">
+            <div class="h-100 rounded-3 bg-primary-subtle p-3">
+                <div class="small text-body-secondary">@L["Routine_NightSleep"]</div>
+                <div class="fs-5 fw-semibold">@RoutineText.Duration(L, routine.AverageNight)</div>
+                <div class="small text-body-secondary">@L["Routine_NightSleepNote"]</div>
+            </div>
+        </div>
+        <div class="col-6">
+            <div class="h-100 rounded-3 bg-primary-subtle p-3">
+                <div class="small text-body-secondary">@L["Routine_NapsADay"]</div>
+                <div class="fs-5 fw-semibold">@RoutineText.Number(routine.AverageNaps!.Value)</div>
+                <div class="small text-body-secondary">@L["Routine_NapTimeNote", RoutineText.Duration(L, routine.AverageNapTime)]</div>
+            </div>
+        </div>
+        <div class="col-6">
+            <div class="h-100 rounded-3 bg-primary-subtle p-3">
+                <div class="small text-body-secondary">@L["Routine_LongestNight"]</div>
+                <div class="fs-5 fw-semibold">@RoutineText.Duration(L, routine.LongestNight?.Duration)</div>
+                @if (routine.LongestNight is not null)
+                {
+                    <div class="small text-body-secondary">@RoutineText.LongestNightNote(L, routine.LongestNight)</div>
+                }
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <p class="text-body-secondary mb-0">@L["Routine_NoFullDay"]</p>
+}

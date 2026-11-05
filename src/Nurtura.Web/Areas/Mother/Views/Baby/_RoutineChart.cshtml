@@ -21,7 +21,7 @@
 }
 
 <svg class="routine-chart d-block w-100" viewBox="0 0 360 @F(height)" role="img" aria-labelledby="routine-chart-title">
-    <title id="routine-chart-title">@L["Routine_ChartTitle"]</title>
+    <title id="routine-chart-title">@L["Routine_ChartTitle", Model.Days.Count]</title>
     @for (var i = 0; i < Model.Days.Count; i++)
     {
         <rect class="rc-shade" x="@F(plotLeft + plotWidth / 2)" y="@F(top + rowHeight * i + 1)" width="@F(plotWidth / 2)" height="@F(rowHeight - 4)" rx="3" />

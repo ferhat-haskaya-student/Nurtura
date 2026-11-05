@@ -114,7 +114,8 @@ public sealed record BabyRoutine(
     }
 
     // Start of the oldest routine day shown.
-    public static DateTime SinceUtc(DateTime nowUtc) => DayStartUtc(RoutineDate(nowUtc).AddDays(1 - BabyTimeline.Days));
+    public static DateTime SinceUtc(DateTime nowUtc, int dayCount = BabyTimeline.Days) =>
+        DayStartUtc(RoutineDate(nowUtc).AddDays(1 - dayCount));
 
     public static bool IsNap(DateTime startUtc)
     {
@@ -133,15 +134,20 @@ public sealed record BabyRoutine(
     public static TimeSpan Total(IEnumerable<SleepRecord> sleeps) =>
         sleeps.Aggregate(TimeSpan.Zero, (sum, s) => sum + (s.EndTime!.Value - s.StartTime));
 
-    // Running sleeps are left out. Days come back newest first, today first, always BabyTimeline.Days of them.
-    public static BabyRoutine Build(IEnumerable<SleepRecord> sleeps, IEnumerable<FeedingRecord> feeds, DateTime nowUtc)
+    // Running sleeps are left out. Days come back newest first, today first, always dayCount of them
+    // (the routine page shows BabyTimeline.Days; the pre-consultation summary 14).
+    public static BabyRoutine Build(
+        IEnumerable<SleepRecord> sleeps,
+        IEnumerable<FeedingRecord> feeds,
+        DateTime nowUtc,
+        int dayCount = BabyTimeline.Days)
     {
         var today = RoutineDate(nowUtc);
         var finished = sleeps.Where(s => s.EndTime is not null).OrderBy(s => s.StartTime).ToList();
         var feedList = feeds.OrderBy(f => f.Time).ThenBy(f => f.Id).ToList();
 
         var days = new List<RoutineDay>();
-        for (var i = 0; i < BabyTimeline.Days; i++)
+        for (var i = 0; i < dayCount; i++)
         {
             var date = today.AddDays(-i);
             var (start, end) = (DayStartUtc(date), DayStartUtc(date.AddDays(1)));

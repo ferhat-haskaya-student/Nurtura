@@ -134,10 +134,20 @@ public class BookController : Controller
             return NotFound();
         }
 
+        // Which baby: the one of the appointment being rescheduled, else her only baby, else she picks.
+        int? babyId = null;
+        if (BookingService.IsBabyTopic(topic.Value))
+        {
+            babyId = info?.BabyId is { } oldBaby && page.Babies.Any(b => b.Id == oldBaby) ? oldBaby
+                : page.Babies.Count == 1 ? page.Babies[0].Id
+                : null;
+        }
+
         return View(new BookRequestViewModel
         {
             SlotId = slotId,
             Topic = topic,
+            BabyId = babyId,
             Concern = info?.Concern,
             RescheduleId = info?.AppointmentId,
             Reschedule = info,
@@ -168,12 +178,30 @@ public class BookController : Controller
             return RedirectToAction(nameof(Index));
         }
 
+        var page = await _bookingService.GetRequestPageAsync(userId, model.SlotId, model.Topic!.Value, model.RescheduleId);
+        if (page is null)
+        {
+            return NotFound();
+        }
+
+        // Baby topics: she says which of her babies the consultation is about.
+        if (BookingService.IsBabyTopic(model.Topic.Value) && page.Babies.Count > 0 && model.BabyId is null)
+        {
+            ModelState.AddModelError(nameof(model.BabyId), _localizer["Book_WhichBabyRequired"]);
+        }
+
         if (ModelState.IsValid)
         {
             var result = await _bookingService.RequestAsync(
                 userId,
                 new BookingRequest(
-                    model.SlotId, model.Topic!.Value, model.Concern!, model.ShareCheckIns, model.ShareBabyId, model.RescheduleId));
+                    model.SlotId,
+                    model.Topic.Value,
+                    model.Concern!,
+                    model.ShareCheckIns,
+                    model.BabyId,
+                    model.ShareBaby,
+                    model.RescheduleId));
 
             if (result.Status == BookingStatus.Sent)
             {
@@ -197,11 +225,7 @@ public class BookController : Controller
             model.Problem = result.Status;
         }
 
-        model.Page = await _bookingService.GetRequestPageAsync(userId, model.SlotId, model.Topic!.Value, model.RescheduleId);
-        if (model.Page is null)
-        {
-            return NotFound();
-        }
+        model.Page = page;
 
         return View(model);
     }

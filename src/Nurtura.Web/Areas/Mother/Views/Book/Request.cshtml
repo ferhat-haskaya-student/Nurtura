@@ -9,6 +9,7 @@
     var professional = slot.Professional;
     var topic = Model.Topic!.Value;
     var problem = Model.Problem ?? page.Problem;
+    var isBabyTopic = BookingService.IsBabyTopic(topic);
     var reschedule = Model.Reschedule;
     var rescheduleId = reschedule?.AppointmentId;
 }
@@ -46,6 +47,26 @@
                 <input type="hidden" asp-for="Topic" />
                 <input type="hidden" asp-for="RescheduleId" />
 
+                @if (isBabyTopic && page.Babies.Count > 0)
+                {
+                    @* Which baby the consultation is about; separate from sharing that baby's log. *@
+                    <fieldset class="mb-4">
+                        <legend class="form-label fs-6 fw-semibold mb-1">@L["Book_WhichBaby"]</legend>
+                        @foreach (var baby in page.Babies)
+                        {
+                            <div class="form-check mb-1">
+                                <input class="form-check-input" type="radio" id="baby-@baby.Id" name="BabyId"
+                                       value="@baby.Id" checked="@(Model.BabyId == baby.Id)" />
+                                <label class="form-check-label text-break" for="baby-@baby.Id">@baby.Name</label>
+                            </div>
+                        }
+                        <span asp-validation-for="BabyId" class="text-danger d-block"></span>
+                        <p class="small text-body-secondary mt-1 mb-0">
+                            @(page.Babies.Count == 1 ? L["Book_SeesBabyAge", page.Babies[0].Name] : L["Book_SeesBabyAgeChosen"])
+                        </p>
+                    </fieldset>
+                }
+
                 <div class="mb-4">
                     <label asp-for="Concern" class="form-label fw-semibold"></label>
                     <textarea asp-for="Concern" class="form-control" rows="4" maxlength="@Appointment.ConcernMaxLength"
@@ -53,6 +74,10 @@
                     <div class="form-text text-end" data-note-counter data-template="@L["CheckIn_NoteCounter"]"
                          data-max="@Appointment.ConcernMaxLength" aria-live="polite"></div>
                     <span asp-validation-for="Concern" class="text-danger"></span>
+                    @if (!isBabyTopic && page.Babies.Count > 0)
+                    {
+                        <p class="small text-body-secondary mt-2 mb-0">@L["Book_SeesStage"]</p>
+                    }
                 </div>
 
                 <fieldset class="mb-4">
@@ -64,31 +89,14 @@
                         <label asp-for="ShareCheckIns" class="form-check-label">@L["Book_ShareCheckIns"]</label>
                     </div>
 
-                    @if (BookingService.IsBabyTopic(topic) && page.Babies.Count == 1)
+                    @if (isBabyTopic && page.Babies.Count > 0)
                     {
-                        var baby = page.Babies[0];
                         <div class="form-check mb-2">
-                            <input class="form-check-input" type="checkbox" id="share-baby-@baby.Id" name="ShareBabyId"
-                                   value="@baby.Id" checked="@(Model.ShareBabyId == baby.Id)" />
-                            <label class="form-check-label" for="share-baby-@baby.Id">@L["Book_ShareBaby", baby.Name]</label>
+                            <input asp-for="ShareBaby" class="form-check-input" type="checkbox" />
+                            <label asp-for="ShareBaby" class="form-check-label">
+                                @(page.Babies.Count == 1 ? L["Book_ShareBaby", page.Babies[0].Name] : L["Book_ShareChosenBaby"])
+                            </label>
                         </div>
-                    }
-                    else if (BookingService.IsBabyTopic(topic) && page.Babies.Count > 1)
-                    {
-                        @* Several babies: she chooses one, or none. *@
-                        <div class="form-check mb-2">
-                            <input class="form-check-input" type="radio" id="share-baby-none" name="ShareBabyId" value=""
-                                   checked="@(Model.ShareBabyId is null)" />
-                            <label class="form-check-label" for="share-baby-none">@L["Book_ShareNoBaby"]</label>
-                        </div>
-                        @foreach (var baby in page.Babies)
-                        {
-                            <div class="form-check mb-2">
-                                <input class="form-check-input" type="radio" id="share-baby-@baby.Id" name="ShareBabyId"
-                                       value="@baby.Id" checked="@(Model.ShareBabyId == baby.Id)" />
-                                <label class="form-check-label" for="share-baby-@baby.Id">@L["Book_ShareBaby", baby.Name]</label>
-                            </div>
-                        }
                     }
                 </fieldset>
 

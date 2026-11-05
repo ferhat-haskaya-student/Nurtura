@@ -33,6 +33,12 @@ public class AppointmentConfiguration : IEntityTypeConfiguration<Appointment>
             .HasForeignKey(a => a.MotherProfileId)
             .OnDelete(DeleteBehavior.Cascade);
 
+        // Removing a baby keeps the appointment; it is then no longer about a particular baby.
+        builder.HasOne<Baby>()
+            .WithMany()
+            .HasForeignKey(a => a.BabyId)
+            .OnDelete(DeleteBehavior.SetNull);
+
         // Slots are never deleted (closing sets IsOpen to false), so an appointment always keeps its date and time.
         builder.HasOne<AvailabilitySlot>()
             .WithMany()

@@ -1,0 +1,78 @@
+@using Nurtura.Web.Areas.Mother
+@model Nurtura.Core.Services.BabyRoutine
+@{
+    // The feeding part of the routine summary: the averages and the breast / bottle / solid split. The heading and
+    // the "based on" line come from the page. ViewData["HideNightFeeds"] leaves out the night feeds tile
+    // (the pre-consultation summary). Used on the baby routine page and in the pre-consultation summary.
+    var routine = Model;
+    var none = RoutineText.None;
+    var feedCount = routine.FeedCount;
+    var hideNightFeeds = ViewData["HideNightFeeds"] is true;
+    string Share(int count) => (100.0 * count / feedCount).ToString("0.##", System.Globalization.CultureInfo.InvariantCulture) + "%";
+}
+
+@if (routine.FeedDays > 0)
+{
+    <div class="row g-2 mb-2">
+        <div class="col-6">
+            <div class="h-100 rounded-3 bg-warning-subtle p-3">
+                <div class="small text-body-secondary">@L["Routine_FeedsADay"]</div>
+                <div class="fs-5 fw-semibold">@RoutineText.Number(routine.AverageFeeds!.Value)</div>
+                <div class="small text-body-secondary">@L["Routine_OnAverage"]</div>
+            </div>
+        </div>
+        <div class="col-6">
+            <div class="h-100 rounded-3 bg-warning-subtle p-3">
+                <div class="small text-body-secondary">@L["Routine_DaytimeGap"]</div>
+                <div class="fs-5 fw-semibold">@RoutineText.Duration(L, routine.AverageDaytimeGap)</div>
+                <div class="small text-body-secondary">@L["Routine_DaytimeGapNote"]</div>
+            </div>
+        </div>
+        @if (!hideNightFeeds)
+        {
+            <div class="col-6">
+                <div class="h-100 rounded-3 bg-warning-subtle p-3">
+                    <div class="small text-body-secondary">@L["Routine_NightFeeds"]</div>
+                    <div class="fs-5 fw-semibold">@RoutineText.Number(routine.AverageNightFeeds!.Value) <small class="fs-6 fw-normal text-body-secondary">@L["Routine_ANight"]</small></div>
+                    <div class="small text-body-secondary">@L["Routine_NightFeedsNote"]</div>
+                </div>
+            </div>
+        }
+        <div class="col-6">
+            <div class="h-100 rounded-3 bg-warning-subtle p-3">
+                <div class="small text-body-secondary">@L["Routine_BottleADay"]</div>
+                <div class="fs-5 fw-semibold">
+                    @if (routine.AverageBottleMl is { } ml)
+                    {
+                        @ml <small class="fs-6 fw-normal text-body-secondary">@L["Routine_Ml"]</small>
+                    }
+                    else
+                    {
+                        @none
+                    }
+                </div>
+                <div class="small text-body-secondary">@L["Routine_BottleNote"]</div>
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <p class="text-body-secondary mb-2">@L["Routine_NoFullDay"]</p>
+}
+@if (feedCount > 0)
+{
+    <div class="rounded-3 bg-warning-subtle p-3">
+        <div class="small text-body-secondary">@L["Routine_TypeOfFeeds", feedCount, routine.Days.Count]</div>
+        <div class="routine-split d-flex rounded-pill overflow-hidden my-2" aria-hidden="true">
+            <div class="routine-type-breast" style="width: @Share(routine.Breast)"></div>
+            <div class="routine-type-bottle" style="width: @Share(routine.Bottle)"></div>
+            <div class="routine-type-solid" style="width: @Share(routine.Solid)"></div>
+        </div>
+        <div class="d-flex flex-wrap gap-3 small text-body-secondary">
+            <span><span class="routine-dot routine-type-breast" aria-hidden="true"></span> @L["FeedingType_Breast"] @routine.Breast</span>
+            <span><span class="routine-dot routine-type-bottle" aria-hidden="true"></span> @L["FeedingType_Bottle"] @routine.Bottle</span>
+            <span><span class="routine-dot routine-type-solid" aria-hidden="true"></span> @L["FeedingType_Solid"] @routine.Solid</span>
+        </div>
+    </div>
+}

@@ -30,8 +30,12 @@ public class BookRequestViewModel
     // Both off by default.
     public bool ShareCheckIns { get; set; }
 
-    // The baby whose sleeps and feeds she chose to mark as shared; empty for none.
-    public int? ShareBabyId { get; set; }
+    // Baby topics: the baby the consultation is about. Required when she has babies (checked in the controller,
+    // because it depends on her babies); the professional sees only that baby's age.
+    public int? BabyId { get; set; }
+
+    // Also share that baby's sleeps and feeds from the last 2 weeks. Off by default.
+    public bool ShareBaby { get; set; }
 
     // Her appointment that this request replaces, when rescheduling.
     public int? RescheduleId { get; set; }

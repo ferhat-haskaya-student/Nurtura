@@ -61,6 +61,12 @@
             </div>
         }
 
+        @if (showActions && Model.State is AppointmentState.Requested or AppointmentState.Confirmed or AppointmentState.Now)
+        {
+            @* From the request until the session ends. *@
+            <a asp-action="Summary" asp-route-id="@Model.Id" class="d-inline-block small mb-2">@L["Appointments_Summary"]</a>
+        }
+
         @if (Model.State == AppointmentState.Now)
         {
             <p class="fw-bold mb-0">@L["AppointmentState_Now"]</p>

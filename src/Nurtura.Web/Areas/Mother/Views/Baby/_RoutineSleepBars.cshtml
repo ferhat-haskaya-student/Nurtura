@@ -12,6 +12,10 @@
     var maxHours = Math.Max(18, Math.Ceiling(tallest / 6) * 6);
     var slot = plotWidth / days.Count;
 
+    // Up to 7 days every bar is labelled; with more (the 14-day pre-consultation summary) every second one,
+    // counted from the newest, so the labels never overlap on a phone.
+    var labelEvery = days.Count > 7 ? 2 : 1;
+
     string F(double value) => value.ToString("0.##", CultureInfo.InvariantCulture);
     double Y(double hours) => plotTop + plotHeight - plotHeight * hours / maxHours;
 
@@ -42,8 +46,11 @@
         {
             <rect class="rc-nap" x="@F(x)" y="@F(plotTop + plotHeight - nightHeight - napHeight)" width="@F(barWidth)" height="@F(napHeight)" rx="3" />
         }
-        @:<text class="rc-day @(day.IsToday ? "rc-today" : null)" x="@F(x + barWidth / 2)" y="@F(plotTop + plotHeight + 16)" text-anchor="middle">@L["Weekday_Short_" + day.Date.DayOfWeek]</text>
-        @:<text class="rc-label" x="@F(x + barWidth / 2)" y="@F(plotTop + plotHeight + 30)" text-anchor="middle">@RoutineText.DayMonth(day.Date)</text>
+        @if ((days.Count - 1 - i) % labelEvery == 0)
+        {
+            @:<text class="rc-day @(day.IsToday ? "rc-today" : null)" x="@F(x + barWidth / 2)" y="@F(plotTop + plotHeight + 16)" text-anchor="middle">@L["Weekday_Short_" + day.Date.DayOfWeek]</text>
+            @:<text class="rc-label" x="@F(x + barWidth / 2)" y="@F(plotTop + plotHeight + 30)" text-anchor="middle">@RoutineText.DayMonth(day.Date)</text>
+        }
     }
     @if (Model.AverageSleep is { } average)
     {

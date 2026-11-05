@@ -1,0 +1,194 @@
+@using System.Globalization
+@using Nurtura.Core
+@using Nurtura.Core.Entities
+@using Nurtura.Core.Services
+@using Nurtura.Web.Areas.Mother
+@using Nurtura.Web.Localization
+@model ConsultationSummary
+@{
+    ViewData["Title"] = L["Summary_Title"];
+    var checkIns = Model.CheckIns;
+    var routine = Model.Routine;
+    var basedOn = L["Summary_BasedOn", Model.DaysWithData, ConsultationSummary.Days];
+    var hasData = Model.DaysWithData > 0;
+    var showCharts = checkIns is not null && checkIns.Chart.CheckInCount > 0;
+    var ratings = new (string Name, Func<RatingAverages, decimal> Value)[]
+    {
+        (nameof(DailyCheckIn.Mood), a => a.Mood),
+        (nameof(DailyCheckIn.SleepQuality), a => a.SleepQuality),
+        (nameof(DailyCheckIn.Energy), a => a.Energy),
+        (nameof(DailyCheckIn.Stress), a => a.Stress)
+    };
+
+    string Range(DateOnly from, DateOnly to) =>
+        L["Availability_Range", from.ToString("dd-MM", CultureInfo.InvariantCulture), to.ToString("dd-MM", CultureInfo.InvariantCulture)];
+    string Average(RatingAverages? averages, Func<RatingAverages, decimal> value) =>
+        averages is null ? RoutineText.None : value(averages).ToString("0.0", CultureInfo.CurrentCulture);
+}
+
+@* Built live from what the mother has shared right now, over the last 14 days. It only reports what was logged:
+   one calm color, no zones, nothing marked good or bad. *@
+<div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6">
+        <a asp-action="Index" class="d-inline-block mb-2">&lsaquo; @L["Appointments_Back"]</a>
+        <h1 class="h3 mb-3">@ViewData["Title"]</h1>
+
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="fw-semibold">@BookText.Day(L, Model.Date)</div>
+                <div class="mb-1">@BookText.HourRange(Model.Hour)</div>
+                <div class="small text-body-secondary mb-2">
+                    @L["Book_TopicLabel", L["Topic_" + Model.Topic]] · <span class="fw-semibold text-body">@Model.MotherName</span>
+                </div>
+                @if (Model.BabyAge is not null)
+                {
+                    <p class="small mb-2">@L["Summary_BabyAge", BabyText.Age(L, Model.BabyAge)]</p>
+                }
+                else if (Model.Stage is not null)
+                {
+                    <p class="small mb-2">@L["Stage_" + Model.Stage]</p>
+                }
+                <div class="small">
+                    <div class="fw-semibold">@L["Appointments_Note"]</div>
+                    <div class="text-break text-body-secondary" style="white-space: pre-line">@Model.Concern</div>
+                </div>
+            </div>
+        </div>
+
+        <h2 class="h5 mb-1">@L[checkIns is not null ? "Summary_CheckInsHeading" : Model.Topic == Topic.BabySleep ? "Summary_SleepHeading" : "Summary_FeedsHeading"]</h2>
+        <p class="small text-body-secondary mb-3">
+            @L["Summary_Period", Model.From.ToString(DateFormats.Display, CultureInfo.InvariantCulture), Model.To.ToString(DateFormats.Display, CultureInfo.InvariantCulture)]
+            · @basedOn
+        </p>
+
+        @if (!hasData)
+        {
+            <p class="text-body-secondary mb-4">@L["Summary_NothingShared"]</p>
+        }
+        else if (checkIns is not null)
+        {
+            <section class="mb-4">
+                <h3 class="h6 mb-2">@L["Summary_WeeklyAverages"]</h3>
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle mb-1">
+                        <thead>
+                            <tr>
+                                <th scope="col"></th>
+                                <th scope="col" class="text-end fw-normal small">@L["Summary_Week", 1]<br /><span class="text-body-secondary">@Range(checkIns.Week1.From, checkIns.Week1.To)</span></th>
+                                <th scope="col" class="text-end fw-normal small">@L["Summary_Week", 2]<br /><span class="text-body-secondary">@Range(checkIns.Week2.From, checkIns.Week2.To)</span></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var rating in ratings)
+                            {
+                                <tr>
+                                    <th scope="row" class="fw-normal">@L["CheckIn_" + rating.Name]</th>
+                                    <td class="text-end fw-semibold">@Average(checkIns.Week1.Averages, rating.Value)</td>
+                                    <td class="text-end fw-semibold">@Average(checkIns.Week2.Averages, rating.Value)</td>
+                                </tr>
+                            }
+                            <tr>
+                                <th scope="row" class="fw-normal small text-body-secondary">@L["Summary_CheckInCount"]</th>
+                                <td class="text-end small text-body-secondary">@checkIns.Week1.CheckInCount</td>
+                                <td class="text-end small text-body-secondary">@checkIns.Week2.CheckInCount</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p class="small text-body-secondary mb-0">@L["Summary_ScaleNote"]</p>
+            </section>
+
+            <section class="mb-4">
+                <h3 class="h6 mb-3">@L["Summary_Daily"]</h3>
+                <partial name="_WellbeingCharts" model="checkIns.Chart" />
+            </section>
+
+            @if (checkIns.TopFeelings.Count > 0)
+            {
+                <section class="mb-4">
+                    <h3 class="h6 mb-2">@L["Week_TopFeelings"]</h3>
+                    <ul class="list-unstyled mb-0">
+                        @foreach (var feeling in checkIns.TopFeelings)
+                        {
+                            <li>
+                                @L["FeelingTag_" + feeling.Tag.Key] —
+                                @L[feeling.Days == 1 ? "Week_FeelingDays_One" : "Week_FeelingDays_Many", feeling.Days]
+                            </li>
+                        }
+                    </ul>
+                </section>
+            }
+
+            <section class="mb-4">
+                <h3 class="h6 mb-2">@L["Summary_Notes"]</h3>
+                @if (checkIns.Notes.Count == 0)
+                {
+                    <p class="small text-body-secondary mb-0">@L["Summary_NoNotes"]</p>
+                }
+                @foreach (var note in checkIns.Notes)
+                {
+                    <div class="border-start border-3 ps-2 mb-2">
+                        <div class="small text-body-secondary">@note.Date.ToString(DateFormats.Display, CultureInfo.InvariantCulture)</div>
+                        <div class="text-break" style="white-space: pre-line">@note.Text</div>
+                    </div>
+                }
+            </section>
+        }
+        else if (routine is not null && Model.Topic == Topic.BabySleep)
+        {
+            <section class="mb-4">
+                <partial name="~/Areas/Mother/Views/Baby/_RoutineSleepSection.cshtml" model="routine" />
+            </section>
+            <section class="mb-4">
+                <h3 class="h6 mb-2">@L["Routine_RhythmHeading"]</h3>
+                <div class="card">
+                    <div class="card-body p-3">
+                        <p class="small text-body-secondary mb-2">@L["Routine_RhythmExplain"]</p>
+                        <partial name="~/Areas/Mother/Views/Baby/_RoutineChart.cshtml" model="routine" />
+                    </div>
+                </div>
+            </section>
+        }
+        else if (routine is not null)
+        {
+            <section class="mb-4">
+                <partial name="~/Areas/Mother/Views/Baby/_RoutineFeedSection.cshtml" model="routine"
+                         view-data='new ViewDataDictionary(ViewData) { ["HideNightFeeds"] = true }' />
+            </section>
+        }
+
+        @if (routine is not null && hasData)
+        {
+            @* The baby's shared sleeps or feeds that have a note, newest first: "Tue 03-11, 13:32 · Bottle · 120 ml". *@
+            <section class="mb-4">
+                <h3 class="h6 mb-2">@L["Summary_Notes"]</h3>
+                @if (Model.BabyNotes.Count == 0)
+                {
+                    <p class="small text-body-secondary mb-0">@L["Summary_NoNotes"]</p>
+                }
+                @foreach (var entry in Model.BabyNotes)
+                {
+                    var day = RoutineText.DayShort(L, DateOnly.FromDateTime(PolandTime.ToLocal(entry.TimeUtc)));
+                    var what = entry.Sleep is { } sleep
+                        ? L["Sleep_ListItem", SleepText.Range(L, sleep), SleepText.Duration(L, sleep)].Value
+                        : SleepText.FeedSummary(L, entry.Feed!, full: true);
+                    <div class="border-start border-3 ps-2 mb-2">
+                        <div class="small text-body-secondary">@L["Summary_NoteWhen", day, what]</div>
+                        <div class="text-break" style="white-space: pre-line">@(entry.Sleep?.Note ?? entry.Feed!.Note)</div>
+                    </div>
+                }
+            </section>
+            <p class="small text-body-secondary">@L["Routine_DayNote"]</p>
+        }
+
+        <p class="small text-body-secondary border-top pt-3 mb-4">@L["Summary_BoundaryNote"]</p>
+    </div>
+</div>
+
+@section Scripts {
+    @if (showCharts)
+    {
+        <script src="~/lib/chart.js/dist/chart.umd.js"></script>
+        <script src="~/js/wellbeing-charts.js" asp-append-version="true"></script>
+    }
+}
