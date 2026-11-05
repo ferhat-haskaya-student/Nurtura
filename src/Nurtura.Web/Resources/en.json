@@ -549,5 +549,12 @@
   "Appointments_Cancelled": "Appointment cancelled.",
   "Appointments_CantChange": "This request or appointment can no longer be changed.",
   "Appointments_Back": "Back to appointments",
-  "Appointments_MessageField": "Message"
+  "Appointments_MessageField": "Message",
+  "Weekday_InText_Monday": "Monday",
+  "Weekday_InText_Tuesday": "Tuesday",
+  "Weekday_InText_Wednesday": "Wednesday",
+  "Weekday_InText_Thursday": "Thursday",
+  "Weekday_InText_Friday": "Friday",
+  "Weekday_InText_Saturday": "Saturday",
+  "Weekday_InText_Sunday": "Sunday"
 }

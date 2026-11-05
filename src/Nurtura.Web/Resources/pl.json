@@ -549,5 +549,12 @@
   "Appointments_Cancelled": "Wizyta odwołana.",
   "Appointments_CantChange": "Tej prośby lub wizyty nie można już zmienić.",
   "Appointments_Back": "Wróć do wizyt",
-  "Appointments_MessageField": "Wiadomość"
+  "Appointments_MessageField": "Wiadomość",
+  "Weekday_InText_Monday": "poniedziałek",
+  "Weekday_InText_Tuesday": "wtorek",
+  "Weekday_InText_Wednesday": "środa",
+  "Weekday_InText_Thursday": "czwartek",
+  "Weekday_InText_Friday": "piątek",
+  "Weekday_InText_Saturday": "sobota",
+  "Weekday_InText_Sunday": "niedziela"
 }

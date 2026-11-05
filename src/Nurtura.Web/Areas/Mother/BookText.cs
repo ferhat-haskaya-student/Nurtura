@@ -12,18 +12,22 @@ public static class BookText
     public static string Day(IStringLocalizer localizer, DateOnly date) =>
         localizer["Weekday_" + date.DayOfWeek] + " " + date.ToString(DateFormats.Display, CultureInfo.InvariantCulture);
 
+    // The same inside a sentence, where Polish writes the weekday in lowercase ("wtorek 10-11-2026").
+    public static string DayInText(IStringLocalizer localizer, DateOnly date) =>
+        localizer["Weekday_InText_" + date.DayOfWeek] + " " + date.ToString(DateFormats.Display, CultureInfo.InvariantCulture);
+
     // "14:00".
     public static string Hour(int hour) => new TimeOnly(hour, 0).ToString(TimeFormats.Display, CultureInfo.InvariantCulture);
 
     // "14:00–15:00": every session is one hour.
     public static string HourRange(int hour) => Hour(hour) + "–" + Hour(hour + 1);
 
-    // "Thursday 06-11-2026, 12:00"; the order comes from the language ("06-11-2026 (Czwartek), 12:00"
+    // Always inside a sentence. "Thursday 06-11-2026, 12:00"; the order comes from the language ("06-11-2026 (czwartek), 12:00"
     // in Polish, where "do" + weekday would need another grammatical case).
     public static string Moment(IStringLocalizer localizer, DateTime polandTime) =>
         localizer[
             "Book_Moment",
-            localizer["Weekday_" + polandTime.DayOfWeek],
+            localizer["Weekday_InText_" + polandTime.DayOfWeek],
             polandTime.ToString(DateFormats.Display, CultureInfo.InvariantCulture),
             polandTime.ToString(TimeFormats.Display, CultureInfo.InvariantCulture)];
 
