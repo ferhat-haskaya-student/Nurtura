@@ -349,6 +349,36 @@ namespace Nurtura.Data.Migrations
                     b.ToTable("CheckInFeelingTags");
                 });
 
+            modelBuilder.Entity("Nurtura.Core.Entities.ConsultationNote", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AppointmentId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AppointmentId")
+                        .IsUnique();
+
+                    b.ToTable("ConsultationNotes");
+                });
+
             modelBuilder.Entity("Nurtura.Core.Entities.DailyCheckIn", b =>
                 {
                     b.Property<int>("Id")
@@ -986,6 +1016,15 @@ namespace Nurtura.Data.Migrations
                         .WithMany()
                         .HasForeignKey("FeelingTagId")
                         .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Nurtura.Core.Entities.ConsultationNote", b =>
+                {
+                    b.HasOne("Nurtura.Core.Entities.Appointment", null)
+                        .WithMany()
+                        .HasForeignKey("AppointmentId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 

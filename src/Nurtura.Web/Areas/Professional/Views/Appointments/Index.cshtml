@@ -1,3 +1,4 @@
+@using Nurtura.Web.Localization
 @model Nurtura.Core.Services.ProfessionalAppointments
 @{
     ViewData["Title"] = L["Appointments_Title"];
@@ -9,6 +10,8 @@
         (Key: "Appointments_Upcoming", Empty: "Appointments_NoUpcoming", Items: Model.Upcoming),
         (Key: "Appointments_Past", Empty: "Appointments_NoPast", Items: Model.Past)
     };
+    // Ended sessions without a closing note; the line at the top jumps to the first of them.
+    var notesToWrite = Model.Past.Where(a => a.NeedsClosingNote).ToList();
 }
 
 <div class="row justify-content-center">
@@ -16,6 +19,13 @@
         <h1 class="h3 mb-3">@ViewData["Title"]</h1>
 
         @await Html.PartialAsync("_ConsultationBanner", ViewData["Banners"])
+
+        @if (notesToWrite.Count > 0)
+        {
+            <p class="mb-3">
+                <a href="#appointment-@notesToWrite[0].Id">@L[Plural.Key("Appointments_NotesToWrite", notesToWrite.Count), notesToWrite.Count]</a>
+            </p>
+        }
 
         @if (statusMessage is not null)
         {

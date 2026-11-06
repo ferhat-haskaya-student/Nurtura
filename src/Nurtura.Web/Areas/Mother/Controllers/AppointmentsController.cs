@@ -8,7 +8,7 @@ using Nurtura.Web.Areas.Mother.Models;
 
 namespace Nurtura.Web.Areas.Mother.Controllers;
 
-// "My appointments": upcoming and past, with cancel, edit note and the consultation chat. Rescheduling goes through Book.
+// "My appointments": upcoming and past, with cancel, edit note, the consultation chat and past consultations. Rescheduling goes through Book.
 [Area(Roles.Mother)]
 [Authorize(Roles = Roles.Mother)]
 public class AppointmentsController : Controller
@@ -18,17 +18,20 @@ public class AppointmentsController : Controller
 
     private readonly AppointmentService _appointmentService;
     private readonly ChatService _chatService;
+    private readonly ConsultationService _consultationService;
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly IStringLocalizer<SharedResource> _localizer;
 
     public AppointmentsController(
         AppointmentService appointmentService,
         ChatService chatService,
+        ConsultationService consultationService,
         UserManager<ApplicationUser> userManager,
         IStringLocalizer<SharedResource> localizer)
     {
         _appointmentService = appointmentService;
         _chatService = chatService;
+        _consultationService = consultationService;
         _userManager = userManager;
         _localizer = localizer;
     }
@@ -53,6 +56,14 @@ public class AppointmentsController : Controller
     {
         var room = await _chatService.GetRoomAsync(_userManager.GetUserId(User)!, id);
         return room is null ? NotFound() : View(room.Info);
+    }
+
+    // One of her past consultations (the session has ended): details, the closing note and the chat, read-only.
+    [HttpGet]
+    public async Task<IActionResult> Consultation(int id)
+    {
+        var consultation = await _consultationService.GetAsync(_userManager.GetUserId(User)!, id);
+        return consultation is null ? NotFound() : View(consultation);
     }
 
     [HttpPost]

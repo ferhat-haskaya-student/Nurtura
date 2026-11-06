@@ -1,0 +1,49 @@
+@using Nurtura.Core.Entities
+@using Nurtura.Web.Areas.Mother
+@model Nurtura.Web.Areas.Professional.Models.ClosingNoteViewModel
+@{
+    var consultation = Model.Consultation!;
+    var room = consultation.Room;
+    ViewData["Title"] = consultation.Note is null ? L["ClosingNote_Write"] : L["ClosingNote_Edit"];
+}
+
+@* Write or edit the closing note. Shown only while allowed; the service checks again on save. *@
+<div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6">
+        <a asp-action="Consultation" asp-route-id="@Model.Id" class="d-inline-block mb-2">&lsaquo; @L["ClosingNote_Back"]</a>
+        <h1 class="h3 mb-3">@ViewData["Title"]</h1>
+
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="fw-semibold">@BookText.Day(L, room.Date)</div>
+                <div class="mb-1">@BookText.HourRange(room.Hour)</div>
+                <div class="small text-body-secondary">
+                    @L["Book_TopicLabel", L["Topic_" + room.Topic]] · <span class="fw-semibold text-body">@room.MotherName</span>
+                </div>
+            </div>
+        </div>
+
+        <form asp-action="ClosingNote" method="post" data-submit-once>
+            <input type="hidden" asp-for="Id" />
+            <div class="mb-4">
+                <label asp-for="Text" class="form-label fw-semibold"></label>
+                <div class="form-text mt-0 mb-2">
+                    @(consultation.Note is null
+                        ? L["ClosingNote_Hint"]
+                        : L["ClosingNote_EditUntil", BookText.Moment(L, consultation.Note.EditableUntil)])
+                </div>
+                <textarea asp-for="Text" class="form-control" rows="10" maxlength="@ConsultationNote.TextMaxLength"
+                          data-note-input></textarea>
+                <div class="form-text text-end" data-note-counter data-template="@L["CheckIn_NoteCounter"]"
+                     data-max="@ConsultationNote.TextMaxLength" aria-live="polite"></div>
+                <span asp-validation-for="Text" class="text-danger"></span>
+            </div>
+            <button type="submit" class="btn btn-primary w-100 mb-4">@L["ClosingNote_Save"]</button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/note-counter.js" asp-append-version="true"></script>
+}

@@ -1,0 +1,42 @@
+@using System.Globalization
+@using Nurtura.Web.Areas.Mother
+@using Nurtura.Web.Localization
+@model Nurtura.Core.Services.Consultation
+@* A past consultation, the same for both sides: details, the mother's note and the closing note. Each page puts
+   its own actions after it (the professional's Write / Edit closing note), then the chat history. *@
+@{
+    var room = Model.Room;
+    var professionalType = L["ProfessionalType_" + Model.ProfessionalType];
+}
+<div class="card mb-3">
+    <div class="card-body">
+        <div class="fw-semibold">@BookText.Day(L, room.Date)</div>
+        <div class="mb-1">@BookText.HourRange(room.Hour)</div>
+        <div class="small text-body-secondary mb-2">
+            @L["Book_TopicLabel", L["Topic_" + room.Topic]] ·
+            <span class="fw-semibold text-body">@room.ProfessionalName</span>, @professionalType
+        </div>
+        <div class="small">
+            <div class="fw-semibold">@L["Book_Concern"]</div>
+            <div class="text-break text-body-secondary" style="white-space: pre-wrap">@Model.Concern</div>
+        </div>
+    </div>
+</div>
+
+<h2 class="h5 mb-2">@L["Consultation_ClosingNote"]</h2>
+<div class="card mb-3" id="closing-note">
+    <div class="card-body">
+        @if (Model.Note is null)
+        {
+            <p class="text-body-secondary mb-0">@L["Consultation_NoNoteYet"]</p>
+        }
+        else
+        {
+            <div class="text-break mb-2" style="white-space: pre-wrap">@Model.Note.Text</div>
+            <div class="small text-body-secondary">
+                @L["Consultation_WrittenBy", room.ProfessionalName, professionalType,
+                    Model.Note.WrittenAt.ToString(DateFormats.Display, CultureInfo.InvariantCulture)]
+            </div>
+        }
+    </div>
+</div>

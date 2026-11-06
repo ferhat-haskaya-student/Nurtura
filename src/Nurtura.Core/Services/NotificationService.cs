@@ -37,14 +37,17 @@ public class NotificationService
             .ToListAsync(cancellationToken);
     }
 
-    // Marks one of hers as read and returns its appointment id; null when it is not hers.
-    public async Task<int?> OpenAsync(string userId, int id, CancellationToken cancellationToken = default)
+    // Marks one of hers as read and returns its appointment id and type; null when it is not hers.
+    public async Task<(int AppointmentId, NotificationType Type)?> OpenAsync(
+        string userId,
+        int id,
+        CancellationToken cancellationToken = default)
     {
-        var appointmentId = await _db.Notifications
+        var found = await _db.Notifications
             .Where(n => n.Id == id && n.UserId == userId)
-            .Select(n => (int?)n.AppointmentId)
+            .Select(n => new { n.AppointmentId, n.Type })
             .SingleOrDefaultAsync(cancellationToken);
-        if (appointmentId is null)
+        if (found is null)
         {
             return null;
         }
@@ -52,7 +55,7 @@ public class NotificationService
         await _db.Notifications
             .Where(n => n.Id == id && n.UserId == userId && !n.IsRead)
             .ExecuteUpdateAsync(set => set.SetProperty(n => n.IsRead, true), cancellationToken);
-        return appointmentId;
+        return (found.AppointmentId, found.Type);
     }
 
     public async Task MarkAllReadAsync(string userId, CancellationToken cancellationToken = default)

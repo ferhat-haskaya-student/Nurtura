@@ -4,7 +4,7 @@
 @using Nurtura.Web.Localization
 @model (int AppointmentId, ChatAccess Access, DateTime OpensAt)
 @* "Open chat" on the banner and on a confirmed appointment in both lists: greyed with "Opens at 13:55" until the
-   room opens, "View chat" (read-only) after the session. The server checks all of this again on the chat page. *@
+   room opens, "View chat" after the session, which leads to the consultation page (read-only chat, closing note). The server checks all of this again on the chat page. *@
 @{
     var area = User.IsInRole(Roles.Mother) ? Roles.Mother : Roles.Professional;
 }
@@ -21,7 +21,7 @@
         </span>
         break;
     case ChatAccess.ViewOnly:
-        <a asp-area="@area" asp-controller="Appointments" asp-action="Chat" asp-route-id="@Model.AppointmentId"
+        <a asp-area="@area" asp-controller="Appointments" asp-action="Consultation" asp-route-id="@Model.AppointmentId"
            class="btn btn-outline-secondary btn-sm">@L["Chat_View"]</a>
         break;
 }

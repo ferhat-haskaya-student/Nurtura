@@ -72,9 +72,14 @@
             <p class="fw-bold mb-2">@L["AppointmentState_Now"]</p>
         }
 
-        @if (showActions && Model.Chat != ChatAccess.None)
+        @if (showActions && (Model.Chat != ChatAccess.None || Model.NeedsClosingNote))
         {
-            <div class="mb-2">
+            <div class="d-flex flex-wrap gap-2 mb-2">
+                @if (Model.NeedsClosingNote)
+                {
+                    @* The session has ended and there is no closing note yet. *@
+                    <a asp-action="ClosingNote" asp-route-id="@Model.Id" class="btn btn-primary btn-sm">@L["ClosingNote_Write"]</a>
+                }
                 <partial name="_ChatButton" model="(Model.Id, Model.Chat, Model.ChatOpensAt)" />
             </div>
         }

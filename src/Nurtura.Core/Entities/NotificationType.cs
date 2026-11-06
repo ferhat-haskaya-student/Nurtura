@@ -8,6 +8,7 @@ public enum NotificationType
     RequestRejected,
     CancelledByProfessional,
     RequestExpired,
+    ClosingNoteWritten,
 
     // To the professional.
     NewRequest,

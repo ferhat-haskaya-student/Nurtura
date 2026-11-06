@@ -50,6 +50,7 @@ public sealed record MotherAppointments(IReadOnlyList<MotherAppointment> Upcomin
 
 // One appointment in the professional's lists: of the mother, only her display name, the topic and her note.
 // CanCancel: as for the mother (accept and reject are for requests, which expire well before the room opens).
+// NeedsClosingNote: the session has ended and she has not written the closing note yet (still Confirmed).
 public sealed record ProfessionalAppointment(
     int Id,
     DateOnly Date,
@@ -64,7 +65,8 @@ public sealed record ProfessionalAppointment(
     bool CanCancel,
     bool CanEditNote,
     ChatAccess Chat,
-    DateTime ChatOpensAt);
+    DateTime ChatOpensAt,
+    bool NeedsClosingNote);
 
 // A confirmed consultation from 24 hours before its start until its end (end of the hour, or End session).
 // Hour and OpensAt are Poland time. IsNow: during the session. IsToday: today, otherwise tomorrow.

@@ -1,0 +1,17 @@
+@model Nurtura.Core.Services.Consultation
+@{
+    ViewData["Title"] = L["Consultation_Title"];
+}
+
+@* The mother's past consultation: read-only. *@
+<div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6">
+        <a asp-action="Index" class="d-inline-block mb-2">&lsaquo; @L["MyAppointments_Back"]</a>
+        <h1 class="h3 mb-3">@ViewData["Title"]</h1>
+
+        <partial name="_Consultation" model="Model" />
+
+        <h2 class="h5 mb-2">@L["Consultation_Chat"]</h2>
+        <partial name="_ChatHistory" model="Model" />
+    </div>
+</div>

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Nurtura.Core.Entities;
 using Nurtura.Core.Identity;
 using Nurtura.Core.Services;
 
@@ -25,18 +26,20 @@ public class NotificationsController : Controller
         return View(await _notificationService.GetAllAsync(_userManager.GetUserId(User)!));
     }
 
-    // Marks it read and goes to the appointment in her own list. Another user's id gives 404.
+    // Marks it read and goes to the appointment in her own list, or for a closing note to that consultation's
+    // page. Another user's id gives 404.
     [HttpGet]
     public async Task<IActionResult> Open(int id)
     {
-        var appointmentId = await _notificationService.OpenAsync(_userManager.GetUserId(User)!, id);
-        if (appointmentId is null)
+        if (await _notificationService.OpenAsync(_userManager.GetUserId(User)!, id) is not { } opened)
         {
             return NotFound();
         }
 
         var area = User.IsInRole(Roles.Mother) ? Roles.Mother : Roles.Professional;
-        var url = Url.Action("Index", "Appointments", new { area }) + "#appointment-" + appointmentId;
+        var url = opened.Type == NotificationType.ClosingNoteWritten
+            ? Url.Action("Consultation", "Appointments", new { area, id = opened.AppointmentId })!
+            : Url.Action("Index", "Appointments", new { area }) + "#appointment-" + opened.AppointmentId;
         return LocalRedirect(url);
     }
 

@@ -9,7 +9,7 @@ using Nurtura.Web.Areas.Professional.Models;
 
 namespace Nurtura.Web.Areas.Professional.Controllers;
 
-// "Appointments": requests, upcoming and past, with accept, reject, cancel and the consultation chat.
+// "Appointments": requests, upcoming and past, with accept, reject, cancel, the consultation chat and the closing note.
 [Area(Roles.Professional)]
 [Authorize(Roles = Roles.Professional)]
 public class AppointmentsController : Controller
@@ -20,6 +20,7 @@ public class AppointmentsController : Controller
     private readonly AppointmentService _appointmentService;
     private readonly ConsultationSummaryService _summaryService;
     private readonly ChatService _chatService;
+    private readonly ConsultationService _consultationService;
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly IStringLocalizer<SharedResource> _localizer;
 
@@ -27,12 +28,14 @@ public class AppointmentsController : Controller
         AppointmentService appointmentService,
         ConsultationSummaryService summaryService,
         ChatService chatService,
+        ConsultationService consultationService,
         UserManager<ApplicationUser> userManager,
         IStringLocalizer<SharedResource> localizer)
     {
         _appointmentService = appointmentService;
         _summaryService = summaryService;
         _chatService = chatService;
+        _consultationService = consultationService;
         _userManager = userManager;
         _localizer = localizer;
     }
@@ -71,6 +74,54 @@ public class AppointmentsController : Controller
         }
 
         return View(new ChatPageViewModel(room.Info, await _summaryService.GetAsync(userId, id)));
+    }
+
+    // One of her past consultations (the session has ended), with Write / Edit closing note while allowed.
+    [HttpGet]
+    public async Task<IActionResult> Consultation(int id)
+    {
+        var consultation = await _consultationService.GetAsync(_userManager.GetUserId(User)!, id);
+        return consultation is null ? NotFound() : View(consultation);
+    }
+
+    // The closing note form: only while she may still write it (session ended, no note) or edit it (24 hours).
+    [HttpGet]
+    public async Task<IActionResult> ClosingNote(int id)
+    {
+        var consultation = await _consultationService.GetAsync(_userManager.GetUserId(User)!, id);
+        if (consultation is not ({ CanWrite: true } or { CanEdit: true }))
+        {
+            return Done(false, null);
+        }
+
+        return View(new ClosingNoteViewModel { Id = id, Text = consultation.Note?.Text, Consultation = consultation });
+    }
+
+    // The service checks everything again: her appointment, session ended, not locked.
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ClosingNote(ClosingNoteViewModel model)
+    {
+        var userId = _userManager.GetUserId(User)!;
+        if (!ModelState.IsValid)
+        {
+            model.Consultation = await _consultationService.GetAsync(userId, model.Id);
+            if (model.Consultation is not ({ CanWrite: true } or { CanEdit: true }))
+            {
+                return Done(false, null);
+            }
+
+            return View(model);
+        }
+
+        var result = await _consultationService.SaveNoteAsync(userId, model.Id, model.Text);
+        if (result == NoteSaveResult.NotAllowed)
+        {
+            return Done(false, null);
+        }
+
+        TempData[StatusMessageKey] = _localizer[result == NoteSaveResult.Created ? "ClosingNote_Saved" : "ClosingNote_Updated"].Value;
+        return RedirectToAction(nameof(Consultation), new { id = model.Id });
     }
 
     // One tap: Requested -> Confirmed.

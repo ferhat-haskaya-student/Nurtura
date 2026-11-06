@@ -372,7 +372,8 @@ public class AppointmentService
         return new ProfessionalAppointment(
             r.Id, r.Date, r.Hour, r.Topic, r.OtherName, r.Concern, state, r.CancelledBy, r.Message,
             BookingService.ConfirmBy(r.Date, r.Hour), CanCancel(state, r, now), CanEditNote(state, r, now),
-            ChatOf(r, now), ConsultationRoom.OpensAt(r.Date, r.Hour));
+            ChatOf(r, now), ConsultationRoom.OpensAt(r.Date, r.Hour),
+            r.Status == AppointmentStatus.Confirmed && state == AppointmentState.Done);
     }
 
     // Her appointments with the professional's display name.

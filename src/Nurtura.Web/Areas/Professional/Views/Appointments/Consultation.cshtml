@@ -1,0 +1,42 @@
+@using Nurtura.Web.Areas.Mother
+@model Nurtura.Core.Services.Consultation
+@{
+    ViewData["Title"] = L["Consultation_Title"];
+    var statusMessage = TempData["StatusMessage"] as string;
+}
+
+@* The professional's past consultation, with Write / Edit closing note while allowed (the server checks again).
+   The pre-consultation summary is not shown after the session. *@
+<div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6">
+        <a asp-action="Index" class="d-inline-block mb-2">&lsaquo; @L["Appointments_Back"]</a>
+        <h1 class="h3 mb-1">@ViewData["Title"]</h1>
+        <p class="text-body-secondary mb-3">@Model.Room.MotherName</p>
+
+        @if (statusMessage is not null)
+        {
+            <div class="alert alert-success" role="status">@statusMessage</div>
+        }
+
+        <partial name="_Consultation" model="Model" />
+
+        <div class="mb-4">
+            @if (Model.CanWrite)
+            {
+                <a asp-action="ClosingNote" asp-route-id="@Model.Room.AppointmentId" class="btn btn-primary">@L["ClosingNote_Write"]</a>
+            }
+            else if (Model.CanEdit)
+            {
+                <a asp-action="ClosingNote" asp-route-id="@Model.Room.AppointmentId" class="btn btn-outline-primary">@L["ClosingNote_Edit"]</a>
+                <p class="small text-body-secondary mt-2 mb-0">@L["ClosingNote_EditUntil", BookText.Moment(L, Model.Note!.EditableUntil)]</p>
+            }
+            else if (Model.Note is not null)
+            {
+                <p class="small text-body-secondary mb-0">@L["Consultation_Locked"]</p>
+            }
+        </div>
+
+        <h2 class="h5 mb-2">@L["Consultation_Chat"]</h2>
+        <partial name="_ChatHistory" model="Model" />
+    </div>
+</div>

@@ -103,6 +103,7 @@ builder.Services.AddScoped<AppointmentService>();
 builder.Services.AddScoped<NotificationService>();
 builder.Services.AddScoped<ConsultationSummaryService>();
 builder.Services.AddScoped<ChatService>();
+builder.Services.AddScoped<ConsultationService>();
 
 // The consultation chat. Presence (who has the chat open) is kept in memory for the whole app.
 builder.Services.AddSignalR();

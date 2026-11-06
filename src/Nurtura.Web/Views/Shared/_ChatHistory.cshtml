@@ -1,0 +1,35 @@
+@using System.Globalization
+@using Nurtura.Web.Localization
+@model Nurtura.Core.Services.Consultation
+@* The chat of an ended session, read-only and without a live connection. Same bubbles as wwwroot/js/chat.js
+   (her own on the right, the other side's on the left, time and "edited"). Razor encodes every message. *@
+@{
+    var room = Model.Room;
+    var endedLine = room.EndedBy is { } endedBy
+        ? L["Chat_EndedBy", room.NameOf(endedBy)]
+        : L["Chat_EndedAt", room.End.ToString(TimeFormats.Display, CultureInfo.InvariantCulture)];
+}
+<div class="alert alert-secondary py-2 small mb-2" role="status">@endedLine</div>
+
+<div class="border rounded p-2 mb-3">
+    @if (Model.Messages.Count == 0)
+    {
+        <p class="small text-body-secondary text-center my-3">@L["Chat_NoMessages"]</p>
+    }
+    @foreach (var message in Model.Messages)
+    {
+        var mine = message.Sender == room.Me;
+        <div class="d-flex mb-2 @(mine ? "justify-content-end" : "justify-content-start")">
+            <div class="rounded px-2 py-1 @(mine ? "bg-primary-subtle" : "bg-body-secondary")" style="max-width: 85%;">
+                <div class="text-break" style="white-space: pre-wrap">@message.Text</div>
+                <div class="small text-body-secondary d-flex flex-wrap gap-2 align-items-center @(mine ? "justify-content-end" : "")">
+                    <span>@message.SentAt.ToString(TimeFormats.Display, CultureInfo.InvariantCulture)</span>
+                    @if (message.Edited)
+                    {
+                        <span>@L["Chat_Edited"]</span>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+</div>
