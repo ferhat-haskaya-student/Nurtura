@@ -1,0 +1,24 @@
+@model List<Nurtura.Core.Services.GuidanceCard>
+@{
+    ViewData["Title"] = L["Guides_TabSaved"];
+}
+
+<div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6">
+        <h1 class="h3 mb-3">@L["Guides_Title"]</h1>
+
+        <partial name="_GuidesTabs" model="@("Saved")" />
+
+        @if (Model.Count > 0)
+        {
+            @foreach (var card in Model)
+            {
+                <partial name="_GuideCard" model="card" />
+            }
+        }
+        else
+        {
+            <p class="text-body-secondary">@L["Guides_SavedEmpty"]</p>
+        }
+    </div>
+</div>

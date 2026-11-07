@@ -177,3 +177,10 @@ body {
 .routine-day-name {
   min-width: 5.5rem;
 }
+
+/* Guidance page body: section headings stay smaller than the page title. */
+.guide-body h2 {
+  font-size: 1.15rem;
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+}

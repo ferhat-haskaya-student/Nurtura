@@ -17,8 +17,8 @@ public class BabyController : Controller
 {
     private const string StatusMessageKey = "StatusMessage";
 
-    // Remembers the baby she last chose. Only a preference: it is checked against her own babies on every read.
-    private const string SelectedBabyCookie = "Nurtura.SelectedBaby";
+    // Remembers the baby she last chose (also read by Guides). Only a preference: it is checked against her own babies on every read.
+    internal const string SelectedBabyCookie = "Nurtura.SelectedBaby";
 
     private readonly BabyService _babyService;
     private readonly SleepService _sleepService;

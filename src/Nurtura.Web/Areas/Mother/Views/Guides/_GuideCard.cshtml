@@ -1,0 +1,11 @@
+@model Nurtura.Core.Services.GuidanceCard
+
+<div class="card mb-2">
+    <div class="card-body">
+        <h3 class="h6 card-title mb-1">
+            <a asp-area="Mother" asp-controller="Guides" asp-action="Article" asp-route-id="@Model.Id"
+               class="stretched-link text-reset">@Model.Title</a>
+        </h3>
+        <p class="card-text small text-body-secondary mb-0">@Model.Summary</p>
+    </div>
+</div>

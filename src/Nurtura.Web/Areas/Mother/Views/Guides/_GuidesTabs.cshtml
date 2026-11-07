@@ -1,0 +1,13 @@
+@model string
+@* The two tabs of the Guides section. The model is the current action: "Index" or "Saved". *@
+
+<ul class="nav nav-tabs mb-3">
+    @foreach (var (action, label) in new[] { ("Index", L["Guides_TabAll"].Value), ("Saved", L["Guides_TabSaved"].Value) })
+    {
+        var isCurrent = action == Model;
+        <li class="nav-item">
+            <a asp-area="Mother" asp-controller="Guides" asp-action="@action"
+               class="nav-link @(isCurrent ? "active" : null)" aria-current="@(isCurrent ? "page" : null)">@label</a>
+        </li>
+    }
+</ul>

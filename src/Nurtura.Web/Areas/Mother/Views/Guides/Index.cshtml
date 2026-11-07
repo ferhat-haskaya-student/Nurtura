@@ -1,0 +1,47 @@
+@model Nurtura.Core.Services.GuidanceList
+@{
+    ViewData["Title"] = L["Guides_Title"];
+}
+
+<div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6">
+        <h1 class="h3 mb-3">@ViewData["Title"]</h1>
+
+        <partial name="_GuidesTabs" model="@("Index")" />
+
+        @if (Model.Suggested.Count > 0)
+        {
+            <section class="mb-4" aria-labelledby="suggested">
+                <h2 id="suggested" class="h5 mb-2">@L["Guides_Suggested"]</h2>
+                @foreach (var card in Model.Suggested)
+                {
+                    <partial name="_GuideCard" model="card" />
+                }
+            </section>
+        }
+
+        <section class="mb-4" aria-labelledby="for-you">
+            <h2 id="for-you" class="h5 mb-1">@L["Guides_ForYou"]</h2>
+            @if (Model.ForYou.Count > 0)
+            {
+                <partial name="_GuideGroups" model="Model.ForYou" />
+            }
+            else
+            {
+                <p class="text-body-secondary">@L["Guides_NoneYet"]</p>
+            }
+        </section>
+
+        <section class="mb-4" aria-labelledby="for-your-baby">
+            <h2 id="for-your-baby" class="h5 mb-1">@L["Guides_ForYourBaby"]</h2>
+            @if (Model.ForYourBaby.Count > 0)
+            {
+                <partial name="_GuideGroups" model="Model.ForYourBaby" />
+            }
+            else
+            {
+                <p class="text-body-secondary">@L["Guides_NoneYet"]</p>
+            }
+        </section>
+    </div>
+</div>

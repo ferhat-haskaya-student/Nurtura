@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
 using Nurtura.Core;
+using Nurtura.Core.Content;
 using Nurtura.Core.Identity;
 using Nurtura.Core.Services;
 using Nurtura.Data;
@@ -104,6 +105,7 @@ builder.Services.AddScoped<NotificationService>();
 builder.Services.AddScoped<ConsultationSummaryService>();
 builder.Services.AddScoped<ChatService>();
 builder.Services.AddScoped<ConsultationService>();
+builder.Services.AddScoped<GuidanceService>();
 
 // The consultation chat. Presence (who has the chat open) is kept in memory for the whole app.
 builder.Services.AddSignalR();
@@ -125,6 +127,9 @@ using (var scope = app.Services.CreateScope())
         userManager,
         adminEmail,
         adminPassword);
+
+    // The approved guidance pages; adds only what is missing, so it is safe on every start.
+    await GuidanceSeeder.SeedAsync(scope.ServiceProvider.GetRequiredService<INurturaDbContext>());
 
     // Test accounts exist only in Development.
     if (app.Environment.IsDevelopment())

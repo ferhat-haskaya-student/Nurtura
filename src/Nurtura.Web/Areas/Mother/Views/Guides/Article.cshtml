@@ -1,0 +1,95 @@
+@using Nurtura.Web.Content
+@using Nurtura.Web.Localization
+@model Nurtura.Web.Areas.Mother.Models.GuidePageViewModel
+@{
+    var guide = Model.Page.Content;
+    ViewData["Title"] = guide.Title;
+    var statusMessage = TempData["StatusMessage"] as string;
+
+    // Page content is English for now; its language field tells the browser.
+    var contentLang = guide.Language == Nurtura.Core.Entities.Language.Polish ? "pl" : "en";
+}
+
+<div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6">
+        <p class="mb-2 small">
+            <a asp-area="Mother" asp-controller="Guides" asp-action="Index">@L["Guides_Back"]</a>
+        </p>
+
+        @if (statusMessage is not null)
+        {
+            <div class="alert alert-success" role="status">@statusMessage</div>
+        }
+
+        <article lang="@contentLang">
+            <h1 class="h3 mb-2 text-break">@guide.Title</h1>
+            <p class="lead mb-3">@guide.Summary</p>
+
+            <form asp-area="Mother" asp-controller="Guides" asp-action="@(Model.Page.IsSaved ? "Unsave" : "Save")"
+                  asp-route-id="@guide.Id" method="post" class="mb-4">
+                <button type="submit" class="btn btn-sm @(Model.Page.IsSaved ? "btn-secondary" : "btn-outline-secondary")"
+                        aria-pressed="@(Model.Page.IsSaved ? "true" : "false")">
+                    @(Model.Page.IsSaved ? L["Guides_Unsave"] : L["Guides_Save"])
+                </button>
+            </form>
+
+            @* Body: Markdown rendered with raw HTML switched off (GuidanceMarkdown), so it cannot carry script. *@
+            <div class="guide-body text-break">
+                @Html.Raw(Model.BodyHtml)
+            </div>
+
+            @* The more serious card first: the red emergency card only where the page has one, then the blue card. *@
+            @if (guide.EmergencyItems.Count > 0)
+            {
+                <div class="card border-danger bg-danger-subtle mb-3">
+                    <div class="card-body">
+                        <h2 class="h5 card-title text-danger-emphasis">@guide.EmergencyHeading</h2>
+                        <ul class="mb-0">
+                            @foreach (var item in guide.EmergencyItems)
+                            {
+                                <li>@item</li>
+                            }
+                        </ul>
+                    </div>
+                </div>
+            }
+
+            <div class="card border-primary bg-primary-subtle mb-3">
+                <div class="card-body">
+                    <h2 class="h5 card-title text-primary-emphasis">@guide.GetHelpHeading</h2>
+                    <ul class="mb-0">
+                        @foreach (var item in guide.GetHelpItems)
+                        {
+                            <li>@item</li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </article>
+
+        <a asp-area="Mother" asp-controller="Book" asp-action="Slots" asp-route-topic="@guide.RelatedTopic"
+           class="btn btn-primary w-100 mb-4">@L["Guides_Book"]</a>
+
+        <h2 class="h6">@L["Guides_Sources"]</h2>
+        <ul class="small mb-3" lang="@contentLang">
+            @foreach (var source in guide.Sources)
+            {
+                <li>
+                    @if (GuidanceMarkdown.IsSafeUrl(source.Url))
+                    {
+                        <a href="@source.Url" target="_blank" rel="noopener noreferrer" class="text-break">@source.Name</a>
+                    }
+                    else
+                    {
+                        @source.Name
+                    }
+                </li>
+            }
+        </ul>
+
+        <p class="small text-body-secondary mb-1">@L["Guides_Disclaimer"]</p>
+        <p class="small text-body-secondary mb-4">
+            @L["Guides_Checked", guide.LastChecked.ToString(DateFormats.Display), guide.NextCheck.ToString(DateFormats.Display)]
+        </p>
+    </div>
+</div>

@@ -41,6 +41,16 @@ public interface INurturaDbContext
 
     DbSet<ConsultationNote> ConsultationNotes { get; }
 
+    DbSet<GuidanceCategory> GuidanceCategories { get; }
+
+    DbSet<GuidanceContent> GuidanceContents { get; }
+
+    DbSet<GuidanceSource> GuidanceSources { get; }
+
+    DbSet<ContentKeywordTag> ContentKeywordTags { get; }
+
+    DbSet<SavedGuidance> SavedGuidances { get; }
+
     // Identity's user table; implemented by IdentityDbContext.
     DbSet<ApplicationUser> Users { get; }
 

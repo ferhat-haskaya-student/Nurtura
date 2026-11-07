@@ -47,6 +47,16 @@ public class NurturaDbContext : IdentityDbContext<ApplicationUser>, INurturaDbCo
 
     public DbSet<ConsultationNote> ConsultationNotes => Set<ConsultationNote>();
 
+    public DbSet<GuidanceCategory> GuidanceCategories => Set<GuidanceCategory>();
+
+    public DbSet<GuidanceContent> GuidanceContents => Set<GuidanceContent>();
+
+    public DbSet<GuidanceSource> GuidanceSources => Set<GuidanceSource>();
+
+    public DbSet<ContentKeywordTag> ContentKeywordTags => Set<ContentKeywordTag>();
+
+    public DbSet<SavedGuidance> SavedGuidances => Set<SavedGuidance>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);

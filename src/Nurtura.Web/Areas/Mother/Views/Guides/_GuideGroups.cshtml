@@ -1,0 +1,11 @@
+@model IReadOnlyList<Nurtura.Core.Services.GuidanceGroup>
+@* Cards grouped by category, inside "For you" or "For your baby". *@
+
+@foreach (var group in Model)
+{
+    <h3 class="h6 text-body-secondary mt-3 mb-2">@group.Category</h3>
+    @foreach (var card in group.Cards)
+    {
+        <partial name="_GuideCard" model="card" />
+    }
+}
