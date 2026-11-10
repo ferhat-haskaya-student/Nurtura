@@ -1,0 +1,56 @@
+@model Nurtura.Web.Areas.Mother.Models.AssistantResultsViewModel
+@{
+    ViewData["Title"] = L["Assistant_Title"];
+    var result = Model.Result;
+}
+
+<div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6">
+        <h1 class="h3 mb-3">@ViewData["Title"]</h1>
+
+        <partial name="_AssistantSearch" model="Model.Box" />
+
+        @* Urgent words: the red card comes first. It never says what is wrong. *@
+        @if (result.Urgent)
+        {
+            <div class="alert alert-danger fw-semibold" role="alert">@L["Assistant_Urgent"]</div>
+        }
+
+        @if (result.Pages.Count > 0)
+        {
+            <section class="mb-4" aria-labelledby="assistant-pages">
+                <h2 id="assistant-pages" class="h5 mb-2">@L["Assistant_Pages"]</h2>
+                @foreach (var card in result.Pages)
+                {
+                    <partial name="~/Areas/Mother/Views/Guides/_GuideCard.cshtml" model="card" />
+                }
+            </section>
+        }
+
+        @if (result.SuggestedTopic is { } topic)
+        {
+            <section class="card mb-4" aria-labelledby="assistant-topic">
+                <div class="card-body">
+                    <h2 id="assistant-topic" class="h6 card-title mb-3">
+                        @L["Assistant_TopicSuggestion", L["Topic_" + topic].Value]
+                    </h2>
+                    <div class="d-grid gap-2 d-sm-flex">
+                        <a asp-area="Mother" asp-controller="Book" asp-action="Slots" asp-route-topic="@topic"
+                           class="btn btn-primary">@L["Assistant_BookThisTopic"]</a>
+                        <a asp-area="Mother" asp-controller="Book" asp-action="Index"
+                           class="btn btn-outline-secondary">@L["Assistant_ChooseAnotherTopic"]</a>
+                    </div>
+                </div>
+            </section>
+        }
+
+        @if (!result.Matched)
+        {
+            <section aria-labelledby="assistant-no-match">
+                <h2 id="assistant-no-match" class="h5 mb-1">@L["Assistant_NoMatch"]</h2>
+                <p class="text-body-secondary mb-3">@L["Assistant_NoMatchTopics"]</p>
+                <partial name="_TopicButtons" />
+            </section>
+        }
+    </div>
+</div>

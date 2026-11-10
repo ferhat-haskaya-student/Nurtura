@@ -21,6 +21,7 @@ namespace Nurtura.Data.Migrations
                 .HasAnnotation("ProductVersion", "10.0.4")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
+            NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "unaccent");
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -220,6 +221,32 @@ namespace Nurtura.Data.Migrations
                     b.HasIndex("MotherProfileId");
 
                     b.ToTable("Appointments");
+                });
+
+            modelBuilder.Entity("Nurtura.Core.Entities.AssistantQuery", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateOnly>("Date")
+                        .HasColumnType("date");
+
+                    b.Property<bool>("Matched")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("SuggestedTopic")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<bool>("UrgentShown")
+                        .HasColumnType("boolean");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("AssistantQueries");
                 });
 
             modelBuilder.Entity("Nurtura.Core.Entities.AvailabilitySlot", b =>

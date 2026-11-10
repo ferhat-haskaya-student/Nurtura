@@ -672,5 +672,17 @@
   "Guides_Sources": "Źródła",
   "Guides_Disclaimer": "Ogólne informacje na podstawie poniższych źródeł. To nie jest indywidualna porada medyczna.",
   "Guides_Checked": "Ostatnio sprawdzono {0} · Następne sprawdzenie {1}",
-  "Guides_Related": "Powiązane poradniki"
+  "Guides_Related": "Powiązane poradniki",
+  "Assistant_Title": "Asystent Nurtura",
+  "Assistant_GuidesLabel": "Co Cię niepokoi?",
+  "Assistant_BookLabel": "Nie wiesz, który temat wybrać? Opisz to własnymi słowami",
+  "Assistant_Placeholder": "Na przykład: dziecko płacze w nocy",
+  "Assistant_Search": "Szukaj",
+  "Assistant_Urgent": "Jeśli Ty lub Twoje dziecko potrzebujecie pomocy teraz, zadzwoń pod 112. Jeśli przeżywasz kryzys emocjonalny, zadzwoń pod 800 70 2222 (bezpłatnie, całą dobę) lub 116 123 (całą dobę).",
+  "Assistant_Pages": "Poradniki, które mogą pomóc",
+  "Assistant_TopicSuggestion": "To może być temat na konsultację: {0}",
+  "Assistant_BookThisTopic": "Zarezerwuj ten temat",
+  "Assistant_ChooseAnotherTopic": "Wybierz inny temat",
+  "Assistant_NoMatch": "Nie znaleźliśmy dopasowania",
+  "Assistant_NoMatchTopics": "Możesz wybrać temat konsultacji:"
 }

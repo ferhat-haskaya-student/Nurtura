@@ -1,4 +1,5 @@
-@using Nurtura.Core.Entities
+@using Nurtura.Web.Areas.Mother.Controllers
+@using Nurtura.Web.Areas.Mother.Models
 @{
     ViewData["Title"] = L["Book_Title"];
     var statusMessage = TempData["StatusMessage"] as string;
@@ -14,13 +15,9 @@
             <div class="alert alert-success" role="status">@statusMessage</div>
         }
 
-        <div class="d-grid gap-2 mb-4">
-            @foreach (var topic in Enum.GetValues<Topic>())
-            {
-                <a asp-action="Slots" asp-route-topic="@topic" class="btn btn-outline-primary btn-lg text-start py-3">
-                    @L["Topic_" + topic]
-                </a>
-            }
-        </div>
+        <partial name="_AssistantSearch"
+                 model="new AssistantSearchBox(AssistantController.LabelKey(AssistantController.FromBook), AssistantController.FromBook)" />
+
+        <partial name="_TopicButtons" />
     </div>
 </div>

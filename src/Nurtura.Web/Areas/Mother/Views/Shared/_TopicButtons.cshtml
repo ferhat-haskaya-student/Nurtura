@@ -1,0 +1,12 @@
+@using Nurtura.Core.Entities
+@* The six consultation topics, each opening its free times. *@
+
+<div class="d-grid gap-2 mb-4">
+    @foreach (var topic in Enum.GetValues<Topic>())
+    {
+        <a asp-area="Mother" asp-controller="Book" asp-action="Slots" asp-route-topic="@topic"
+           class="btn btn-outline-primary btn-lg text-start py-3">
+            @L["Topic_" + topic]
+        </a>
+    }
+</div>

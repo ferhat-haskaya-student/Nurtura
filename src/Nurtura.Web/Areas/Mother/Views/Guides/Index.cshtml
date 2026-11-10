@@ -1,4 +1,6 @@
 @model Nurtura.Core.Services.GuidanceList
+@using Nurtura.Web.Areas.Mother.Controllers
+@using Nurtura.Web.Areas.Mother.Models
 @{
     ViewData["Title"] = L["Guides_Title"];
 }
@@ -6,6 +8,9 @@
 <div class="row justify-content-center">
     <div class="col-12 col-md-8 col-lg-6">
         <h1 class="h3 mb-3">@ViewData["Title"]</h1>
+
+        <partial name="_AssistantSearch"
+                 model="new AssistantSearchBox(AssistantController.LabelKey(AssistantController.FromGuides), AssistantController.FromGuides)" />
 
         <partial name="_GuidesTabs" model="@("Index")" />
 

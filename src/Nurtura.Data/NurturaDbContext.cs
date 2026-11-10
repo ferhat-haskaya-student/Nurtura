@@ -57,9 +57,14 @@ public class NurturaDbContext : IdentityDbContext<ApplicationUser>, INurturaDbCo
 
     public DbSet<SavedGuidance> SavedGuidances => Set<SavedGuidance>();
 
+    public DbSet<AssistantQuery> AssistantQueries => Set<AssistantQuery>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
+
+        // The Nurtura Assistant's full-text search ignores Polish letters (see PostgresKeywordMatcher).
+        builder.HasPostgresExtension("unaccent");
         builder.ApplyConfigurationsFromAssembly(typeof(NurturaDbContext).Assembly);
     }
 }

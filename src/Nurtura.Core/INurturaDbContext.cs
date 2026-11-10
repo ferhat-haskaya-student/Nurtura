@@ -51,6 +51,8 @@ public interface INurturaDbContext
 
     DbSet<SavedGuidance> SavedGuidances { get; }
 
+    DbSet<AssistantQuery> AssistantQueries { get; }
+
     // Identity's user table; implemented by IdentityDbContext.
     DbSet<ApplicationUser> Users { get; }
 

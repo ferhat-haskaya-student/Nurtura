@@ -672,5 +672,17 @@
   "Guides_Sources": "Sources",
   "Guides_Disclaimer": "General information based on the sources below. Not personal medical advice.",
   "Guides_Checked": "Last checked {0} · Next check {1}",
-  "Guides_Related": "Related guides"
+  "Guides_Related": "Related guides",
+  "Assistant_Title": "Nurtura Assistant",
+  "Assistant_GuidesLabel": "What's on your mind?",
+  "Assistant_BookLabel": "Not sure which topic? Describe it in your own words",
+  "Assistant_Placeholder": "For example: baby cries at night",
+  "Assistant_Search": "Search",
+  "Assistant_Urgent": "If you or your baby need help right now, call 112. If you are in emotional crisis, call 800 70 2222 (free, 24 hours) or 116 123 (24 hours).",
+  "Assistant_Pages": "Guides that might help",
+  "Assistant_TopicSuggestion": "This might be a topic for a consultation: {0}",
+  "Assistant_BookThisTopic": "Book this topic",
+  "Assistant_ChooseAnotherTopic": "Choose another topic",
+  "Assistant_NoMatch": "We couldn't find a match",
+  "Assistant_NoMatchTopics": "You can choose a topic for a consultation:"
 }

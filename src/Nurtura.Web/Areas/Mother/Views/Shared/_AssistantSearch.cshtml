@@ -1,0 +1,15 @@
+@model Nurtura.Web.Areas.Mother.Models.AssistantSearchBox
+@using Nurtura.Core.Services
+@* The Nurtura Assistant search box. A POST, so the text never appears in a URL; autocomplete off, so the
+   browser does not remember it. *@
+
+<form asp-area="Mother" asp-controller="Assistant" asp-action="Index" method="post" class="mb-4" role="search">
+    <input type="hidden" name="from" value="@Model.From" />
+    <label for="assistant-search" class="form-label fw-semibold">@L[Model.LabelKey]</label>
+    <div class="input-group">
+        <input type="search" id="assistant-search" name="search" value="@Model.Search" class="form-control"
+               maxlength="@AssistantService.SearchMaxLength" autocomplete="off" required
+               placeholder="@L["Assistant_Placeholder"]" />
+        <button type="submit" class="btn btn-primary">@L["Assistant_Search"]</button>
+    </div>
+</form>
