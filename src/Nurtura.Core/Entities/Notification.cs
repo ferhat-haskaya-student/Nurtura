@@ -14,16 +14,21 @@ public class Notification
 
     public NotificationType Type { get; set; }
 
-    // For Rescheduled, the new appointment.
-    public int AppointmentId { get; set; }
+    // Appointment notifications: the appointment; for Rescheduled, the new one.
+    public int? AppointmentId { get; set; }
 
-    // The other side's display name when it happened.
+    // CommentOnYourPost: the post and its title when the comment was written.
+    public int? ForumPostId { get; set; }
+
+    public string? PostTitle { get; set; }
+
+    // The other side's display name when it happened (for CommentOnYourPost, the commenter).
     public string OtherName { get; set; } = string.Empty;
 
-    // The slot, Poland time.
-    public DateOnly Date { get; set; }
+    // Appointment notifications: the slot, Poland time.
+    public DateOnly? Date { get; set; }
 
-    public int Hour { get; set; }
+    public int? Hour { get; set; }
 
     // Rescheduled only: the old slot, Poland time.
     public DateOnly? PreviousDate { get; set; }

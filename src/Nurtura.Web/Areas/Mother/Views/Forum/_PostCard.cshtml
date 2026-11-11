@@ -1,0 +1,39 @@
+@using System.Globalization
+@using Nurtura.Core
+@using Nurtura.Web.Localization
+@model Nurtura.Core.Services.ForumPostCard
+@{
+    var created = PolandTime.ToLocal(Model.CreatedAt);
+    var showUnhide = ViewData["ShowUnhide"] is true;
+}
+
+<div class="card mb-2">
+    <div class="card-body">
+        <h3 class="h6 card-title mb-1 text-break">
+            <a asp-area="Mother" asp-controller="Forum" asp-action="Post" asp-route-id="@Model.Id"
+               class="stretched-link text-reset">
+                @if (Model.IsDeleted)
+                {
+                    <span class="fst-italic text-body-secondary">@L["Forum_DeletedByAuthor"]</span>
+                }
+                else
+                {
+                    @Model.Title
+                }
+            </a>
+        </h3>
+        <div class="small text-body-secondary">
+            <span class="badge text-bg-light border">@L["ForumCategory_" + Model.CategoryKey]</span>
+            · @(Model.AuthorName ?? L["Forum_DeletedUser"].Value)
+            · @created.ToString(DateFormats.Display, CultureInfo.InvariantCulture) @created.ToString(TimeFormats.Display, CultureInfo.InvariantCulture)
+            · @L[Plural.Key("Forum_CommentCount", Model.CommentCount), Model.CommentCount]
+        </div>
+        @if (showUnhide)
+        {
+            <form asp-area="Mother" asp-controller="Forum" asp-action="Unhide" asp-route-id="@Model.Id" method="post"
+                  class="mt-2 position-relative z-2" data-submit-once>
+                <button type="submit" class="btn btn-outline-secondary btn-sm">@L["Forum_Unhide"]</button>
+            </form>
+        }
+    </div>
+</div>

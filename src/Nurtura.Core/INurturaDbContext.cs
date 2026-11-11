@@ -53,6 +53,20 @@ public interface INurturaDbContext
 
     DbSet<AssistantQuery> AssistantQueries { get; }
 
+    DbSet<ForumCategory> ForumCategories { get; }
+
+    DbSet<ForumPost> ForumPosts { get; }
+
+    DbSet<ForumComment> ForumComments { get; }
+
+    DbSet<PostReport> PostReports { get; }
+
+    DbSet<CommentReport> CommentReports { get; }
+
+    DbSet<HiddenPost> HiddenPosts { get; }
+
+    DbSet<SavedPost> SavedPosts { get; }
+
     // Identity's user table; implemented by IdentityDbContext.
     DbSet<ApplicationUser> Users { get; }
 

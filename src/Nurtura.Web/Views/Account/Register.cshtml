@@ -12,7 +12,8 @@
 
             <div class="mb-3">
                 <label asp-for="DisplayName" class="form-label"></label>
-                <input asp-for="DisplayName" class="form-control" autocomplete="nickname" />
+                <input asp-for="DisplayName" class="form-control" autocomplete="nickname" aria-describedby="display-name-hint" />
+                <div id="display-name-hint" class="form-text">@L["Account_DisplayNameHint"]</div>
                 <span asp-validation-for="DisplayName" class="text-danger"></span>
             </div>
 

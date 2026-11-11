@@ -59,6 +59,20 @@ public class NurturaDbContext : IdentityDbContext<ApplicationUser>, INurturaDbCo
 
     public DbSet<AssistantQuery> AssistantQueries => Set<AssistantQuery>();
 
+    public DbSet<ForumCategory> ForumCategories => Set<ForumCategory>();
+
+    public DbSet<ForumPost> ForumPosts => Set<ForumPost>();
+
+    public DbSet<ForumComment> ForumComments => Set<ForumComment>();
+
+    public DbSet<PostReport> PostReports => Set<PostReport>();
+
+    public DbSet<CommentReport> CommentReports => Set<CommentReport>();
+
+    public DbSet<HiddenPost> HiddenPosts => Set<HiddenPost>();
+
+    public DbSet<SavedPost> SavedPosts => Set<SavedPost>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);

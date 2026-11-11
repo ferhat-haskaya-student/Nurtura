@@ -9,6 +9,7 @@ public enum NotificationType
     CancelledByProfessional,
     RequestExpired,
     ClosingNoteWritten,
+    CommentOnYourPost,
 
     // To the professional.
     NewRequest,

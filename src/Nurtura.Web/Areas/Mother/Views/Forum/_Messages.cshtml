@@ -1,0 +1,15 @@
+@* The status line after an action, and a problem line when something could not be done. *@
+@{
+    var statusMessage = TempData["StatusMessage"] as string;
+    var problemMessage = TempData["ProblemMessage"] as string;
+}
+
+@if (statusMessage is not null)
+{
+    <div class="alert alert-success" role="status">@statusMessage</div>
+}
+
+@if (problemMessage is not null)
+{
+    <div class="alert alert-warning" role="alert">@problemMessage</div>
+}

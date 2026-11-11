@@ -1,0 +1,201 @@
+@using System.Globalization
+@using Nurtura.Core
+@using Nurtura.Core.Entities
+@using Nurtura.Web.Localization
+@model Nurtura.Web.Areas.Mother.Models.ForumPostPageViewModel
+@{
+    var post = Model.Post;
+    ViewData["Title"] = post.IsDeleted ? L["Forum_Title"].Value : post.Title;
+    var postLang = post.Language == Language.Polish ? "pl" : "en";
+
+    string When(DateTime utc)
+    {
+        var local = PolandTime.ToLocal(utc);
+        return local.ToString(DateFormats.Display, CultureInfo.InvariantCulture) + " "
+            + local.ToString(TimeFormats.Display, CultureInfo.InvariantCulture);
+    }
+}
+
+<div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6">
+        <p class="mb-2 small">
+            <a asp-action="Index">&lsaquo; @L["Forum_Back"]</a>
+        </p>
+
+        @* Her own new post or comment had an urgent word: the Assistant's red card, right after saving. It never
+           says what is wrong; the text was published as usual. *@
+        @if (Model.Urgent)
+        {
+            <div class="alert alert-danger fw-semibold" role="alert">@L["Assistant_Urgent"]</div>
+        }
+
+        <partial name="_Messages" />
+
+        @if (post.IsHidden)
+        {
+            <div class="alert alert-secondary d-flex flex-wrap justify-content-between align-items-center gap-2">
+                <span>@L["Forum_YouHidThis"]</span>
+                <form asp-action="Unhide" asp-route-id="@post.Id" method="post" data-submit-once>
+                    <button type="submit" class="btn btn-outline-secondary btn-sm">@L["Forum_Unhide"]</button>
+                </form>
+            </div>
+        }
+
+        <article class="mb-4">
+            <div class="small text-body-secondary mb-1">
+                <span class="badge text-bg-light border">@L["ForumCategory_" + post.CategoryKey]</span>
+            </div>
+
+            @if (post.IsDeleted)
+            {
+                <p class="fst-italic text-body-secondary mb-1">@L["Forum_DeletedByAuthor"]</p>
+            }
+            else
+            {
+                <h1 class="h4 mb-1 text-break" lang="@postLang">@post.Title</h1>
+            }
+
+            <div class="small text-body-secondary mb-3">
+                @(post.AuthorName ?? L["Forum_DeletedUser"].Value) · @When(post.CreatedAt)
+                @if (post.EditedAt is not null && !post.IsDeleted)
+                {
+                    <span>· @L["Forum_Edited"]</span>
+                }
+            </div>
+
+            @if (!post.IsDeleted)
+            {
+                @* Plain text: encoded by Razor, line breaks kept. *@
+                <div class="text-break mb-3" style="white-space: pre-wrap" lang="@postLang">@post.Body</div>
+            }
+
+            @if (post.IsMine && !post.IsDeleted)
+            {
+                <div class="d-flex flex-wrap gap-2">
+                    @if (post.CanEdit)
+                    {
+                        <a asp-action="Edit" asp-route-id="@post.Id" class="btn btn-outline-secondary btn-sm">@L["Forum_Edit"]</a>
+                    }
+                    <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="collapse" data-bs-target="#delete-post"
+                            aria-expanded="false" aria-controls="delete-post">@L["Forum_Delete"]</button>
+                </div>
+                <div class="collapse" id="delete-post">
+                    <div class="border rounded p-2 mt-2">
+                        <p class="small mb-2">@L["Forum_DeletePostQuestion"]</p>
+                        <div class="d-flex flex-wrap gap-2">
+                            <form asp-action="Delete" asp-route-id="@post.Id" method="post" data-submit-once>
+                                <button type="submit" class="btn btn-danger btn-sm">@L["Forum_DeleteYes"]</button>
+                            </form>
+                            <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="collapse"
+                                    data-bs-target="#delete-post">@L["Forum_DeleteNo"]</button>
+                        </div>
+                    </div>
+                </div>
+            }
+            else if (!post.IsMine && !post.IsDeleted)
+            {
+                <div class="d-flex flex-wrap gap-2">
+                    <form asp-action="@(post.IsSaved ? "Unsave" : "Save")" asp-route-id="@post.Id" method="post" data-submit-once>
+                        <button type="submit" class="btn btn-sm @(post.IsSaved ? "btn-secondary" : "btn-outline-secondary")"
+                                aria-pressed="@(post.IsSaved ? "true" : "false")">
+                            @(post.IsSaved ? L["Forum_Unsave"] : L["Forum_Save"])
+                        </button>
+                    </form>
+                    @if (!post.IsHidden)
+                    {
+                        <form asp-action="Hide" asp-route-id="@post.Id" method="post" data-submit-once>
+                            <button type="submit" class="btn btn-outline-secondary btn-sm">@L["Forum_Hide"]</button>
+                        </form>
+                    }
+                    @if (post.HasReported)
+                    {
+                        <span class="small text-body-secondary align-self-center">@L["Forum_Reported"]</span>
+                    }
+                    else
+                    {
+                        <a asp-action="ReportPost" asp-route-id="@post.Id" class="btn btn-link btn-sm text-body-secondary">@L["Forum_Report"]</a>
+                    }
+                </div>
+            }
+        </article>
+
+        <section aria-labelledby="comments">
+            <h2 id="comments" class="h5 mb-2">@L[Plural.Key("Forum_CommentCount", post.Comments.Count), post.Comments.Count]</h2>
+
+            @foreach (var comment in post.Comments)
+            {
+                var confirmId = "delete-comment-" + comment.Id;
+                <div class="card mb-2" id="comment-@comment.Id">
+                    <div class="card-body py-2">
+                        <div class="small text-body-secondary mb-1">
+                            <span class="fw-semibold text-body">@(comment.AuthorName ?? L["Forum_DeletedUser"].Value)</span>
+                            · @When(comment.CreatedAt)
+                            @if (comment.EditedAt is not null)
+                            {
+                                <span>· @L["Forum_Edited"]</span>
+                            }
+                        </div>
+                        <div class="text-break" style="white-space: pre-wrap">@comment.Body</div>
+
+                        @if (comment.IsMine)
+                        {
+                            <div class="d-flex flex-wrap gap-2 mt-2">
+                                @if (comment.CanEdit)
+                                {
+                                    <a asp-action="EditComment" asp-route-id="@comment.Id" class="btn btn-outline-secondary btn-sm">@L["Forum_Edit"]</a>
+                                }
+                                <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="collapse" data-bs-target="#@confirmId"
+                                        aria-expanded="false" aria-controls="@confirmId">@L["Forum_Delete"]</button>
+                            </div>
+                            <div class="collapse" id="@confirmId">
+                                <div class="border rounded p-2 mt-2">
+                                    <p class="small mb-2">@L["Forum_DeleteCommentQuestion"]</p>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        <form asp-action="DeleteComment" asp-route-id="@comment.Id" method="post" data-submit-once>
+                                            <button type="submit" class="btn btn-danger btn-sm">@L["Forum_DeleteYes"]</button>
+                                        </form>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="collapse"
+                                                data-bs-target="#@confirmId">@L["Forum_DeleteNo"]</button>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                        else if (comment.HasReported)
+                        {
+                            <div class="small text-body-secondary mt-1">@L["Forum_Reported"]</div>
+                        }
+                        else
+                        {
+                            <a asp-action="ReportComment" asp-route-id="@comment.Id"
+                               class="btn btn-link btn-sm text-body-secondary px-0">@L["Forum_Report"]</a>
+                        }
+                    </div>
+                </div>
+            }
+
+            @if (post.IsDeleted)
+            {
+                <p class="text-body-secondary mt-3">@L["Forum_CommentsClosed"]</p>
+            }
+            else
+            {
+                <form asp-action="Comment" asp-route-id="@post.Id" method="post" class="mt-3 mb-4" data-submit-once>
+                    <div class="mb-2">
+                        @* Posted as "Body" (ForumCommentFormModel without a prefix), so its errors are under "Body". *@
+                        <label for="comment-body" class="form-label fw-semibold">@L["Forum_CommentBody"]</label>
+                        <textarea name="Body" id="comment-body" class="form-control" rows="4" required
+                                  maxlength="@ForumComment.BodyMaxLength" data-note-input>@Model.Comment.Body</textarea>
+                        <div class="form-text text-end" data-note-counter data-template="@L["CheckIn_NoteCounter"]"
+                             data-max="@ForumComment.BodyMaxLength" aria-live="polite"></div>
+                        @Html.ValidationMessage(nameof(Model.Comment.Body), new { @class = "text-danger" })
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">@L["Forum_SendComment"]</button>
+                </form>
+            }
+        </section>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/note-counter.js" asp-append-version="true"></script>
+}

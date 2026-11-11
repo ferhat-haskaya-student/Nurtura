@@ -1,0 +1,131 @@
+@using Nurtura.Core.Entities
+@using Nurtura.Core.Services
+@model Nurtura.Web.Areas.Mother.Models.ForumIndexViewModel
+@{
+    ViewData["Title"] = L["Forum_Title"];
+    var filter = Model.Filter;
+    var list = Model.List;
+
+    // A list address with the given filters; page 1 unless given.
+    string ListUrl(int? category, Language? language, ForumTab tab, bool hidden = false, int page = 1) =>
+        Url.Action("Index", "Forum", new
+        {
+            area = "Mother",
+            category,
+            language,
+            tab = tab == ForumTab.All ? (ForumTab?)null : tab,
+            hidden = hidden ? true : (bool?)null,
+            page = page == 1 ? (int?)null : page
+        })!;
+
+    var emptyKey = filter.Hidden ? "Forum_EmptyHidden"
+        : filter.Tab == ForumTab.Saved ? "Forum_EmptySaved"
+        : filter.Tab == ForumTab.Mine ? "Forum_EmptyMine"
+        : "Forum_Empty";
+    var tabs = new[] { (ForumTab.All, "Forum_TabAll"), (ForumTab.Saved, "Forum_TabSaved"), (ForumTab.Mine, "Forum_TabMine") };
+    var languages = new[] { ((Language?)null, "Forum_LanguageAny"), (Language.Polish, "Language_Polish"), (Language.English, "Language_English") };
+    ViewData["ShowUnhide"] = filter.Hidden;
+}
+
+<div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+            <h1 class="h3 mb-0">@ViewData["Title"]</h1>
+            <a asp-action="New" class="btn btn-primary">@L["Forum_NewPost"]</a>
+        </div>
+
+        <partial name="_Messages" />
+
+        @if (filter.Hidden)
+        {
+            <p class="mb-2 small">
+                <a href="@ListUrl(filter.CategoryId, filter.Language, ForumTab.All)">&lsaquo; @L["Forum_Back"]</a>
+            </p>
+            <h2 class="h5 mb-1">@L["Forum_HiddenTitle"]</h2>
+            <p class="small text-body-secondary mb-3">@L["Forum_HiddenIntro"]</p>
+        }
+        else
+        {
+            <partial name="_ForumSearch" model="@string.Empty" />
+
+            <ul class="nav nav-tabs mb-3">
+                @foreach (var (tab, label) in tabs)
+                {
+                    var isCurrent = tab == filter.Tab;
+                    <li class="nav-item">
+                        <a href="@ListUrl(filter.CategoryId, filter.Language, tab)"
+                           class="nav-link @(isCurrent ? "active" : null)" aria-current="@(isCurrent ? "page" : null)">@L[label]</a>
+                    </li>
+                }
+            </ul>
+        }
+
+        @* Category buttons plus All. *@
+        <div class="d-flex flex-wrap gap-1 mb-2" role="group" aria-label="@L["Forum_CategoryFilter"]">
+            <a href="@ListUrl(null, filter.Language, filter.Tab, filter.Hidden)"
+               class="btn btn-sm @(filter.CategoryId is null ? "btn-secondary" : "btn-outline-secondary")"
+               aria-current="@(filter.CategoryId is null ? "true" : null)">@L["Forum_AllCategories"]</a>
+            @foreach (var category in list.Categories)
+            {
+                var isCurrent = filter.CategoryId == category.Id;
+                <a href="@ListUrl(category.Id, filter.Language, filter.Tab, filter.Hidden)"
+                   class="btn btn-sm @(isCurrent ? "btn-secondary" : "btn-outline-secondary")"
+                   aria-current="@(isCurrent ? "true" : null)">@L["ForumCategory_" + category.Key]</a>
+            }
+        </div>
+
+        @* Language: Any / Polish / English. *@
+        <div class="d-flex flex-wrap align-items-center gap-1 mb-3" role="group" aria-label="@L["Forum_LanguageFilter"]">
+            <span class="small text-body-secondary me-1">@L["Forum_LanguageFilter"]</span>
+            @foreach (var (language, label) in languages)
+            {
+                var isCurrent = filter.Language == language;
+                <a href="@ListUrl(filter.CategoryId, language, filter.Tab, filter.Hidden)"
+                   class="btn btn-sm @(isCurrent ? "btn-secondary" : "btn-outline-secondary")"
+                   aria-current="@(isCurrent ? "true" : null)">@L[label]</a>
+            }
+        </div>
+
+        @if (list.Posts.Count == 0)
+        {
+            <p class="text-body-secondary">@L[emptyKey]</p>
+        }
+
+        @foreach (var post in list.Posts)
+        {
+            <partial name="_PostCard" model="post" view-data="ViewData" />
+        }
+
+        @if (list.TotalPages > 1)
+        {
+            <nav class="d-flex justify-content-between align-items-center gap-2 my-3" aria-label="@L["Forum_Pages"]">
+                @if (list.Page > 1)
+                {
+                    <a href="@ListUrl(filter.CategoryId, filter.Language, filter.Tab, filter.Hidden, list.Page - 1)"
+                       class="btn btn-outline-secondary btn-sm">&lsaquo; @L["Forum_Newer"]</a>
+                }
+                else
+                {
+                    <span></span>
+                }
+                <span class="small text-body-secondary">@L["Forum_PageOf", list.Page, list.TotalPages]</span>
+                @if (list.Page < list.TotalPages)
+                {
+                    <a href="@ListUrl(filter.CategoryId, filter.Language, filter.Tab, filter.Hidden, list.Page + 1)"
+                       class="btn btn-outline-secondary btn-sm">@L["Forum_Older"] &rsaquo;</a>
+                }
+                else
+                {
+                    <span></span>
+                }
+            </nav>
+        }
+
+        @if (!filter.Hidden)
+        {
+            <p class="small my-4">
+                <a href="@ListUrl(null, null, ForumTab.All, hidden: true)">@L["Forum_ShowHidden"]</a>
+            </p>
+        }
+    </div>
+</div>

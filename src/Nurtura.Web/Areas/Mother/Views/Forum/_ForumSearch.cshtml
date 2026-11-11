@@ -1,0 +1,14 @@
+@model string
+@using Nurtura.Core.Services
+@* The forum search box. A POST, so the text never appears in a URL; autocomplete off, so the browser does not
+   remember it. The model is the current search, or empty. *@
+
+<form asp-area="Mother" asp-controller="Forum" asp-action="Search" method="post" class="mb-3" role="search">
+    <label for="forum-search" class="form-label fw-semibold">@L["Forum_SearchLabel"]</label>
+    <div class="input-group">
+        <input type="search" id="forum-search" name="search" value="@Model" class="form-control"
+               maxlength="@ForumService.SearchMaxLength" autocomplete="off" required
+               placeholder="@L["Forum_SearchPlaceholder"]" />
+        <button type="submit" class="btn btn-primary">@L["Forum_Search"]</button>
+    </div>
+</form>

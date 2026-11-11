@@ -20,7 +20,10 @@ public class NotificationConfiguration : IEntityTypeConfiguration<Notification>
         builder.Property(n => n.Message)
             .HasMaxLength(Appointment.MessageMaxLength);
 
-        // Deleting the user or the appointment deletes the notification.
+        builder.Property(n => n.PostTitle)
+            .HasMaxLength(ForumPost.TitleMaxLength);
+
+        // Deleting the user, the appointment or the forum post deletes the notification.
         builder.HasOne<ApplicationUser>()
             .WithMany()
             .HasForeignKey(n => n.UserId)
@@ -29,6 +32,11 @@ public class NotificationConfiguration : IEntityTypeConfiguration<Notification>
         builder.HasOne<Appointment>()
             .WithMany()
             .HasForeignKey(n => n.AppointmentId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasOne<ForumPost>()
+            .WithMany()
+            .HasForeignKey(n => n.ForumPostId)
             .OnDelete(DeleteBehavior.Cascade);
 
         // The bell counts a user's unread ones; the page lists hers newest first.

@@ -1,0 +1,29 @@
+@using Nurtura.Core.Services
+@model Nurtura.Web.Areas.Mother.Models.ForumSearchViewModel
+@{
+    ViewData["Title"] = L["Forum_SearchResults"];
+}
+
+<div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6">
+        <p class="mb-2 small">
+            <a asp-action="Index">&lsaquo; @L["Forum_Back"]</a>
+        </p>
+        <h1 class="h3 mb-3">@ViewData["Title"]</h1>
+
+        <partial name="_ForumSearch" model="Model.Search" />
+
+        @if (Model.Results.Count == 0)
+        {
+            <p class="text-body-secondary">@L["Forum_SearchNoResults"]</p>
+        }
+        else
+        {
+            <p class="small text-body-secondary mb-2">@L["Forum_SearchTop", ForumService.SearchMax]</p>
+            @foreach (var post in Model.Results)
+            {
+                <partial name="_PostCard" model="post" />
+            }
+        }
+    </div>
+</div>

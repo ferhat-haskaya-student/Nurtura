@@ -377,6 +377,49 @@ namespace Nurtura.Data.Migrations
                     b.ToTable("CheckInFeelingTags");
                 });
 
+            modelBuilder.Entity("Nurtura.Core.Entities.CommentReport", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("ForumCommentId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<int>("ReporterProfileId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ForumCommentId");
+
+                    b.HasIndex("ReporterProfileId", "ForumCommentId")
+                        .IsUnique();
+
+                    b.HasIndex("Status", "CreatedAt");
+
+                    b.ToTable("CommentReports");
+                });
+
             modelBuilder.Entity("Nurtura.Core.Entities.ConsultationNote", b =>
                 {
                     b.Property<int>("Id")
@@ -610,6 +653,157 @@ namespace Nurtura.Data.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Nurtura.Core.Entities.ForumCategory", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Key")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Key")
+                        .IsUnique();
+
+                    b.ToTable("ForumCategories");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Key = "EmotionalWellbeing"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Key = "SleepAndTiredness"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Key = "BabyFeeding"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Key = "BabySleep"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Key = "Nutrition"
+                        },
+                        new
+                        {
+                            Id = 6,
+                            Key = "RecoveryAfterBirth"
+                        },
+                        new
+                        {
+                            Id = 7,
+                            Key = "GeneralSupport"
+                        },
+                        new
+                        {
+                            Id = 8,
+                            Key = "ConsultationExperiences"
+                        },
+                        new
+                        {
+                            Id = 9,
+                            Key = "Other"
+                        });
+                });
+
+            modelBuilder.Entity("Nurtura.Core.Entities.ForumComment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("AuthorProfileId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("EditedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("ForumPostId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AuthorProfileId");
+
+                    b.HasIndex("ForumPostId", "CreatedAt");
+
+                    b.ToTable("ForumComments");
+                });
+
+            modelBuilder.Entity("Nurtura.Core.Entities.ForumPost", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("AuthorProfileId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasMaxLength(5000)
+                        .HasColumnType("character varying(5000)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DeletedByAuthorAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("EditedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("ForumCategoryId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Language")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AuthorProfileId");
+
+                    b.HasIndex("CreatedAt");
+
+                    b.HasIndex("ForumCategoryId", "CreatedAt");
+
+                    b.ToTable("ForumPosts");
+                });
+
             modelBuilder.Entity("Nurtura.Core.Entities.GuidanceCategory", b =>
                 {
                     b.Property<int>("Id")
@@ -749,6 +943,33 @@ namespace Nurtura.Data.Migrations
                     b.ToTable("GuidanceSources");
                 });
 
+            modelBuilder.Entity("Nurtura.Core.Entities.HiddenPost", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ForumPostId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("HiddenAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("MotherProfileId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ForumPostId");
+
+                    b.HasIndex("MotherProfileId", "ForumPostId")
+                        .IsUnique();
+
+                    b.ToTable("HiddenPosts");
+                });
+
             modelBuilder.Entity("Nurtura.Core.Entities.MotherConcern", b =>
                 {
                     b.Property<int>("Id")
@@ -846,16 +1067,19 @@ namespace Nurtura.Data.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("AppointmentId")
+                    b.Property<int?>("AppointmentId")
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<DateOnly>("Date")
+                    b.Property<DateOnly?>("Date")
                         .HasColumnType("date");
 
-                    b.Property<int>("Hour")
+                    b.Property<int?>("ForumPostId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("Hour")
                         .HasColumnType("integer");
 
                     b.Property<bool>("IsRead")
@@ -869,6 +1093,10 @@ namespace Nurtura.Data.Migrations
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
+
+                    b.Property<string>("PostTitle")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
 
                     b.Property<DateOnly?>("PreviousDate")
                         .HasColumnType("date");
@@ -889,9 +1117,54 @@ namespace Nurtura.Data.Migrations
 
                     b.HasIndex("AppointmentId");
 
+                    b.HasIndex("ForumPostId");
+
                     b.HasIndex("UserId", "IsRead", "CreatedAt");
 
                     b.ToTable("Notifications");
+                });
+
+            modelBuilder.Entity("Nurtura.Core.Entities.PostReport", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("ForumPostId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<int>("ReporterProfileId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ForumPostId");
+
+                    b.HasIndex("ReporterProfileId", "ForumPostId")
+                        .IsUnique();
+
+                    b.HasIndex("Status", "CreatedAt");
+
+                    b.ToTable("PostReports");
                 });
 
             modelBuilder.Entity("Nurtura.Core.Entities.ProfessionalCategory", b =>
@@ -1013,6 +1286,33 @@ namespace Nurtura.Data.Migrations
                         .IsUnique();
 
                     b.ToTable("SavedGuidances");
+                });
+
+            modelBuilder.Entity("Nurtura.Core.Entities.SavedPost", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ForumPostId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("MotherProfileId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("SavedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ForumPostId");
+
+                    b.HasIndex("MotherProfileId", "ForumPostId")
+                        .IsUnique();
+
+                    b.ToTable("SavedPosts");
                 });
 
             modelBuilder.Entity("Nurtura.Core.Entities.SleepRecord", b =>
@@ -1237,6 +1537,21 @@ namespace Nurtura.Data.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Nurtura.Core.Entities.CommentReport", b =>
+                {
+                    b.HasOne("Nurtura.Core.Entities.ForumComment", null)
+                        .WithMany()
+                        .HasForeignKey("ForumCommentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Nurtura.Core.Entities.MotherProfile", null)
+                        .WithMany()
+                        .HasForeignKey("ReporterProfileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Nurtura.Core.Entities.ConsultationNote", b =>
                 {
                     b.HasOne("Nurtura.Core.Entities.Appointment", null)
@@ -1273,6 +1588,34 @@ namespace Nurtura.Data.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Nurtura.Core.Entities.ForumComment", b =>
+                {
+                    b.HasOne("Nurtura.Core.Entities.MotherProfile", null)
+                        .WithMany()
+                        .HasForeignKey("AuthorProfileId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Nurtura.Core.Entities.ForumPost", null)
+                        .WithMany()
+                        .HasForeignKey("ForumPostId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Nurtura.Core.Entities.ForumPost", b =>
+                {
+                    b.HasOne("Nurtura.Core.Entities.MotherProfile", null)
+                        .WithMany()
+                        .HasForeignKey("AuthorProfileId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Nurtura.Core.Entities.ForumCategory", null)
+                        .WithMany()
+                        .HasForeignKey("ForumCategoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Nurtura.Core.Entities.GuidanceContent", b =>
                 {
                     b.HasOne("Nurtura.Core.Entities.GuidanceCategory", "Category")
@@ -1289,6 +1632,21 @@ namespace Nurtura.Data.Migrations
                     b.HasOne("Nurtura.Core.Entities.GuidanceContent", null)
                         .WithMany("Sources")
                         .HasForeignKey("GuidanceContentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Nurtura.Core.Entities.HiddenPost", b =>
+                {
+                    b.HasOne("Nurtura.Core.Entities.ForumPost", null)
+                        .WithMany()
+                        .HasForeignKey("ForumPostId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Nurtura.Core.Entities.MotherProfile", null)
+                        .WithMany()
+                        .HasForeignKey("MotherProfileId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
@@ -1325,12 +1683,31 @@ namespace Nurtura.Data.Migrations
                     b.HasOne("Nurtura.Core.Entities.Appointment", null)
                         .WithMany()
                         .HasForeignKey("AppointmentId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("Nurtura.Core.Entities.ForumPost", null)
+                        .WithMany()
+                        .HasForeignKey("ForumPostId")
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.HasOne("Nurtura.Core.Identity.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Nurtura.Core.Entities.PostReport", b =>
+                {
+                    b.HasOne("Nurtura.Core.Entities.ForumPost", null)
+                        .WithMany()
+                        .HasForeignKey("ForumPostId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Nurtura.Core.Entities.MotherProfile", null)
+                        .WithMany()
+                        .HasForeignKey("ReporterProfileId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
@@ -1367,6 +1744,21 @@ namespace Nurtura.Data.Migrations
                     b.HasOne("Nurtura.Core.Entities.GuidanceContent", null)
                         .WithMany()
                         .HasForeignKey("GuidanceContentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Nurtura.Core.Entities.MotherProfile", null)
+                        .WithMany()
+                        .HasForeignKey("MotherProfileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Nurtura.Core.Entities.SavedPost", b =>
+                {
+                    b.HasOne("Nurtura.Core.Entities.ForumPost", null)
+                        .WithMany()
+                        .HasForeignKey("ForumPostId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 

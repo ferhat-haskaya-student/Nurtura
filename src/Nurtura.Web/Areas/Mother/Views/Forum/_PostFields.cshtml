@@ -1,0 +1,47 @@
+@using Nurtura.Core.Entities
+@model Nurtura.Web.Areas.Mother.Models.ForumPostFormModel
+@* The post form's fields, for New and Edit. *@
+
+<div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+<div class="mb-3">
+    <label asp-for="CategoryId" class="form-label fw-semibold"></label>
+    <select asp-for="CategoryId" class="form-select">
+        <option value="">@L["Forum_ChooseCategory"]</option>
+        @foreach (var category in Model.Categories)
+        {
+            <option value="@category.Id" selected="@(Model.CategoryId == category.Id)">@L["ForumCategory_" + category.Key]</option>
+        }
+    </select>
+    <span asp-validation-for="CategoryId" class="text-danger"></span>
+</div>
+
+<fieldset class="mb-3">
+    <legend class="form-label fw-semibold fs-6">@L["Forum_Language"]</legend>
+    <div class="form-text mt-0 mb-1">@L["Forum_LanguageHint"]</div>
+    @foreach (var (language, label) in new[] { (Language.Polish, "Language_Polish"), (Language.English, "Language_English") })
+    {
+        <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" name="@nameof(Model.Language)" id="language-@language"
+                   value="@language" checked="@(Model.Language == language)" />
+            <label class="form-check-label" for="language-@language">@L[label]</label>
+        </div>
+    }
+    <div><span asp-validation-for="Language" class="text-danger"></span></div>
+</fieldset>
+
+<div class="mb-3">
+    <label asp-for="Title" class="form-label fw-semibold"></label>
+    <input asp-for="Title" class="form-control" maxlength="@ForumPost.TitleMaxLength" autocomplete="off" data-note-input />
+    <div class="form-text text-end" data-note-counter data-template="@L["CheckIn_NoteCounter"]"
+         data-max="@ForumPost.TitleMaxLength" aria-live="polite"></div>
+    <span asp-validation-for="Title" class="text-danger"></span>
+</div>
+
+<div class="mb-4">
+    <label asp-for="Body" class="form-label fw-semibold"></label>
+    <textarea asp-for="Body" class="form-control" rows="10" maxlength="@ForumPost.BodyMaxLength" data-note-input></textarea>
+    <div class="form-text text-end" data-note-counter data-template="@L["CheckIn_NoteCounter"]"
+         data-max="@ForumPost.BodyMaxLength" aria-live="polite"></div>
+    <span asp-validation-for="Body" class="text-danger"></span>
+</div>

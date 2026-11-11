@@ -1,0 +1,35 @@
+@model Nurtura.Web.Areas.Mother.Models.ForumPostFormModel
+@{
+    ViewData["Title"] = L["Forum_NewPost"];
+}
+
+<div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6">
+        <p class="mb-2 small">
+            <a asp-action="Index">&lsaquo; @L["Forum_Back"]</a>
+        </p>
+        <h1 class="h3 mb-3">@ViewData["Title"]</h1>
+
+        @* The rules box, above the form. *@
+        <div class="card border-primary bg-primary-subtle mb-3">
+            <div class="card-body">
+                <h2 class="h6 card-title text-primary-emphasis">@L["Forum_RulesTitle"]</h2>
+                <ul class="small mb-0">
+                    <li>@L["Forum_RuleOwnExperience"]</li>
+                    <li>@L["Forum_RuleNotMedical"]</li>
+                    <li>@L["Forum_RulePersonalDetails"]</li>
+                </ul>
+            </div>
+        </div>
+
+        <form asp-action="New" method="post" data-submit-once>
+            <partial name="_PostFields" model="Model" />
+            <button type="submit" class="btn btn-primary w-100 mb-4">@L["Forum_Publish"]</button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/note-counter.js" asp-append-version="true"></script>
+}

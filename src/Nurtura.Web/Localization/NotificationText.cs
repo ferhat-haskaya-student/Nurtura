@@ -9,7 +9,12 @@ public static class NotificationText
 {
     public static string Sentence(IStringLocalizer localizer, Notification notification)
     {
-        var moment = BookText.Moment(localizer, notification.Date.ToDateTime(new TimeOnly(notification.Hour, 0)));
+        if (notification.Type == NotificationType.CommentOnYourPost)
+        {
+            return localizer["Notification_CommentOnYourPost", notification.OtherName, notification.PostTitle ?? string.Empty];
+        }
+
+        var moment = BookText.Moment(localizer, notification.Date!.Value.ToDateTime(new TimeOnly(notification.Hour!.Value, 0)));
         if (notification.Type == NotificationType.Rescheduled
             && notification.PreviousDate is { } previousDate
             && notification.PreviousHour is { } previousHour)

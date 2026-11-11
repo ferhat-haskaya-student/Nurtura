@@ -9,6 +9,7 @@ using Nurtura.Core.Identity;
 using Nurtura.Core.Services;
 using Nurtura.Data;
 using Nurtura.Data.Assistant;
+using Nurtura.Data.Forum;
 using Nurtura.Web;
 using Nurtura.Web.Areas.Mother;
 using Nurtura.Web.Areas.Professional;
@@ -109,6 +110,8 @@ builder.Services.AddScoped<ConsultationService>();
 builder.Services.AddScoped<GuidanceService>();
 builder.Services.AddScoped<IKeywordMatcher, PostgresKeywordMatcher>();
 builder.Services.AddScoped<AssistantService>();
+builder.Services.AddScoped<IForumSearch, PostgresForumSearch>();
+builder.Services.AddScoped<ForumService>();
 
 // The consultation chat. Presence (who has the chat open) is kept in memory for the whole app.
 builder.Services.AddSignalR();

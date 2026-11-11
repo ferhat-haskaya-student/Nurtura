@@ -1,0 +1,40 @@
+@using System.Globalization
+@using Nurtura.Core
+@using Nurtura.Core.Entities
+@using Nurtura.Web.Localization
+@model Nurtura.Web.Areas.Mother.Models.ForumCommentFormModel
+@{
+    ViewData["Title"] = L["Forum_EditComment"];
+}
+
+@* Shown only while she may still edit (her own comment, 30 minutes); the service checks again on save. *@
+<div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6">
+        <p class="mb-2 small">
+            <a asp-action="Post" asp-route-id="@Model.PostId" asp-fragment="comment-@Model.Id">&lsaquo; @L["Forum_BackToPost"]</a>
+        </p>
+        <h1 class="h3 mb-2">@ViewData["Title"]</h1>
+        @if (Model.EditableUntil is { } until)
+        {
+            <p class="small text-body-secondary mb-3">
+                @L["Forum_EditUntil", PolandTime.ToLocal(until).ToString(TimeFormats.Display, CultureInfo.InvariantCulture)]
+            </p>
+        }
+
+        <form asp-action="EditComment" asp-route-id="@Model.Id" method="post" data-submit-once>
+            <div class="mb-4">
+                <label asp-for="Body" class="form-label fw-semibold"></label>
+                <textarea asp-for="Body" class="form-control" rows="6" maxlength="@ForumComment.BodyMaxLength" data-note-input></textarea>
+                <div class="form-text text-end" data-note-counter data-template="@L["CheckIn_NoteCounter"]"
+                     data-max="@ForumComment.BodyMaxLength" aria-live="polite"></div>
+                <span asp-validation-for="Body" class="text-danger"></span>
+            </div>
+            <button type="submit" class="btn btn-primary w-100 mb-4">@L["Forum_SaveChanges"]</button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/note-counter.js" asp-append-version="true"></script>
+}

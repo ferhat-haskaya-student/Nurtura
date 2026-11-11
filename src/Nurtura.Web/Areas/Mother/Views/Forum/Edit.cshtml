@@ -1,0 +1,33 @@
+@using System.Globalization
+@using Nurtura.Core
+@using Nurtura.Web.Localization
+@model Nurtura.Web.Areas.Mother.Models.ForumPostFormModel
+@{
+    ViewData["Title"] = L["Forum_EditPost"];
+}
+
+@* Shown only while she may still edit (her own post, 30 minutes); the service checks again on save. *@
+<div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6">
+        <p class="mb-2 small">
+            <a asp-action="Post" asp-route-id="@Model.Id">&lsaquo; @L["Forum_BackToPost"]</a>
+        </p>
+        <h1 class="h3 mb-2">@ViewData["Title"]</h1>
+        @if (Model.EditableUntil is { } until)
+        {
+            <p class="small text-body-secondary mb-3">
+                @L["Forum_EditUntil", PolandTime.ToLocal(until).ToString(TimeFormats.Display, CultureInfo.InvariantCulture)]
+            </p>
+        }
+
+        <form asp-action="Edit" asp-route-id="@Model.Id" method="post" data-submit-once>
+            <partial name="_PostFields" model="Model" />
+            <button type="submit" class="btn btn-primary w-100 mb-4">@L["Forum_SaveChanges"]</button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/note-counter.js" asp-append-version="true"></script>
+}

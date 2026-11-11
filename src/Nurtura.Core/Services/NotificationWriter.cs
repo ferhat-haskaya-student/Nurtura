@@ -32,4 +32,24 @@ public static class NotificationWriter
             IsRead = false
         });
     }
+
+    // To a post's author: someone else commented on her post.
+    public static void AddForumComment(
+        INurturaDbContext db,
+        string authorUserId,
+        int postId,
+        string commenterName,
+        string postTitle)
+    {
+        db.Notifications.Add(new Notification
+        {
+            UserId = authorUserId,
+            Type = NotificationType.CommentOnYourPost,
+            ForumPostId = postId,
+            PostTitle = postTitle,
+            OtherName = commenterName,
+            CreatedAt = DateTime.UtcNow,
+            IsRead = false
+        });
+    }
 }

@@ -1,0 +1,45 @@
+@using Nurtura.Core.Entities
+@model Nurtura.Web.Areas.Mother.Models.ForumReportFormModel
+@{
+    ViewData["Title"] = Model.IsComment ? L["Forum_ReportCommentTitle"] : L["Forum_ReportPostTitle"];
+    var action = Model.IsComment ? "ReportComment" : "ReportPost";
+}
+
+<div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6">
+        <p class="mb-2 small">
+            <a asp-action="Post" asp-route-id="@Model.PostId">&lsaquo; @L["Forum_BackToPost"]</a>
+        </p>
+        <h1 class="h3 mb-2">@ViewData["Title"]</h1>
+        <p class="small text-body-secondary mb-3">@L["Forum_ReportIntro"]</p>
+
+        <form asp-action="@action" asp-route-id="@Model.Id" method="post" data-submit-once>
+            <fieldset class="mb-3">
+                <legend class="form-label fw-semibold fs-6">@L["Forum_ReportReason"]</legend>
+                @foreach (var reason in Enum.GetValues<ReportReason>())
+                {
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="@nameof(Model.Reason)" id="reason-@reason"
+                               value="@reason" checked="@(Model.Reason == reason)" />
+                        <label class="form-check-label" for="reason-@reason">@L["ReportReason_" + reason]</label>
+                    </div>
+                }
+                <span asp-validation-for="Reason" class="text-danger"></span>
+            </fieldset>
+
+            <div class="mb-4">
+                <label asp-for="Note" class="form-label fw-semibold"></label>
+                <textarea asp-for="Note" class="form-control" rows="3" maxlength="@PostReport.NoteMaxLength" data-note-input></textarea>
+                <div class="form-text text-end" data-note-counter data-template="@L["CheckIn_NoteCounter"]"
+                     data-max="@PostReport.NoteMaxLength" aria-live="polite"></div>
+                <span asp-validation-for="Note" class="text-danger"></span>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100 mb-4">@L["Forum_SendReport"]</button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/note-counter.js" asp-append-version="true"></script>
+}
