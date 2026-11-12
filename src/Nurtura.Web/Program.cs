@@ -114,6 +114,8 @@ builder.Services.AddScoped<AssistantService>();
 builder.Services.AddScoped<IForumSearch, PostgresForumSearch>();
 builder.Services.AddScoped<ForumService>();
 builder.Services.AddScoped<ForumModerationService>();
+builder.Services.AddScoped<GuidanceAdminService>();
+builder.Services.AddScoped<AdminNumbersService>();
 
 // The consultation chat. Presence (who has the chat open) is kept in memory for the whole app.
 builder.Services.AddSignalR();
@@ -136,11 +138,11 @@ using (var scope = app.Services.CreateScope())
         adminEmail,
         adminPassword);
 
-    // The approved guidance pages; adds only what is missing, so it is safe on every start.
-    await GuidanceSeeder.SeedAsync(scope.ServiceProvider.GetRequiredService<INurturaDbContext>());
+    // The approved guidance pages; adds only pages whose slug is missing, so admin edits are never overwritten.
+    var newPageSlugs = await GuidanceSeeder.SeedAsync(scope.ServiceProvider.GetRequiredService<INurturaDbContext>());
 
-    // The Nurtura Assistant page keywords; also adds only what is missing.
-    await AssistantKeywordSeeder.SeedAsync(scope.ServiceProvider.GetRequiredService<INurturaDbContext>());
+    // The Nurtura Assistant keywords, only for the pages just added; admin keyword edits are never undone.
+    await AssistantKeywordSeeder.SeedAsync(scope.ServiceProvider.GetRequiredService<INurturaDbContext>(), newPageSlugs);
 
     // Test accounts exist only in Development.
     if (app.Environment.IsDevelopment())

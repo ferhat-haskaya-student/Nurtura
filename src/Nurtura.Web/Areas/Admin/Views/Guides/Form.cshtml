@@ -1,0 +1,195 @@
+@using System.Globalization
+@using Nurtura.Core.Entities
+@using Nurtura.Core.Services
+@using Nurtura.Web.Localization
+@model Nurtura.Web.Areas.Admin.Models.GuideFormModel
+@{
+    var isNew = Model.Id == 0;
+    ViewData["Title"] = isNew ? L["GuideAdmin_NewTitle"] : L["GuideAdmin_EditTitle"];
+    var action = isNew ? "New" : "Edit";
+}
+
+@* One form for New and Edit. Every rule is checked on the server (GuidanceAdminService). *@
+<div class="row justify-content-center">
+    <div class="col-12 col-md-10 col-lg-8">
+        <p class="mb-2 small">
+            <a asp-action="Index">&lsaquo; @L["GuideAdmin_Back"]</a>
+        </p>
+        <h1 class="h3 mb-3">@ViewData["Title"]</h1>
+
+        <partial name="_AdminMessages" />
+
+        @if (!isNew)
+        {
+            <div class="card mb-3">
+                <div class="card-body small">
+                    <div class="mb-1"><span class="text-body-secondary">@L["GuideAdmin_Slug"]:</span> <code>@Model.Slug</code></div>
+                    <div class="mb-2">
+                        @L["GuideAdmin_LastChecked"]: @Model.LastChecked?.ToString(DateFormats.Display, CultureInfo.InvariantCulture)
+                        · @L["GuideAdmin_NextCheck"]: @Model.NextCheck?.ToString(DateFormats.Display, CultureInfo.InvariantCulture)
+                    </div>
+                    <form asp-action="MarkChecked" asp-route-id="@Model.Id" method="post" data-submit-once>
+                        <button type="submit" class="btn btn-outline-secondary btn-sm">@L["GuideAdmin_MarkChecked"]</button>
+                    </form>
+                </div>
+            </div>
+        }
+
+        <form asp-action="@action" asp-route-id="@(isNew ? null : Model.Id)" method="post">
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div class="alert alert-danger" role="alert">@L["GuideAdmin_CheckForm"]</div>
+            }
+
+            <div class="mb-3">
+                <label asp-for="Title" class="form-label fw-semibold">@L["GuideAdmin_Field_Title"]</label>
+                <input asp-for="Title" class="form-control" maxlength="@GuidanceContent.TitleMaxLength" />
+                <span asp-validation-for="Title" class="text-danger small"></span>
+                @if (isNew)
+                {
+                    <div class="form-text">@L["GuideAdmin_SlugHint"]</div>
+                }
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Summary" class="form-label fw-semibold">@L["GuideAdmin_Field_Summary"]</label>
+                <textarea asp-for="Summary" class="form-control" rows="2" maxlength="@GuidanceContent.SummaryMaxLength"></textarea>
+                <span asp-validation-for="Summary" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Body" class="form-label fw-semibold">@L["GuideAdmin_Field_Body"]</label>
+                <div class="form-text mt-0 mb-1">@L["GuideAdmin_BodyHint"]</div>
+                <textarea asp-for="Body" class="form-control font-monospace" rows="16" maxlength="@GuidanceAdminService.BodyMaxLength"></textarea>
+                <span asp-validation-for="Body" class="text-danger small"></span>
+            </div>
+
+            <div class="row g-3 mb-3">
+                <div class="col-12 col-sm-6">
+                    <label asp-for="Audience" class="form-label fw-semibold">@L["GuideAdmin_Field_Audience"]</label>
+                    <select asp-for="Audience" class="form-select">
+                        <option value="">@L["GuideAdmin_Choose"]</option>
+                        @foreach (var audience in Enum.GetValues<GuidanceAudience>())
+                        {
+                            <option value="@audience" selected="@(Model.Audience == audience)">@L["GuideAdmin_Audience_" + audience]</option>
+                        }
+                    </select>
+                    <span asp-validation-for="Audience" class="text-danger small"></span>
+                </div>
+                <div class="col-12 col-sm-6">
+                    <label asp-for="CategoryId" class="form-label fw-semibold">@L["GuideAdmin_Field_Category"]</label>
+                    <select asp-for="CategoryId" class="form-select">
+                        <option value="">@L["GuideAdmin_Choose"]</option>
+                        @foreach (var category in Model.Categories)
+                        {
+                            <option value="@category.Id" selected="@(Model.CategoryId == category.Id)">@category.Name</option>
+                        }
+                    </select>
+                    <span asp-validation-for="CategoryId" class="text-danger small"></span>
+                </div>
+                <div class="col-12 col-sm-6">
+                    <label asp-for="RelatedTopic" class="form-label fw-semibold">@L["GuideAdmin_Field_RelatedTopic"]</label>
+                    <select asp-for="RelatedTopic" class="form-select">
+                        <option value="">@L["GuideAdmin_Choose"]</option>
+                        @foreach (var topic in Enum.GetValues<Topic>())
+                        {
+                            <option value="@topic" selected="@(Model.RelatedTopic == topic)">@L["Topic_" + topic]</option>
+                        }
+                    </select>
+                    <span asp-validation-for="RelatedTopic" class="text-danger small"></span>
+                </div>
+                <div class="col-12 col-sm-6">
+                    <label asp-for="Language" class="form-label fw-semibold">@L["GuideAdmin_Field_Language"]</label>
+                    <select asp-for="Language" class="form-select">
+                        <option value="">@L["GuideAdmin_Choose"]</option>
+                        @foreach (var language in Enum.GetValues<Language>())
+                        {
+                            <option value="@language" selected="@(Model.Language == language)">@L["Language_" + language]</option>
+                        }
+                    </select>
+                    <span asp-validation-for="Language" class="text-danger small"></span>
+                </div>
+            </div>
+
+            <fieldset class="mb-3">
+                <legend class="form-label fw-semibold fs-6 mb-0">@L["GuideAdmin_Field_BabyAge"]</legend>
+                <div class="form-text mt-0 mb-1">@L["GuideAdmin_BabyAgeHint", GuidanceAdminService.AgeMaxMonths]</div>
+                <div class="row g-2">
+                    <div class="col-6">
+                        <label asp-for="BabyAgeFromMonths" class="form-label small">@L["GuideAdmin_Field_AgeFrom"]</label>
+                        <input asp-for="BabyAgeFromMonths" type="number" min="0" max="@GuidanceAdminService.AgeMaxMonths" class="form-control" />
+                    </div>
+                    <div class="col-6">
+                        <label asp-for="BabyAgeToMonths" class="form-label small">@L["GuideAdmin_Field_AgeTo"]</label>
+                        <input asp-for="BabyAgeToMonths" type="number" min="0" max="@GuidanceAdminService.AgeMaxMonths" class="form-control" />
+                    </div>
+                </div>
+                <span asp-validation-for="BabyAgeFromMonths" class="text-danger small"></span>
+                <span asp-validation-for="BabyAgeToMonths" class="text-danger small"></span>
+            </fieldset>
+
+            <div class="mb-3">
+                <label asp-for="GetHelpHeading" class="form-label fw-semibold">@L["GuideAdmin_Field_GetHelpHeading"]</label>
+                <input asp-for="GetHelpHeading" class="form-control" maxlength="@GuidanceContent.HeadingMaxLength" />
+                <span asp-validation-for="GetHelpHeading" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="GetHelpItems" class="form-label fw-semibold">@L["GuideAdmin_Field_GetHelpItems"]</label>
+                <div class="form-text mt-0 mb-1">@L["GuideAdmin_OnePerLine"]</div>
+                <textarea asp-for="GetHelpItems" class="form-control" rows="5"></textarea>
+                <span asp-validation-for="GetHelpItems" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="EmergencyHeading" class="form-label fw-semibold">@L["GuideAdmin_Field_EmergencyHeading"]</label>
+                <div class="form-text mt-0 mb-1">@L["GuideAdmin_EmergencyHint"]</div>
+                <input asp-for="EmergencyHeading" class="form-control" maxlength="@GuidanceContent.HeadingMaxLength" />
+                <span asp-validation-for="EmergencyHeading" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="EmergencyItems" class="form-label fw-semibold">@L["GuideAdmin_Field_EmergencyItems"]</label>
+                <div class="form-text mt-0 mb-1">@L["GuideAdmin_OnePerLine"]</div>
+                <textarea asp-for="EmergencyItems" class="form-control" rows="3"></textarea>
+                <span asp-validation-for="EmergencyItems" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Sources" class="form-label fw-semibold">@L["GuideAdmin_Field_Sources"]</label>
+                <div class="form-text mt-0 mb-1">@L["GuideAdmin_SourcesHint"]</div>
+                <textarea asp-for="Sources" class="form-control" rows="4"></textarea>
+                <span asp-validation-for="Sources" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Keywords" class="form-label fw-semibold">@L["GuideAdmin_Field_Keywords"]</label>
+                <div class="form-text mt-0 mb-1">@L["GuideAdmin_KeywordsHint"]</div>
+                <textarea asp-for="Keywords" class="form-control" rows="3"></textarea>
+                <span asp-validation-for="Keywords" class="text-danger small"></span>
+            </div>
+
+            <div class="form-check mb-4">
+                <input asp-for="IsPublished" class="form-check-input" />
+                <label asp-for="IsPublished" class="form-check-label">@L["GuideAdmin_Field_Published"]</label>
+                <div class="form-text">@L["GuideAdmin_PublishedHint"]</div>
+            </div>
+
+            <div class="d-flex flex-wrap gap-2 mb-4">
+                <button type="submit" class="btn btn-primary">@L["GuideAdmin_Save"]</button>
+                <button type="submit" name="preview" value="1" class="btn btn-outline-secondary">@L["GuideAdmin_Preview"]</button>
+            </div>
+        </form>
+
+        @if (Model.PreviewHtml is not null)
+        {
+            <section class="card mb-4" aria-labelledby="preview-heading">
+                <div class="card-body">
+                    <h2 id="preview-heading" class="h6 text-body-secondary mb-3">@L["GuideAdmin_PreviewHeading"]</h2>
+                    @* Rendered by GuidanceMarkdown, the Guides renderer: raw HTML off, unsafe link addresses removed. *@
+                    <div class="guide-body text-break">@Html.Raw(Model.PreviewHtml)</div>
+                </div>
+            </section>
+        }
+    </div>
+</div>

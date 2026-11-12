@@ -1,0 +1,85 @@
+@using System.Globalization
+@using Nurtura.Core.Entities
+@using Nurtura.Core.Services
+@model Nurtura.Core.Services.AdminNumbers
+@{
+    ViewData["Title"] = L["Numbers_Title"];
+    var all = Model.AllTime;
+    var recent = Model.LastDays;
+
+    string Percent(double? value) => value is { } v ? v.ToString("0.0", CultureInfo.CurrentCulture) + " %" : "–";
+
+    // Topics with the most first (all-time order), so the two columns read side by side.
+    var topicsByBookings = Enum.GetValues<Topic>().OrderByDescending(t => all.AppointmentsByTopic[t]).ThenBy(t => t).ToList();
+    var topicsBySuggestions = Enum.GetValues<Topic>().OrderByDescending(t => all.SuggestedTopics[t]).ThenBy(t => t).ToList();
+}
+
+@* Counts only: never names or text. *@
+<div class="row justify-content-center">
+    <div class="col-12 col-lg-8">
+        <h1 class="h3 mb-1">@ViewData["Title"]</h1>
+        <p class="small text-body-secondary mb-3">@L["Numbers_Intro", AdminNumbersService.WindowDays]</p>
+
+        @{
+            var sections = new (string Heading, (string Label, string Recent, string All)[] Rows)[]
+            {
+                ("Numbers_People", new[]
+                {
+                    (L["Numbers_Mothers"].Value, recent.Mothers.ToString(), all.Mothers.ToString()),
+                    (L["Numbers_ProfessionalsApproved"].Value, recent.ProfessionalsApproved.ToString(), all.ProfessionalsApproved.ToString()),
+                    (L["Numbers_ProfessionalsPending"].Value, recent.ProfessionalsPending.ToString(), all.ProfessionalsPending.ToString()),
+                    (L["Numbers_ProfessionalsDeactivated"].Value, recent.ProfessionalsDeactivated.ToString(), all.ProfessionalsDeactivated.ToString())
+                }),
+                ("Numbers_AppointmentsByStatus", Enum.GetValues<AppointmentStatus>()
+                    .Select(s => (L["Numbers_Status_" + s].Value, recent.AppointmentsByStatus[s].ToString(), all.AppointmentsByStatus[s].ToString()))
+                    .ToArray()),
+                ("Numbers_MostBookedTopics", topicsByBookings
+                    .Select(t => (L["Topic_" + t].Value, recent.AppointmentsByTopic[t].ToString(), all.AppointmentsByTopic[t].ToString()))
+                    .ToArray()),
+                ("Numbers_Forum", new[]
+                {
+                    (L["Numbers_ForumPosts"].Value, recent.ForumPosts.ToString(), all.ForumPosts.ToString()),
+                    (L["Numbers_ForumComments"].Value, recent.ForumComments.ToString(), all.ForumComments.ToString()),
+                    (L["Numbers_OpenReports"].Value, recent.OpenReports.ToString(), all.OpenReports.ToString())
+                }),
+                ("Numbers_Assistant", new[]
+                {
+                    (L["Numbers_Searches"].Value, recent.Searches.ToString(), all.Searches.ToString()),
+                    (L["Numbers_Matched"].Value, Percent(recent.MatchedPercent), Percent(all.MatchedPercent)),
+                    (L["Numbers_UrgentShown"].Value, recent.UrgentShown.ToString(), all.UrgentShown.ToString())
+                }),
+                ("Numbers_MostSuggestedTopics", topicsBySuggestions
+                    .Select(t => (L["Topic_" + t].Value, recent.SuggestedTopics[t].ToString(), all.SuggestedTopics[t].ToString()))
+                    .ToArray())
+            };
+        }
+
+        @foreach (var (heading, rows) in sections)
+        {
+            <h2 class="h5 mt-4 mb-2">@L[heading]</h2>
+            <div class="table-responsive">
+                <table class="table table-sm align-middle">
+                    <thead>
+                        <tr>
+                            <th scope="col"><span class="visually-hidden">@L[heading]</span></th>
+                            <th scope="col" class="text-end">@L["Numbers_LastDays", AdminNumbersService.WindowDays]</th>
+                            <th scope="col" class="text-end">@L["Numbers_AllTime"]</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var (label, last, total) in rows)
+                        {
+                            <tr>
+                                <th scope="row" class="fw-normal">@label</th>
+                                <td class="text-end">@last</td>
+                                <td class="text-end">@total</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+
+        <p class="small text-body-secondary mb-4">@L["Numbers_Notes"]</p>
+    </div>
+</div>

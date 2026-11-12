@@ -3,15 +3,24 @@ using Nurtura.Core.Entities;
 
 namespace Nurtura.Core.Content;
 
-// Seeds the page keywords (AssistantKeywords.Pages) into ContentKeywordTag, found by page slug.
-// Safe to run on every start: only keywords a page does not have yet are added, and a keyword listed twice
-// for one page is added once. Slugs with no page in the database are skipped. Existing rows are never changed.
+// Seeds the page keywords (AssistantKeywords.Pages) into ContentKeywordTag, found by page slug, only for the pages
+// GuidanceSeeder added in the same run. Pages that already existed are left alone, so a keyword the admin removed
+// in the admin panel never comes back on the next start. A keyword listed twice for one page is added once.
 public static class AssistantKeywordSeeder
 {
-    public static async Task SeedAsync(INurturaDbContext db, CancellationToken cancellationToken = default)
+    public static async Task SeedAsync(
+        INurturaDbContext db,
+        IReadOnlyCollection<string> newPageSlugs,
+        CancellationToken cancellationToken = default)
     {
+        var slugs = AssistantKeywords.Pages.Keys.Where(newPageSlugs.Contains).ToList();
+        if (slugs.Count == 0)
+        {
+            return;
+        }
+
         var pageIds = await db.GuidanceContents
-            .Where(g => AssistantKeywords.Pages.Keys.Contains(g.Slug))
+            .Where(g => slugs.Contains(g.Slug))
             .ToDictionaryAsync(g => g.Slug, g => g.Id, cancellationToken);
 
         var existing = (await db.ContentKeywordTags

@@ -5,7 +5,8 @@ namespace Nurtura.Core.Content;
 
 // The approved guidance pages, seeded straight into the database until the admin panel takes over editing.
 // Safe to run on every start: a category is added only if no category has its name, a page only if no
-// page has its slug. Existing rows are never changed, so later edits in the admin panel are kept.
+// page has its slug. Existing rows are never changed, so later edits in the admin panel are kept: the admin
+// never changes a slug and cannot delete a page, so an edited page is always skipped here.
 // New approved pages are added to Pages.
 public static class GuidanceSeeder
 {
@@ -30,7 +31,12 @@ public static class GuidanceSeeder
     private const string CuhSignsName = "Cambridge University Hospitals NHS: Signs and symptoms and who to call";
     private const string CuhSignsUrl = "https://www.cuh.nhs.uk/rosie-hospital/maternity/after-birth/signs-and-symptoms-and-who-to-call/";
 
-    public static async Task SeedAsync(INurturaDbContext db, CancellationToken cancellationToken = default)
+    // The slugs of the approved pages. A page the admin creates never takes one of these, so the seeder never
+    // skips its own page because of an admin page with the same slug.
+    public static IReadOnlyCollection<string> SeededSlugs => Pages.Select(p => p.Slug).ToList();
+
+    // Returns the slugs of the pages added in this run (none on a database that already has them all).
+    public static async Task<IReadOnlyList<string>> SeedAsync(INurturaDbContext db, CancellationToken cancellationToken = default)
     {
         var categories = await db.GuidanceCategories.ToDictionaryAsync(c => c.Name, cancellationToken);
         foreach (var name in Pages.Select(p => p.Category).Distinct())
@@ -46,8 +52,10 @@ public static class GuidanceSeeder
         await db.SaveChangesAsync(cancellationToken);
 
         var existingSlugs = await db.GuidanceContents.Select(g => g.Slug).ToListAsync(cancellationToken);
+        var added = new List<string>();
         foreach (var page in Pages.Where(p => !existingSlugs.Contains(p.Slug)))
         {
+            added.Add(page.Slug);
             db.GuidanceContents.Add(new GuidanceContent
             {
                 Slug = page.Slug,
@@ -74,6 +82,7 @@ public static class GuidanceSeeder
         }
 
         await db.SaveChangesAsync(cancellationToken);
+        return added;
     }
 
     private sealed record SeedSource(string Name, string Url);

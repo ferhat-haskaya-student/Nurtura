@@ -60,10 +60,16 @@
                         @if (User.IsInRole(Roles.Admin))
                         {
                             <li class="nav-item">
+                                <a class="nav-link text-dark" asp-area="Admin" asp-controller="Home" asp-action="Index">@L["Nav_AdminNumbers"]</a>
+                            </li>
+                            <li class="nav-item">
                                 <a class="nav-link text-dark" asp-area="Admin" asp-controller="Professionals" asp-action="Index">@L["Nav_AdminProfessionals"]</a>
                             </li>
                             <li class="nav-item">
                                 @await Component.InvokeAsync("AdminReportsLink")
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-area="Admin" asp-controller="Guides" asp-action="Index">@L["Nav_AdminGuides"]</a>
                             </li>
                         }
                         <li class="nav-item">

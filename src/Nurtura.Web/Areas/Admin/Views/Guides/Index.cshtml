@@ -1,0 +1,61 @@
+@using System.Globalization
+@using Nurtura.Web.Localization
+@model List<Nurtura.Core.Services.GuideListItem>
+@{
+    ViewData["Title"] = L["GuideAdmin_Title"];
+}
+
+<div class="row justify-content-center">
+    <div class="col-12 col-lg-10">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+            <h1 class="h3 mb-0">@ViewData["Title"]</h1>
+            <a asp-action="New" class="btn btn-primary">@L["GuideAdmin_New"]</a>
+        </div>
+
+        <partial name="_AdminMessages" />
+
+        @if (Model.Count == 0)
+        {
+            <p class="text-body-secondary">@L["GuideAdmin_None"]</p>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-sm align-middle">
+                    <thead>
+                        <tr>
+                            <th scope="col">@L["GuideAdmin_Field_Title"]</th>
+                            <th scope="col">@L["GuideAdmin_Field_Audience"]</th>
+                            <th scope="col">@L["GuideAdmin_Field_Category"]</th>
+                            <th scope="col">@L["GuideAdmin_LastChecked"]</th>
+                            <th scope="col">@L["GuideAdmin_NextCheck"]</th>
+                            <th scope="col">@L["GuideAdmin_Field_Published"]</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var guide in Model)
+                        {
+                            <tr>
+                                <td class="text-break"><a asp-action="Edit" asp-route-id="@guide.Id">@guide.Title</a></td>
+                                <td>@L["GuideAdmin_Audience_" + guide.Audience]</td>
+                                <td>@guide.CategoryName</td>
+                                <td class="text-nowrap">@guide.LastChecked.ToString(DateFormats.Display, CultureInfo.InvariantCulture)</td>
+                                <td class="text-nowrap">@guide.NextCheck.ToString(DateFormats.Display, CultureInfo.InvariantCulture)</td>
+                                <td>
+                                    @if (guide.IsPublished)
+                                    {
+                                        <span class="badge text-bg-success">@L["GuideAdmin_Published"]</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge text-bg-secondary">@L["GuideAdmin_NotPublished"]</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
