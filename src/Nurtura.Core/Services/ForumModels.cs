@@ -10,14 +10,34 @@ public enum ForumTab
     Mine
 }
 
+// What mothers see of a post. Anything but Visible shows one line in place of its title and text and takes no
+// new comments. Removed comes before deleted, deleted before hidden.
+public enum ForumPostState
+{
+    Visible,
+    DeletedByAuthor,
+    HiddenByModerator,
+    RemovedByModerator
+}
+
+public static class ForumPostStates
+{
+    public static ForumPostState Of(DateTime? deletedByAuthorAt, DateTime? hiddenByModeratorAt, DateTime? removedByModeratorAt) =>
+        removedByModeratorAt is not null ? ForumPostState.RemovedByModerator
+        : deletedByAuthorAt is not null ? ForumPostState.DeletedByAuthor
+        : hiddenByModeratorAt is not null ? ForumPostState.HiddenByModerator
+        : ForumPostState.Visible;
+}
+
 // The list's filters. Hidden = true lists only the posts she hid (the tab is then ignored).
 public sealed record ForumFilter(int? CategoryId, Language? Language, ForumTab Tab, bool Hidden, int Page);
 
 // One post in a list. Times are UTC. AuthorName is null when the author's account was deleted.
+// Title is empty unless State is Visible.
 public sealed record ForumPostCard(
     int Id,
     string Title,
-    bool IsDeleted,
+    ForumPostState State,
     string CategoryKey,
     string? AuthorName,
     DateTime CreatedAt,
@@ -29,7 +49,7 @@ public sealed record ForumList(
     int Page,
     int TotalPages);
 
-// One comment on the post page. Times are UTC.
+// One comment on the post page. Times are UTC. Body is empty when a moderator hid it.
 public sealed record ForumCommentView(
     int Id,
     string? AuthorName,
@@ -38,9 +58,10 @@ public sealed record ForumCommentView(
     DateTime? EditedAt,
     bool IsMine,
     bool CanEdit,
-    bool HasReported);
+    bool HasReported,
+    bool HiddenByModerator);
 
-// The post page. Times are UTC. Title and Body are empty when the author deleted it (IsDeleted).
+// The post page. Times are UTC. Title and Body are empty unless State is Visible.
 public sealed record ForumPostView(
     int Id,
     string Title,
@@ -50,7 +71,7 @@ public sealed record ForumPostView(
     string? AuthorName,
     DateTime CreatedAt,
     DateTime? EditedAt,
-    bool IsDeleted,
+    ForumPostState State,
     bool IsMine,
     bool CanEdit,
     bool IsSaved,

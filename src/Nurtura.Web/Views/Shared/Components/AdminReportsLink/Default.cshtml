@@ -1,0 +1,12 @@
+@model int
+@{
+    var label = Model > 0 ? L["Nav_AdminReportsOpen", Model].Value : L["Nav_AdminReports"].Value;
+}
+
+<a class="nav-link text-dark" asp-area="Admin" asp-controller="Reports" asp-action="Index" aria-label="@label">
+    @L["Nav_AdminReports"]
+    @if (Model > 0)
+    {
+        <span class="badge rounded-pill bg-danger" aria-hidden="true">@Model</span>
+    }
+</a>

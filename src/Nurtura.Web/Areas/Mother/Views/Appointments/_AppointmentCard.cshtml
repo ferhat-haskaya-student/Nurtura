@@ -32,6 +32,9 @@
             case AppointmentState.Requested:
                 <p class="small mb-2">@L["MyAppointments_Waiting", Model.ProfessionalName, BookText.Moment(L, Model.ConfirmBy)]</p>
                 break;
+            case AppointmentState.Cancelled when Model.CancelledBy == AppointmentParty.Nurtura:
+                <p class="small mb-2">@L["MyAppointments_CancelledByNurtura"]</p>
+                break;
             case AppointmentState.Cancelled when Model.CancelledBy == AppointmentParty.Professional:
                 <p class="small mb-2">@L["MyAppointments_CancelledByProfessional", Model.ProfessionalName]</p>
                 break;

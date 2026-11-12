@@ -4,5 +4,8 @@ namespace Nurtura.Core.Entities;
 public enum AppointmentParty
 {
     Mother,
-    Professional
+    Professional,
+
+    // Only for CancelledBy: the admin deactivated the professional, which cancelled her upcoming appointments.
+    Nurtura
 }

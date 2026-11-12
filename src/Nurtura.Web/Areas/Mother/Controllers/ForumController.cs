@@ -223,7 +223,7 @@ public class ForumController : Controller
                 TempData[UrgentKey] = result.Urgent;
                 return RedirectToAction(nameof(Post), new { id });
             case ForumSaveStatus.Closed:
-                TempData[ProblemMessageKey] = _localizer["Forum_CommentsClosed"].Value;
+                TempData[ProblemMessageKey] = _localizer["Forum_CommentsClosedAny"].Value;
                 return RedirectToAction(nameof(Post), new { id });
             case ForumSaveStatus.Invalid:
                 var post = await _forumService.GetPostAsync(UserId, id);

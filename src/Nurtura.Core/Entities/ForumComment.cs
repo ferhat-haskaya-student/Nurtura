@@ -22,4 +22,7 @@ public class ForumComment
 
     // UTC. Empty unless edited.
     public DateTime? EditedAt { get; set; }
+
+    // UTC. Set when the admin hid it after a report: everyone sees "hidden by a moderator"; the admin can unhide it.
+    public DateTime? HiddenByModeratorAt { get; set; }
 }

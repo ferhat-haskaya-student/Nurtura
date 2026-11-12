@@ -1,0 +1,31 @@
+@using Nurtura.Core.Entities
+@model Nurtura.Core.Services.TopicsEdit
+@{
+    ViewData["Title"] = L["AdminPro_TopicsTitle", Model.DisplayName];
+}
+
+<div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6">
+        <p class="mb-2 small">
+            <a asp-action="Index">&lsaquo; @L["AdminPro_Back"]</a>
+        </p>
+        <h1 class="h4 mb-2">@ViewData["Title"]</h1>
+        <p class="small text-body-secondary mb-3">@L["AdminPro_TopicsHint"]</p>
+
+        <form asp-action="Topics" asp-route-id="@Model.ProfileId" method="post" data-submit-once>
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+            <fieldset class="mb-4">
+                <legend class="form-label fw-semibold fs-6">@L["Admin_Topics"]</legend>
+                @foreach (var topic in Enum.GetValues<Topic>())
+                {
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="topics" id="topic-@topic" value="@topic"
+                               checked="@Model.Topics.Contains(topic)" />
+                        <label class="form-check-label" for="topic-@topic">@L["Topic_" + topic]</label>
+                    </div>
+                }
+            </fieldset>
+            <button type="submit" class="btn btn-primary w-100 mb-4">@L["AdminPro_SaveTopics"]</button>
+        </form>
+    </div>
+</div>

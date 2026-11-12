@@ -57,6 +57,15 @@
                                 <a class="nav-link text-dark" asp-area="Mother" asp-controller="Appointments" asp-action="Index">@L["Nav_MyAppointments"]</a>
                             </li>
                         }
+                        @if (User.IsInRole(Roles.Admin))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-area="Admin" asp-controller="Professionals" asp-action="Index">@L["Nav_AdminProfessionals"]</a>
+                            </li>
+                            <li class="nav-item">
+                                @await Component.InvokeAsync("AdminReportsLink")
+                            </li>
+                        }
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">@L["Nav_Privacy"]</a>
                         </li>

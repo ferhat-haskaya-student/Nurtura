@@ -29,7 +29,7 @@ public class ConsultationSummaryService
                 where a.Id == appointmentId && Appointment.ActiveStatuses.Contains(a.Status)
                 join s in _db.AvailabilitySlots on a.AvailabilitySlotId equals s.Id
                 join p in _db.ProfessionalProfiles on s.ProfessionalProfileId equals p.Id
-                where p.UserId == userId && p.ApprovalStatus == ApprovalStatus.Approved
+                where p.UserId == userId && p.ApprovalStatus == ApprovalStatus.Approved && p.IsActive
                 join m in _db.MotherProfiles on a.MotherProfileId equals m.Id
                 select new
                 {

@@ -93,6 +93,7 @@ builder.Services.AddScoped<MotherRegistrationService>();
 builder.Services.AddScoped<MotherOnboardingService>();
 builder.Services.AddScoped<ProfessionalRegistrationService>();
 builder.Services.AddScoped<ProfessionalApprovalService>();
+builder.Services.AddScoped<ProfessionalAdminService>();
 builder.Services.AddScoped<MotherExternalLoginService>();
 builder.Services.AddScoped<DailyCheckInService>();
 builder.Services.AddScoped<MotherProfileService>();
@@ -112,6 +113,7 @@ builder.Services.AddScoped<IKeywordMatcher, PostgresKeywordMatcher>();
 builder.Services.AddScoped<AssistantService>();
 builder.Services.AddScoped<IForumSearch, PostgresForumSearch>();
 builder.Services.AddScoped<ForumService>();
+builder.Services.AddScoped<ForumModerationService>();
 
 // The consultation chat. Presence (who has the chat open) is kept in memory for the whole app.
 builder.Services.AddSignalR();

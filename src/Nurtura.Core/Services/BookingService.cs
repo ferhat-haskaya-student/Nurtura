@@ -21,7 +21,7 @@ public class BookingService
     // Poland time she has to wait for: the professional must confirm by 2 hours before the start.
     public static DateTime ConfirmBy(DateOnly date, int hour) => SlotStart(date, hour) - Appointment.ConfirmBefore;
 
-    // Free slots for the topic, grouped by day: open, of an approved professional who covers the topic
+    // Free slots for the topic, grouped by day: open, of an approved and active professional who covers the topic
     // (and speaks the language, when one is chosen), starting 12 hours to 4 weeks from now, with no
     // active appointment, and not at an hour where she already has an appointment.
     // When rescheduling, the hour of the appointment being replaced does not count as taken.
@@ -82,11 +82,11 @@ public class BookingService
             row.Status == AppointmentStatus.Confirmed, row.ConcernText, row.BabyId);
     }
 
-    // An approved professional's profile; null for any other id.
+    // An approved and active professional's profile; null for any other id.
     public async Task<ProfessionalDetails?> GetProfessionalAsync(int profileId, CancellationToken cancellationToken = default)
     {
         var profile = await _db.ProfessionalProfiles
-            .Where(p => p.Id == profileId && p.ApprovalStatus == ApprovalStatus.Approved)
+            .Where(p => p.Id == profileId && p.ApprovalStatus == ApprovalStatus.Approved && p.IsActive)
             .Select(p => new { p.Id, p.DisplayName, p.ProfessionalType, p.Bio })
             .SingleOrDefaultAsync(cancellationToken);
         if (profile is null)
@@ -406,7 +406,7 @@ public class BookingService
 
         var rows = await query
             .Join(
-                _db.ProfessionalProfiles.Where(p => p.ApprovalStatus == ApprovalStatus.Approved),
+                _db.ProfessionalProfiles.Where(p => p.ApprovalStatus == ApprovalStatus.Approved && p.IsActive),
                 s => s.ProfessionalProfileId,
                 p => p.Id,
                 (s, p) => new { s.Id, s.Date, s.StartHour, ProfessionalId = p.Id, p.DisplayName, p.ProfessionalType })
@@ -430,14 +430,14 @@ public class BookingService
             .ToList();
     }
 
-    // A slot of an approved professional who covers the topic, whatever its state; for showing it on the request page.
+    // A slot of an approved and active professional who covers the topic, whatever its state; for showing it on the request page.
     private async Task<FreeSlot?> GetSlotAsync(int slotId, Topic topic, CancellationToken cancellationToken)
     {
         var row = await _db.AvailabilitySlots
             .Where(s => s.Id == slotId
                 && _db.ProfessionalCategories.Any(c => c.ProfessionalProfileId == s.ProfessionalProfileId && c.Category == topic))
             .Join(
-                _db.ProfessionalProfiles.Where(p => p.ApprovalStatus == ApprovalStatus.Approved),
+                _db.ProfessionalProfiles.Where(p => p.ApprovalStatus == ApprovalStatus.Approved && p.IsActive),
                 s => s.ProfessionalProfileId,
                 p => p.Id,
                 (s, p) => new { s.Id, s.Date, s.StartHour, ProfessionalId = p.Id, p.DisplayName, p.ProfessionalType })

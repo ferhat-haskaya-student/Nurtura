@@ -1,14 +1,13 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
-using Nurtura.Core.Entities;
 using Nurtura.Core.Identity;
 using Nurtura.Core.Services;
 
 namespace Nurtura.Web.Areas.Professional;
 
-// Registered globally: until a professional is approved, every page in the Professional area
-// except the approval page itself sends her to the approval page.
+// Registered globally: until a professional is approved, and while the admin has deactivated her, every page in
+// the Professional area except the approval page itself sends her to the approval page.
 public class ProfessionalApprovalFilter : IAsyncActionFilter
 {
     private const string ApprovalController = "Approval";
@@ -32,7 +31,7 @@ public class ProfessionalApprovalFilter : IAsyncActionFilter
         if (string.Equals(area, Roles.Professional, StringComparison.OrdinalIgnoreCase)
             && !string.Equals(controller, ApprovalController, StringComparison.OrdinalIgnoreCase)
             && user.IsInRole(Roles.Professional)
-            && await _approvalService.GetStatusAsync(_userManager.GetUserId(user)!) != ApprovalStatus.Approved)
+            && await _approvalService.GetStatusAsync(_userManager.GetUserId(user)!) is not { CanWork: true })
         {
             context.Result = new RedirectToActionResult("Index", ApprovalController, new { area = Roles.Professional });
             return;

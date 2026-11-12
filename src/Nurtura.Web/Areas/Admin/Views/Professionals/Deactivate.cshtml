@@ -1,0 +1,51 @@
+@using Nurtura.Web.Areas.Mother
+@using Nurtura.Web.Localization
+@model Nurtura.Core.Services.DeactivationInfo
+@{
+    ViewData["Title"] = L["AdminPro_DeactivateTitle", Model.DisplayName];
+    var count = Model.Upcoming.Count;
+}
+
+@* The one confirmation before deactivating. The service checks everything again on confirm. *@
+<div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6">
+        <p class="mb-2 small">
+            <a asp-action="Index">&lsaquo; @L["AdminPro_Back"]</a>
+        </p>
+        <h1 class="h4 mb-3">@ViewData["Title"]</h1>
+
+        @if (Model.HasOpenSession)
+        {
+            <div class="alert alert-warning" role="alert">@L["AdminPro_SessionInProgress", Model.DisplayName]</div>
+        }
+        else
+        {
+            @if (count == 0)
+            {
+                <p>@L["AdminPro_DeactivateNoAppointments", Model.DisplayName]</p>
+            }
+            else
+            {
+                <p>@L[Plural.Key("AdminPro_DeactivateWarning", count), Model.DisplayName, count]</p>
+                <ul class="list-group mb-3">
+                    @foreach (var appointment in Model.Upcoming)
+                    {
+                        <li class="list-group-item">
+                            <div>@BookText.Moment(L, appointment.Date.ToDateTime(new TimeOnly(appointment.Hour, 0)))</div>
+                            <div class="small text-body-secondary">
+                                @L["Topic_" + appointment.Topic] · @L["AdminPro_Status_" + appointment.Status]
+                            </div>
+                        </li>
+                    }
+                </ul>
+            }
+
+            <p class="small text-body-secondary">@L["AdminPro_DeactivateHours"]</p>
+
+            <form asp-action="Deactivate" asp-route-id="@Model.ProfileId" method="post" class="d-flex flex-wrap gap-2 mb-4" data-submit-once>
+                <button type="submit" class="btn btn-danger">@L["AdminPro_DeactivateConfirm"]</button>
+                <a asp-action="Index" class="btn btn-outline-secondary">@L["AdminPro_Cancel"]</a>
+            </form>
+        }
+    </div>
+</div>

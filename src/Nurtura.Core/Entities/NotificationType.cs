@@ -10,6 +10,10 @@ public enum NotificationType
     RequestExpired,
     ClosingNoteWritten,
     CommentOnYourPost,
+    PostHidden,
+    PostRemoved,
+    CommentHidden,
+    CommentRemoved,
 
     // To the professional.
     NewRequest,

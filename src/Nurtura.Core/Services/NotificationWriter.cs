@@ -52,4 +52,26 @@ public static class NotificationWriter
             IsRead = false
         });
     }
+
+    // To an author: the admin hid or removed her post or comment. postTitle is the post's title before any change.
+    // Hide links to the post (postId); Remove does not, because the post may be deleted with the removal and the
+    // notification must not go with it.
+    public static void AddModeration(
+        INurturaDbContext db,
+        string authorUserId,
+        NotificationType type,
+        int? postId,
+        string postTitle)
+    {
+        db.Notifications.Add(new Notification
+        {
+            UserId = authorUserId,
+            Type = type,
+            ForumPostId = postId,
+            PostTitle = postTitle,
+            OtherName = string.Empty,
+            CreatedAt = DateTime.UtcNow,
+            IsRead = false
+        });
+    }
 }

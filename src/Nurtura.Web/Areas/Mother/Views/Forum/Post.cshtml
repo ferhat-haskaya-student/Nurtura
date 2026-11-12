@@ -1,11 +1,13 @@
 @using System.Globalization
 @using Nurtura.Core
 @using Nurtura.Core.Entities
+@using Nurtura.Core.Services
 @using Nurtura.Web.Localization
 @model Nurtura.Web.Areas.Mother.Models.ForumPostPageViewModel
 @{
     var post = Model.Post;
-    ViewData["Title"] = post.IsDeleted ? L["Forum_Title"].Value : post.Title;
+    var visible = post.State == ForumPostState.Visible;
+    ViewData["Title"] = visible ? post.Title : L["Forum_Title"].Value;
     var postLang = post.Language == Language.Polish ? "pl" : "en";
 
     string When(DateTime utc)
@@ -46,9 +48,9 @@
                 <span class="badge text-bg-light border">@L["ForumCategory_" + post.CategoryKey]</span>
             </div>
 
-            @if (post.IsDeleted)
+            @if (!visible)
             {
-                <p class="fst-italic text-body-secondary mb-1">@L["Forum_DeletedByAuthor"]</p>
+                <p class="fst-italic text-body-secondary mb-1">@L["Forum_State_" + post.State]</p>
             }
             else
             {
@@ -57,19 +59,20 @@
 
             <div class="small text-body-secondary mb-3">
                 @(post.AuthorName ?? L["Forum_DeletedUser"].Value) · @When(post.CreatedAt)
-                @if (post.EditedAt is not null && !post.IsDeleted)
+                @if (post.EditedAt is not null && visible)
                 {
                     <span>· @L["Forum_Edited"]</span>
                 }
             </div>
 
-            @if (!post.IsDeleted)
+            @if (visible)
             {
                 @* Plain text: encoded by Razor, line breaks kept. *@
                 <div class="text-break mb-3" style="white-space: pre-wrap" lang="@postLang">@post.Body</div>
             }
 
-            @if (post.IsMine && !post.IsDeleted)
+            @* Her own post: Delete also while a moderator has hidden it (the author-delete rules apply). *@
+            @if (post.IsMine && post.State is ForumPostState.Visible or ForumPostState.HiddenByModerator)
             {
                 <div class="d-flex flex-wrap gap-2">
                     @if (post.CanEdit)
@@ -92,7 +95,7 @@
                     </div>
                 </div>
             }
-            else if (!post.IsMine && !post.IsDeleted)
+            else if (!post.IsMine && visible)
             {
                 <div class="d-flex flex-wrap gap-2">
                     <form asp-action="@(post.IsSaved ? "Unsave" : "Save")" asp-route-id="@post.Id" method="post" data-submit-once>
@@ -135,7 +138,14 @@
                                 <span>· @L["Forum_Edited"]</span>
                             }
                         </div>
-                        <div class="text-break" style="white-space: pre-wrap">@comment.Body</div>
+                        @if (comment.HiddenByModerator)
+                        {
+                            <div class="fst-italic text-body-secondary">@L["Forum_CommentHiddenByModerator"]</div>
+                        }
+                        else
+                        {
+                            <div class="text-break" style="white-space: pre-wrap">@comment.Body</div>
+                        }
 
                         @if (comment.IsMine)
                         {
@@ -160,11 +170,11 @@
                                 </div>
                             </div>
                         }
-                        else if (comment.HasReported)
+                        else if (comment.HasReported && !comment.HiddenByModerator)
                         {
                             <div class="small text-body-secondary mt-1">@L["Forum_Reported"]</div>
                         }
-                        else
+                        else if (!comment.HiddenByModerator)
                         {
                             <a asp-action="ReportComment" asp-route-id="@comment.Id"
                                class="btn btn-link btn-sm text-body-secondary px-0">@L["Forum_Report"]</a>
@@ -173,9 +183,11 @@
                 </div>
             }
 
-            @if (post.IsDeleted)
+            @if (!visible)
             {
-                <p class="text-body-secondary mt-3">@L["Forum_CommentsClosed"]</p>
+                <p class="text-body-secondary mt-3">
+                    @(post.State == ForumPostState.DeletedByAuthor ? L["Forum_CommentsClosed"] : L["Forum_CommentsClosedModerator"])
+                </p>
             }
             else
             {

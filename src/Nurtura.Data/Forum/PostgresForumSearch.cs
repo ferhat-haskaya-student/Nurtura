@@ -45,6 +45,8 @@ public class PostgresForumSearch : IForumSearch
                        to_tsvector('simple', unaccent(translate(lower(p."Title" || ' ' || p."Body"), '-''’', ' '))) AS v
                 FROM "ForumPosts" p
                 WHERE p."DeletedByAuthorAt" IS NULL
+                  AND p."HiddenByModeratorAt" IS NULL
+                  AND p."RemovedByModeratorAt" IS NULL
                   AND NOT EXISTS (
                       SELECT 1 FROM "HiddenPosts" h
                       WHERE h."ForumPostId" = p."Id" AND h."MotherProfileId" = {{motherProfileId}})

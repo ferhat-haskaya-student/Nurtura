@@ -27,7 +27,8 @@ public class NotificationsController : Controller
     }
 
     // Marks it read and goes to the appointment in her own list, for a closing note to that consultation's
-    // page, for a forum comment to the post. Another user's id gives 404.
+    // page, for a forum comment or a moderator's hide to the post (a removal to the forum list). Another user's id
+    // gives 404.
     [HttpGet]
     public async Task<IActionResult> Open(int id)
     {
@@ -39,7 +40,10 @@ public class NotificationsController : Controller
         var area = User.IsInRole(Roles.Mother) ? Roles.Mother : Roles.Professional;
         var url = opened.Type switch
         {
-            NotificationType.CommentOnYourPost => Url.Action("Post", "Forum", new { area = Roles.Mother, id = opened.ForumPostId })!,
+            NotificationType.CommentOnYourPost or NotificationType.PostHidden or NotificationType.CommentHidden
+                or NotificationType.PostRemoved or NotificationType.CommentRemoved => opened.ForumPostId is { } postId
+                ? Url.Action("Post", "Forum", new { area = Roles.Mother, id = postId })!
+                : Url.Action("Index", "Forum", new { area = Roles.Mother })!,
             NotificationType.ClosingNoteWritten => Url.Action("Consultation", "Appointments", new { area, id = opened.AppointmentId })!,
             _ => Url.Action("Index", "Appointments", new { area }) + "#appointment-" + opened.AppointmentId
         };

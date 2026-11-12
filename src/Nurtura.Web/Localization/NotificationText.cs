@@ -9,9 +9,13 @@ public static class NotificationText
 {
     public static string Sentence(IStringLocalizer localizer, Notification notification)
     {
-        if (notification.Type == NotificationType.CommentOnYourPost)
+        switch (notification.Type)
         {
-            return localizer["Notification_CommentOnYourPost", notification.OtherName, notification.PostTitle ?? string.Empty];
+            case NotificationType.CommentOnYourPost:
+                return localizer["Notification_CommentOnYourPost", notification.OtherName, notification.PostTitle ?? string.Empty];
+            case NotificationType.PostHidden or NotificationType.PostRemoved
+                or NotificationType.CommentHidden or NotificationType.CommentRemoved:
+                return localizer["Notification_" + notification.Type, notification.PostTitle ?? string.Empty];
         }
 
         var moment = BookText.Moment(localizer, notification.Date!.Value.ToDateTime(new TimeOnly(notification.Hour!.Value, 0)));

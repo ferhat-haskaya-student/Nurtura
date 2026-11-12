@@ -34,4 +34,12 @@ public class ForumPost
     // UTC. Set when the author deleted a post that has comments: title and body are cleared, the post keeps its
     // place and takes no new comments. A post without comments is removed instead.
     public DateTime? DeletedByAuthorAt { get; set; }
+
+    // UTC. Set when the admin hid it after a report: everyone sees "hidden by a moderator", nothing is cleared,
+    // it takes no new comments, and the admin can unhide it.
+    public DateTime? HiddenByModeratorAt { get; set; }
+
+    // UTC. Set when the admin removed a post that has comments: title and body are cleared and it takes no new
+    // comments, like an author delete. A post without comments is deleted instead.
+    public DateTime? RemovedByModeratorAt { get; set; }
 }

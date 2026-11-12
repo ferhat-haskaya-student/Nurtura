@@ -1,5 +1,6 @@
 @using System.Globalization
 @using Nurtura.Core
+@using Nurtura.Core.Services
 @using Nurtura.Web.Localization
 @model Nurtura.Core.Services.ForumPostCard
 @{
@@ -12,9 +13,9 @@
         <h3 class="h6 card-title mb-1 text-break">
             <a asp-area="Mother" asp-controller="Forum" asp-action="Post" asp-route-id="@Model.Id"
                class="stretched-link text-reset">
-                @if (Model.IsDeleted)
+                @if (Model.State != ForumPostState.Visible)
                 {
-                    <span class="fst-italic text-body-secondary">@L["Forum_DeletedByAuthor"]</span>
+                    <span class="fst-italic text-body-secondary">@L["Forum_State_" + Model.State]</span>
                 }
                 else
                 {

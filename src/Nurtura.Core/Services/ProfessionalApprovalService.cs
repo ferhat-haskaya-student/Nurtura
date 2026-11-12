@@ -15,11 +15,11 @@ public class ProfessionalApprovalService
     }
 
     // Null when the user has no professional profile.
-    public async Task<ApprovalStatus?> GetStatusAsync(string userId, CancellationToken cancellationToken = default)
+    public async Task<ProfessionalStatus?> GetStatusAsync(string userId, CancellationToken cancellationToken = default)
     {
         return await _db.ProfessionalProfiles
             .Where(p => p.UserId == userId)
-            .Select(p => (ApprovalStatus?)p.ApprovalStatus)
+            .Select(p => new ProfessionalStatus(p.ApprovalStatus, p.IsActive))
             .SingleOrDefaultAsync(cancellationToken);
     }
 
@@ -75,4 +75,10 @@ public class ProfessionalApprovalService
         await _db.SaveChangesAsync(cancellationToken);
         return profile.DisplayName;
     }
+}
+
+// A professional's own state: only an approved and active professional can use the Professional area.
+public sealed record ProfessionalStatus(ApprovalStatus Approval, bool IsActive)
+{
+    public bool CanWork => Approval == ApprovalStatus.Approved && IsActive;
 }

@@ -197,7 +197,7 @@ public class AvailabilityService
     private async Task<int?> GetProfileIdAsync(string userId, CancellationToken cancellationToken)
     {
         return await _db.ProfessionalProfiles
-            .Where(p => p.UserId == userId && p.ApprovalStatus == ApprovalStatus.Approved)
+            .Where(p => p.UserId == userId && p.ApprovalStatus == ApprovalStatus.Approved && p.IsActive)
             .Select(p => (int?)p.Id)
             .SingleOrDefaultAsync(cancellationToken);
     }

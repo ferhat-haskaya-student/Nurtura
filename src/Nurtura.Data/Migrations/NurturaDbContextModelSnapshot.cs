@@ -746,6 +746,9 @@ namespace Nurtura.Data.Migrations
                     b.Property<int>("ForumPostId")
                         .HasColumnType("integer");
 
+                    b.Property<DateTime?>("HiddenByModeratorAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.HasKey("Id");
 
                     b.HasIndex("AuthorProfileId");
@@ -783,10 +786,16 @@ namespace Nurtura.Data.Migrations
                     b.Property<int>("ForumCategoryId")
                         .HasColumnType("integer");
 
+                    b.Property<DateTime?>("HiddenByModeratorAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("Language")
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
+
+                    b.Property<DateTime?>("RemovedByModeratorAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Title")
                         .IsRequired()
@@ -1240,6 +1249,9 @@ namespace Nurtura.Data.Migrations
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
 
                     b.Property<string>("PhotoUrl")
                         .HasColumnType("text");

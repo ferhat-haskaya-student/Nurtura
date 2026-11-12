@@ -25,9 +25,10 @@ public class ApprovalController : Controller
     {
         return await _approvalService.GetStatusAsync(_userManager.GetUserId(User)!) switch
         {
-            ApprovalStatus.Pending => View("Pending"),
-            ApprovalStatus.Rejected => View("Rejected"),
-            ApprovalStatus.Approved => RedirectToAction("Index", "Home", new { area = Roles.Professional }),
+            { Approval: ApprovalStatus.Pending } => View("Pending"),
+            { Approval: ApprovalStatus.Rejected } => View("Rejected"),
+            { Approval: ApprovalStatus.Approved, IsActive: false } => View("Inactive"),
+            { Approval: ApprovalStatus.Approved } => RedirectToAction("Index", "Home", new { area = Roles.Professional }),
             _ => NotFound()
         };
     }

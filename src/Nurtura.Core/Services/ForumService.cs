@@ -50,7 +50,7 @@ public class ForumService
             }
             else if (filter.Tab == ForumTab.Mine)
             {
-                posts = posts.Where(p => p.AuthorProfileId == me && p.DeletedByAuthorAt == null);
+                posts = posts.Where(p => p.AuthorProfileId == me && p.DeletedByAuthorAt == null && p.RemovedByModeratorAt == null);
             }
         }
 
@@ -105,8 +105,9 @@ public class ForumService
         return cards.OrderBy(c => rank[c.Id]).ToList();
     }
 
-    // The post page, including a post she hid (opened directly) and one deleted by its author. Null when it does
-    // not exist or she has no mother profile.
+    // The post page, including a post she hid (opened directly), one deleted by its author and one a moderator hid
+    // or removed. The text of anything a moderator hid never leaves this method. Null when it does not exist or she
+    // has no mother profile.
     public async Task<ForumPostView?> GetPostAsync(string userId, int id, CancellationToken cancellationToken = default)
     {
         if (await ProfileIdAsync(userId, cancellationToken) is not { } me)
@@ -146,35 +147,38 @@ public class ForumService
         var hasReported = await _db.PostReports.AnyAsync(r => r.ReporterProfileId == me && r.ForumPostId == id, cancellationToken);
 
         var utcNow = DateTime.UtcNow;
-        var isDeleted = post.DeletedByAuthorAt is not null;
+        var state = ForumPostStates.Of(post.DeletedByAuthorAt, post.HiddenByModeratorAt, post.RemovedByModeratorAt);
+        var visible = state == ForumPostState.Visible;
         var isMine = post.AuthorProfileId == me;
         return new ForumPostView(
             post.Id,
-            post.Title,
-            post.Body,
+            visible ? post.Title : string.Empty,
+            visible ? post.Body : string.Empty,
             categoryKey,
             post.Language,
             authorName,
             post.CreatedAt,
             post.EditedAt,
-            isDeleted,
+            state,
             isMine,
-            isMine && !isDeleted && post.CreatedAt + ForumPost.EditWindow > utcNow,
+            isMine && visible && post.CreatedAt + ForumPost.EditWindow > utcNow,
             isSaved,
             isHidden,
             hasReported,
             comments.Select(c =>
             {
                 var commentIsMine = c.Comment.AuthorProfileId == me;
+                var hidden = c.Comment.HiddenByModeratorAt is not null;
                 return new ForumCommentView(
                     c.Comment.Id,
                     c.AuthorName,
-                    c.Comment.Body,
+                    hidden ? string.Empty : c.Comment.Body,
                     c.Comment.CreatedAt,
                     c.Comment.EditedAt,
                     commentIsMine,
-                    commentIsMine && c.Comment.CreatedAt + ForumComment.EditWindow > utcNow,
-                    c.HasReported);
+                    commentIsMine && !hidden && c.Comment.CreatedAt + ForumComment.EditWindow > utcNow,
+                    c.HasReported,
+                    hidden);
             }).ToList());
     }
 
@@ -212,14 +216,15 @@ public class ForumService
     {
         var editableSince = DateTime.UtcNow - ForumPost.EditWindow;
         return await OwnPosts(userId)
-            .Where(p => p.Id == id && p.DeletedByAuthorAt == null && p.CreatedAt > editableSince)
+            .Where(p => p.Id == id && p.DeletedByAuthorAt == null && p.HiddenByModeratorAt == null
+                && p.RemovedByModeratorAt == null && p.CreatedAt > editableSince)
             .Select(p => new ForumPostEdit(p.Id, p.ForumCategoryId, p.Language, p.Title, p.Body, p.CreatedAt + ForumPost.EditWindow))
             .SingleOrDefaultAsync(cancellationToken);
     }
 
-    // True when the post is hers and not deleted (whether or not the 30 minutes have passed).
+    // True when the post is hers and not deleted or removed (whether or not the 30 minutes have passed).
     public async Task<bool> IsOwnPostAsync(string userId, int id, CancellationToken cancellationToken = default) =>
-        await OwnPosts(userId).AnyAsync(p => p.Id == id && p.DeletedByAuthorAt == null, cancellationToken);
+        await OwnPosts(userId).AnyAsync(p => p.Id == id && p.DeletedByAuthorAt == null && p.RemovedByModeratorAt == null, cancellationToken);
 
     // The post of her own comment; null when the comment is not hers.
     public async Task<int?> OwnCommentPostIdAsync(string userId, int id, CancellationToken cancellationToken = default) =>
@@ -229,7 +234,7 @@ public class ForumService
     // opened in time but sent late changes nothing.
     public async Task<ForumSaveResult> EditPostAsync(string userId, int id, ForumPostInput input, CancellationToken cancellationToken = default)
     {
-        if (!await OwnPosts(userId).AnyAsync(p => p.Id == id && p.DeletedByAuthorAt == null, cancellationToken))
+        if (!await IsOwnPostAsync(userId, id, cancellationToken))
         {
             return ForumSaveResult.NotFound;
         }
@@ -242,7 +247,8 @@ public class ForumService
         var utcNow = DateTime.UtcNow;
         var editableSince = utcNow - ForumPost.EditWindow;
         var changed = await OwnPosts(userId)
-            .Where(p => p.Id == id && p.DeletedByAuthorAt == null && p.CreatedAt > editableSince)
+            .Where(p => p.Id == id && p.DeletedByAuthorAt == null && p.HiddenByModeratorAt == null
+                && p.RemovedByModeratorAt == null && p.CreatedAt > editableSince)
             .ExecuteUpdateAsync(
                 set => set
                     .SetProperty(p => p.Title, clean.Title)
@@ -260,7 +266,9 @@ public class ForumService
     public async Task<bool> DeletePostAsync(string userId, int id, CancellationToken cancellationToken = default)
     {
         if (await ProfileIdAsync(userId, cancellationToken) is not { } me
-            || !await _db.ForumPosts.AnyAsync(p => p.Id == id && p.AuthorProfileId == me && p.DeletedByAuthorAt == null, cancellationToken))
+            || !await _db.ForumPosts.AnyAsync(
+                p => p.Id == id && p.AuthorProfileId == me && p.DeletedByAuthorAt == null && p.RemovedByModeratorAt == null,
+                cancellationToken))
         {
             return false;
         }
@@ -277,7 +285,7 @@ public class ForumService
         if (removed == 0)
         {
             await _db.ForumPosts
-                .Where(p => p.Id == id && p.AuthorProfileId == me && p.DeletedByAuthorAt == null)
+                .Where(p => p.Id == id && p.AuthorProfileId == me && p.DeletedByAuthorAt == null && p.RemovedByModeratorAt == null)
                 .ExecuteUpdateAsync(
                     set => set
                         .SetProperty(p => p.Title, string.Empty)
@@ -300,14 +308,14 @@ public class ForumService
             .SingleOrDefaultAsync(cancellationToken);
         var post = await _db.ForumPosts
             .Where(p => p.Id == postId)
-            .Select(p => new { p.Title, p.AuthorProfileId, p.DeletedByAuthorAt })
+            .Select(p => new { p.Title, p.AuthorProfileId, p.DeletedByAuthorAt, p.HiddenByModeratorAt, p.RemovedByModeratorAt })
             .SingleOrDefaultAsync(cancellationToken);
         if (me is null || post is null)
         {
             return ForumSaveResult.NotFound;
         }
 
-        if (post.DeletedByAuthorAt is not null)
+        if (ForumPostStates.Of(post.DeletedByAuthorAt, post.HiddenByModeratorAt, post.RemovedByModeratorAt) != ForumPostState.Visible)
         {
             return ForumSaveResult.Closed;
         }
@@ -347,7 +355,7 @@ public class ForumService
     {
         var editableSince = DateTime.UtcNow - ForumComment.EditWindow;
         return await OwnComments(userId)
-            .Where(c => c.Id == id && c.CreatedAt > editableSince)
+            .Where(c => c.Id == id && c.HiddenByModeratorAt == null && c.CreatedAt > editableSince)
             .Select(c => new ForumCommentEdit(c.Id, c.ForumPostId, c.Body, c.CreatedAt + ForumComment.EditWindow))
             .SingleOrDefaultAsync(cancellationToken);
     }
@@ -373,7 +381,7 @@ public class ForumService
         var utcNow = DateTime.UtcNow;
         var editableSince = utcNow - ForumComment.EditWindow;
         var changed = await OwnComments(userId)
-            .Where(c => c.Id == id && c.CreatedAt > editableSince)
+            .Where(c => c.Id == id && c.HiddenByModeratorAt == null && c.CreatedAt > editableSince)
             .ExecuteUpdateAsync(
                 set => set
                     .SetProperty(c => c.Body, clean)
@@ -401,7 +409,8 @@ public class ForumService
         await using var transaction = await _db.Database.BeginTransactionAsync(cancellationToken);
         await OwnComments(userId).Where(c => c.Id == id).ExecuteDeleteAsync(cancellationToken);
         var postRemoved = await _db.ForumPosts
-            .Where(p => p.Id == postId && p.DeletedByAuthorAt != null && !_db.ForumComments.Any(c => c.ForumPostId == p.Id))
+            .Where(p => p.Id == postId && (p.DeletedByAuthorAt != null || p.RemovedByModeratorAt != null)
+                && !_db.ForumComments.Any(c => c.ForumPostId == p.Id))
             .ExecuteDeleteAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
         return (true, postRemoved == 1 ? null : postId);
@@ -640,7 +649,9 @@ public class ForumService
             {
                 p.Id,
                 p.Title,
-                IsDeleted = p.DeletedByAuthorAt != null,
+                p.DeletedByAuthorAt,
+                p.HiddenByModeratorAt,
+                p.RemovedByModeratorAt,
                 p.ForumCategoryId,
                 AuthorName = _db.MotherProfiles.Where(m => m.Id == p.AuthorProfileId).Select(m => m.DisplayName).FirstOrDefault(),
                 p.CreatedAt,
@@ -650,7 +661,12 @@ public class ForumService
 
         var keys = categories.ToDictionary(c => c.Id, c => c.Key);
         return rows
-            .Select(r => new ForumPostCard(r.Id, r.Title, r.IsDeleted, keys[r.ForumCategoryId], r.AuthorName, r.CreatedAt, r.CommentCount))
+            .Select(r =>
+            {
+                var state = ForumPostStates.Of(r.DeletedByAuthorAt, r.HiddenByModeratorAt, r.RemovedByModeratorAt);
+                var title = state == ForumPostState.Visible ? r.Title : string.Empty;
+                return new ForumPostCard(r.Id, title, state, keys[r.ForumCategoryId], r.AuthorName, r.CreatedAt, r.CommentCount);
+            })
             .ToList();
     }
 
@@ -666,11 +682,13 @@ public class ForumService
     private IQueryable<ForumComment> OwnComments(string userId) =>
         _db.ForumComments.Where(c => _db.MotherProfiles.Any(m => m.Id == c.AuthorProfileId && m.UserId == userId));
 
-    // Posts she may save, hide or report: another mother's (or a deleted user's), not deleted by its author.
+    // Posts she may save, hide or report: another mother's (or a deleted user's), not deleted by its author and not
+    // hidden or removed by a moderator.
     private IQueryable<ForumPost> ReportablePosts(int me) =>
-        _db.ForumPosts.Where(p => p.DeletedByAuthorAt == null && (p.AuthorProfileId == null || p.AuthorProfileId != me));
+        _db.ForumPosts.Where(p => p.DeletedByAuthorAt == null && p.HiddenByModeratorAt == null && p.RemovedByModeratorAt == null
+            && (p.AuthorProfileId == null || p.AuthorProfileId != me));
 
-    // Comments she may report: another mother's (or a deleted user's).
+    // Comments she may report: another mother's (or a deleted user's), not hidden by a moderator.
     private IQueryable<ForumComment> ReportableComments(int me) =>
-        _db.ForumComments.Where(c => c.AuthorProfileId == null || c.AuthorProfileId != me);
+        _db.ForumComments.Where(c => c.HiddenByModeratorAt == null && (c.AuthorProfileId == null || c.AuthorProfileId != me));
 }

@@ -140,7 +140,7 @@ public class ChatService
                 join s in _db.AvailabilitySlots on a.AvailabilitySlotId equals s.Id
                 join p in _db.ProfessionalProfiles on s.ProfessionalProfileId equals p.Id
                 join m in _db.MotherProfiles on a.MotherProfileId equals m.Id
-                where m.UserId == userId || (p.UserId == userId && p.ApprovalStatus == ApprovalStatus.Approved)
+                where m.UserId == userId || (p.UserId == userId && p.ApprovalStatus == ApprovalStatus.Approved && p.IsActive)
                 select new
                 {
                     a.Id, a.Status, s.Date, s.StartHour, a.Topic, a.SessionEndedAt, a.SessionEndedBy,

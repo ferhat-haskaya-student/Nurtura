@@ -1,0 +1,127 @@
+@using System.Globalization
+@using Nurtura.Core
+@using Nurtura.Core.Services
+@using Nurtura.Web.Localization
+@model List<Nurtura.Core.Services.ReportCard>
+@{
+    ViewData["Title"] = L["AdminReports_Title"];
+
+    string When(DateTime utc)
+    {
+        var local = PolandTime.ToLocal(utc);
+        return local.ToString(DateFormats.Display, CultureInfo.InvariantCulture) + " "
+            + local.ToString(TimeFormats.Display, CultureInfo.InvariantCulture);
+    }
+}
+
+@* One card per reported post or comment with open reports: "Someone may be in danger" first, then the oldest.
+   Reporters are never shown: only reasons, notes and how many mothers reported it. *@
+<div class="row justify-content-center">
+    <div class="col-12 col-lg-8">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+            <h1 class="h3 mb-0">@ViewData["Title"]</h1>
+            <a asp-action="Hidden" class="btn btn-outline-secondary btn-sm">@L["AdminReports_HiddenLink"]</a>
+        </div>
+
+        <partial name="_AdminMessages" />
+
+        @if (Model.Count == 0)
+        {
+            <p class="text-body-secondary">@L["AdminReports_None"]</p>
+        }
+
+        @foreach (var card in Model)
+        {
+            var key = card.Kind + "-" + card.Id;
+            <div class="card mb-3 @(card.Danger ? "border-danger" : null)">
+                <div class="card-body">
+                    <div class="d-flex flex-wrap gap-1 mb-2">
+                        @if (card.Danger)
+                        {
+                            <span class="badge text-bg-danger">@L["ReportReason_SomeoneInDanger"]</span>
+                        }
+                        <span class="badge text-bg-light border">@L["AdminReports_Kind_" + card.Kind]</span>
+                        <span class="badge text-bg-light border">@L[Plural.Key("AdminReports_ReportCount", card.ReportCount), card.ReportCount]</span>
+                        @if (card.State != ForumPostState.Visible)
+                        {
+                            <span class="badge text-bg-secondary">@L["AdminReports_State_" + card.State]</span>
+                        }
+                    </div>
+
+                    @if (card.Kind == ModerationKind.Comment)
+                    {
+                        <div class="small text-body-secondary mb-1 text-break">
+                            @L["AdminReports_OnPost", string.IsNullOrEmpty(card.PostTitle) ? L["AdminReports_NoTitle"].Value : card.PostTitle]
+                        </div>
+                    }
+                    else if (!string.IsNullOrEmpty(card.PostTitle))
+                    {
+                        <h2 class="h6 mb-1 text-break">@card.PostTitle</h2>
+                    }
+
+                    <div class="small text-body-secondary mb-2">
+                        @(card.AuthorName ?? L["Forum_DeletedUser"].Value) · @When(card.CreatedAt)
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(card.Text))
+                    {
+                        <div class="border rounded p-2 mb-3 text-break" style="white-space: pre-wrap">@card.Text</div>
+                    }
+
+                    <h3 class="h6 mb-1">@L["AdminReports_Reasons"]</h3>
+                    <ul class="small mb-2">
+                        @foreach (var reason in card.Reasons)
+                        {
+                            <li>@L["ReportReason_" + reason.Reason] (@reason.Count)</li>
+                        }
+                    </ul>
+
+                    @if (card.Notes.Count > 0)
+                    {
+                        <h3 class="h6 mb-1">@L["AdminReports_Notes"]</h3>
+                        <ul class="small mb-2">
+                            @foreach (var note in card.Notes)
+                            {
+                                <li class="text-break" style="white-space: pre-wrap">@note</li>
+                            }
+                        </ul>
+                    }
+
+                    <div class="small text-body-secondary mb-3">@L["AdminReports_FirstReported", When(card.FirstReportedAt)]</div>
+
+                    <div class="d-flex flex-wrap gap-2">
+                        <form asp-action="Dismiss" asp-route-kind="@card.Kind" asp-route-id="@card.Id" method="post" data-submit-once>
+                            <button type="submit" class="btn btn-outline-secondary btn-sm">@L["AdminReports_Dismiss"]</button>
+                        </form>
+                        @if (card.CanHide)
+                        {
+                            <form asp-action="Hide" asp-route-kind="@card.Kind" asp-route-id="@card.Id" method="post" data-submit-once>
+                                <button type="submit" class="btn btn-outline-warning btn-sm">@L["AdminReports_Hide"]</button>
+                            </form>
+                        }
+                        @if (card.CanRemove)
+                        {
+                            <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="collapse" data-bs-target="#remove-@key"
+                                    aria-expanded="false" aria-controls="remove-@key">@L["AdminReports_Remove"]</button>
+                        }
+                    </div>
+                    @if (card.CanRemove)
+                    {
+                        <div class="collapse" id="remove-@key">
+                            <div class="border rounded p-2 mt-2">
+                                <p class="small mb-2">@L["AdminReports_RemoveQuestion_" + card.Kind]</p>
+                                <div class="d-flex flex-wrap gap-2">
+                                    <form asp-action="Remove" asp-route-kind="@card.Kind" asp-route-id="@card.Id" method="post" data-submit-once>
+                                        <button type="submit" class="btn btn-danger btn-sm">@L["AdminReports_RemoveYes"]</button>
+                                    </form>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="collapse"
+                                            data-bs-target="#remove-@key">@L["AdminReports_RemoveNo"]</button>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+</div>

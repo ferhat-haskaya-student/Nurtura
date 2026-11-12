@@ -38,9 +38,12 @@
         else if (Model.State == AppointmentState.Cancelled)
         {
             <p class="small mb-2">
-                @(Model.CancelledBy == AppointmentParty.Professional
-                    ? L["Appointments_CancelledByYou"]
-                    : L["Appointments_CancelledByMother", Model.MotherName])
+                @(Model.CancelledBy switch
+                {
+                    AppointmentParty.Professional => L["Appointments_CancelledByYou"],
+                    AppointmentParty.Nurtura => L["Appointments_CancelledByNurtura"],
+                    _ => L["Appointments_CancelledByMother", Model.MotherName]
+                })
             </p>
         }
         else if (Model.State == AppointmentState.Expired)

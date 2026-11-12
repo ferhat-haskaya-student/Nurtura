@@ -1,0 +1,114 @@
+@using Nurtura.Web.Localization
+@model Nurtura.Core.Services.ProfessionalsOverview
+@{
+    ViewData["Title"] = L["AdminPro_Title"];
+}
+
+<div class="row justify-content-center">
+    <div class="col-12 col-lg-8">
+        <h1 class="h3 mb-3">@ViewData["Title"]</h1>
+
+        <partial name="_AdminMessages" />
+
+        @* Waiting for approval (moved here from the admin home). *@
+        <h2 class="h5 mb-3">@L["Admin_Pending_Title"]</h2>
+
+        @if (Model.Pending.Count == 0)
+        {
+            <p class="text-body-secondary">@L["Admin_Pending_None"]</p>
+        }
+
+        @foreach (var professional in Model.Pending)
+        {
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h3 class="card-title h6 mb-3">@professional.DisplayName</h3>
+
+                    <dl class="mb-3">
+                        <dt>@L["Admin_Email"]</dt>
+                        <dd class="text-break">@professional.Email</dd>
+
+                        <dt>@L["Admin_ProfessionalType"]</dt>
+                        <dd>@L["ProfessionalType_" + professional.ProfessionalType]</dd>
+
+                        <dt>@L["Admin_Topics"]</dt>
+                        <dd>@string.Join(", ", professional.Topics.Select(t => L["Topic_" + t].Value))</dd>
+
+                        <dt>@L["Admin_Languages"]</dt>
+                        <dd>@string.Join(", ", professional.Languages.Select(l => L["Language_" + l].Value))</dd>
+
+                        <dt>@L["Admin_Bio"]</dt>
+                        <dd class="text-break">@professional.Bio</dd>
+
+                        <dt>@L["Admin_SignedUp"]</dt>
+                        <dd class="mb-0">@professional.CreatedAt.ToLocalTime().ToString(DateFormats.Display)</dd>
+                    </dl>
+
+                    <div class="d-flex gap-2">
+                        <form asp-action="Approve" asp-route-id="@professional.ProfileId" method="post" class="flex-fill" data-submit-once>
+                            <button type="submit" class="btn btn-success w-100">@L["Admin_Approve"]</button>
+                        </form>
+                        <form asp-action="Reject" asp-route-id="@professional.ProfileId" method="post" class="flex-fill" data-submit-once>
+                            <button type="submit" class="btn btn-outline-danger w-100">@L["Admin_Reject"]</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        }
+
+        @foreach (var (heading, emptyKey, list) in new[]
+        {
+            ("AdminPro_ActiveTitle", "AdminPro_ActiveNone", Model.Active),
+            ("AdminPro_DeactivatedTitle", "AdminPro_DeactivatedNone", Model.Deactivated)
+        })
+        {
+            <h2 class="h5 mt-4 mb-3">@L[heading]</h2>
+            @if (list.Count == 0)
+            {
+                <p class="text-body-secondary">@L[emptyKey]</p>
+            }
+
+            @foreach (var professional in list)
+            {
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <h3 class="card-title h6 mb-1">
+                            @professional.DisplayName
+                            @if (!professional.IsActive)
+                            {
+                                <span class="badge text-bg-secondary ms-1">@L["AdminPro_InactiveBadge"]</span>
+                            }
+                        </h3>
+                        <div class="small text-body-secondary text-break mb-2">
+                            @L["ProfessionalType_" + professional.ProfessionalType] · @professional.Email
+                        </div>
+                        <dl class="small mb-3">
+                            <dt>@L["Admin_Topics"]</dt>
+                            <dd>@string.Join(", ", professional.Topics.Select(t => L["Topic_" + t].Value))</dd>
+                            <dt>@L["Admin_Languages"]</dt>
+                            <dd>@string.Join(", ", professional.Languages.Select(l => L["Language_" + l].Value))</dd>
+                            @if (professional.IsActive)
+                            {
+                                <dt>@L["AdminPro_Upcoming"]</dt>
+                                <dd class="mb-0">@professional.UpcomingCount</dd>
+                            }
+                        </dl>
+                        <div class="d-flex flex-wrap gap-2">
+                            <a asp-action="Topics" asp-route-id="@professional.ProfileId" class="btn btn-outline-secondary btn-sm">@L["AdminPro_EditTopics"]</a>
+                            @if (professional.IsActive)
+                            {
+                                <a asp-action="Deactivate" asp-route-id="@professional.ProfileId" class="btn btn-outline-danger btn-sm">@L["AdminPro_Deactivate"]</a>
+                            }
+                            else
+                            {
+                                <form asp-action="Reactivate" asp-route-id="@professional.ProfileId" method="post" data-submit-once>
+                                    <button type="submit" class="btn btn-outline-success btn-sm">@L["AdminPro_Reactivate"]</button>
+                                </form>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+    </div>
+</div>
