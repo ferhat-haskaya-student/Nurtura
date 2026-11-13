@@ -18,5 +18,8 @@ public enum NotificationType
     // To the professional.
     NewRequest,
     CancelledByMother,
-    Rescheduled
+    Rescheduled,
+
+    // The mother deleted her account; no name and no appointment link (the appointment is deleted with her).
+    MotherDeletedAccount
 }

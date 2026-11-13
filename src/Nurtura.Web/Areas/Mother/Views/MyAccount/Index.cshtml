@@ -1,0 +1,20 @@
+@model Nurtura.Core.Services.MotherAccount
+@{
+    ViewData["Title"] = L["MyAccount_Title"];
+}
+
+<div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6">
+        <h1 class="h3 mb-4">@ViewData["Title"]</h1>
+
+        <dl class="mb-5">
+            <dt class="small text-body-secondary fw-normal">@L["MyAccount_DisplayName"]</dt>
+            <dd class="text-break mb-3">@Model.DisplayName</dd>
+            <dt class="small text-body-secondary fw-normal">@L["MyAccount_Email"]</dt>
+            <dd class="text-break">@Model.Email</dd>
+        </dl>
+
+        <a asp-area="Mother" asp-controller="MyAccount" asp-action="Delete"
+           class="btn btn-outline-danger w-100">@L["MyAccount_DeleteButton"]</a>
+    </div>
+</div>

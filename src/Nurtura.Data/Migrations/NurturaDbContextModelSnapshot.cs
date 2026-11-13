@@ -1085,6 +1085,9 @@ namespace Nurtura.Data.Migrations
                     b.Property<DateOnly?>("Date")
                         .HasColumnType("date");
 
+                    b.Property<int?>("ForumCommentId")
+                        .HasColumnType("integer");
+
                     b.Property<int?>("ForumPostId")
                         .HasColumnType("integer");
 
@@ -1125,6 +1128,8 @@ namespace Nurtura.Data.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("AppointmentId");
+
+                    b.HasIndex("ForumCommentId");
 
                     b.HasIndex("ForumPostId");
 
@@ -1695,6 +1700,11 @@ namespace Nurtura.Data.Migrations
                     b.HasOne("Nurtura.Core.Entities.Appointment", null)
                         .WithMany()
                         .HasForeignKey("AppointmentId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("Nurtura.Core.Entities.ForumComment", null)
+                        .WithMany()
+                        .HasForeignKey("ForumCommentId")
                         .OnDelete(DeleteBehavior.Cascade);
 
                     b.HasOne("Nurtura.Core.Entities.ForumPost", null)

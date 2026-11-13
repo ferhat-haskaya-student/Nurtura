@@ -56,6 +56,9 @@
                             <li class="nav-item">
                                 <a class="nav-link text-dark" asp-area="Mother" asp-controller="Appointments" asp-action="Index">@L["Nav_MyAppointments"]</a>
                             </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-area="Mother" asp-controller="MyAccount" asp-action="Index">@L["Nav_MyAccount"]</a>
+                            </li>
                         }
                         @if (User.IsInRole(Roles.Admin))
                         {

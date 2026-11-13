@@ -39,6 +39,12 @@ public class NotificationConfiguration : IEntityTypeConfiguration<Notification>
             .HasForeignKey(n => n.ForumPostId)
             .OnDelete(DeleteBehavior.Cascade);
 
+        // Deleting the comment (by its author, the admin, or with the author's account) deletes the notification.
+        builder.HasOne<ForumComment>()
+            .WithMany()
+            .HasForeignKey(n => n.ForumCommentId)
+            .OnDelete(DeleteBehavior.Cascade);
+
         // The bell counts a user's unread ones; the page lists hers newest first.
         builder.HasIndex(n => new { n.UserId, n.IsRead, n.CreatedAt });
     }

@@ -33,11 +33,28 @@ public static class NotificationWriter
         });
     }
 
+    // To the professional: the mother deleted her account, so this appointment was cancelled and deleted. No
+    // appointment link (it would delete the notification with the appointment) and no mother's name.
+    public static void AddMotherDeletedAccount(INurturaDbContext db, string professionalUserId, DateOnly date, int hour)
+    {
+        db.Notifications.Add(new Notification
+        {
+            UserId = professionalUserId,
+            Type = NotificationType.MotherDeletedAccount,
+            OtherName = string.Empty,
+            Date = date,
+            Hour = hour,
+            CreatedAt = DateTime.UtcNow,
+            IsRead = false
+        });
+    }
+
     // To a post's author: someone else commented on her post.
     public static void AddForumComment(
         INurturaDbContext db,
         string authorUserId,
         int postId,
+        int commentId,
         string commenterName,
         string postTitle)
     {
@@ -46,6 +63,7 @@ public static class NotificationWriter
             UserId = authorUserId,
             Type = NotificationType.CommentOnYourPost,
             ForumPostId = postId,
+            ForumCommentId = commentId,
             PostTitle = postTitle,
             OtherName = commenterName,
             CreatedAt = DateTime.UtcNow,

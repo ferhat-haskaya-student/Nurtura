@@ -22,6 +22,10 @@ public class Notification
 
     public string? PostTitle { get; set; }
 
+    // CommentOnYourPost: the comment that caused it, so deleting the comment (or its author's account) deletes the
+    // notification. Empty for notifications written before this link existed.
+    public int? ForumCommentId { get; set; }
+
     // The other side's display name when it happened (for CommentOnYourPost, the commenter).
     public string OtherName { get; set; } = string.Empty;
 

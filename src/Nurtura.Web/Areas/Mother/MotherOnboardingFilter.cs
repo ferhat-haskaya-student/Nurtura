@@ -8,17 +8,24 @@ namespace Nurtura.Web.Areas.Mother;
 
 // Registered globally: until a mother finishes onboarding, every page in the Mother area
 // except the onboarding form itself sends her to the form.
+// A mother with no profile any more (she deleted her account, and this is another browser or device still
+// signed in) is signed out and sent to the login page, on every Mother-area page including onboarding.
 public class MotherOnboardingFilter : IAsyncActionFilter
 {
     private const string OnboardingController = "Onboarding";
 
     private readonly MotherOnboardingService _onboardingService;
     private readonly UserManager<ApplicationUser> _userManager;
+    private readonly SignInManager<ApplicationUser> _signInManager;
 
-    public MotherOnboardingFilter(MotherOnboardingService onboardingService, UserManager<ApplicationUser> userManager)
+    public MotherOnboardingFilter(
+        MotherOnboardingService onboardingService,
+        UserManager<ApplicationUser> userManager,
+        SignInManager<ApplicationUser> signInManager)
     {
         _onboardingService = onboardingService;
         _userManager = userManager;
+        _signInManager = signInManager;
     }
 
     public async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
@@ -28,13 +35,21 @@ public class MotherOnboardingFilter : IAsyncActionFilter
         routeValues.TryGetValue("controller", out var controller);
         var user = context.HttpContext.User;
 
-        if (string.Equals(area, Roles.Mother, StringComparison.OrdinalIgnoreCase)
-            && !string.Equals(controller, OnboardingController, StringComparison.OrdinalIgnoreCase)
-            && user.IsInRole(Roles.Mother)
-            && await _onboardingService.IsCompletedAsync(_userManager.GetUserId(user)!) != true)
+        if (string.Equals(area, Roles.Mother, StringComparison.OrdinalIgnoreCase) && user.IsInRole(Roles.Mother))
         {
-            context.Result = new RedirectToActionResult("Index", OnboardingController, new { area = Roles.Mother });
-            return;
+            var completed = await _onboardingService.IsCompletedAsync(_userManager.GetUserId(user)!);
+            if (completed is null)
+            {
+                await _signInManager.SignOutAsync();
+                context.Result = new RedirectToActionResult("Login", "Account", new { area = "" });
+                return;
+            }
+
+            if (completed != true && !string.Equals(controller, OnboardingController, StringComparison.OrdinalIgnoreCase))
+            {
+                context.Result = new RedirectToActionResult("Index", OnboardingController, new { area = Roles.Mother });
+                return;
+            }
         }
 
         await next();

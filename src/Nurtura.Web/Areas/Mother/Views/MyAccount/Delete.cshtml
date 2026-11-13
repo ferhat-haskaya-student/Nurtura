@@ -1,0 +1,55 @@
+@model Nurtura.Core.Services.MotherAccount
+@{
+    ViewData["Title"] = L["MyAccount_DeleteTitle"];
+    string[] deletedItems =
+    [
+        "MyAccount_Deletes_Profile",
+        "MyAccount_Deletes_Babies",
+        "MyAccount_Deletes_CheckIns",
+        "MyAccount_Deletes_Appointments",
+        "MyAccount_Deletes_Notifications",
+        "MyAccount_Deletes_Saved",
+        "MyAccount_Deletes_Forum",
+        "MyAccount_Deletes_Login"
+    ];
+}
+
+<div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6">
+        <h1 class="h3 mb-3">@ViewData["Title"]</h1>
+
+        <p class="mb-2">@L["MyAccount_DeletesIntro"]</p>
+        <ul class="mb-3">
+            @foreach (var key in deletedItems)
+            {
+                <li class="mb-1">@L[key]</li>
+            }
+        </ul>
+        <p class="mb-2">@L["MyAccount_DeletesUpcoming"]</p>
+        <p class="mb-4">@L["MyAccount_DeletesForever"]</p>
+
+        @if (ViewData["DeleteError"] is string error)
+        {
+            <div class="alert alert-danger" role="alert">@error</div>
+        }
+
+        <form asp-area="Mother" asp-controller="MyAccount" asp-action="Delete" method="post" data-submit-once>
+            <div class="mb-3">
+                @if (Model.HasPassword)
+                {
+                    <label for="confirmation" class="form-label">@L["MyAccount_PasswordPrompt"]</label>
+                    <input id="confirmation" name="confirmation" type="password" class="form-control" autocomplete="current-password" required />
+                }
+                else
+                {
+                    <label for="confirmation" class="form-label">@L["MyAccount_EmailPrompt"]</label>
+                    <input id="confirmation" name="confirmation" type="email" class="form-control" autocomplete="off" required />
+                }
+            </div>
+            <button type="submit" class="btn btn-danger w-100 mb-3">@L["MyAccount_DeleteConfirm"]</button>
+        </form>
+
+        <a asp-area="Mother" asp-controller="MyAccount" asp-action="Index"
+           class="btn btn-outline-secondary w-100">@L["MyAccount_DeleteBack"]</a>
+    </div>
+</div>

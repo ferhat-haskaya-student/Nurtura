@@ -44,7 +44,8 @@ public class NotificationsController : Controller
                 or NotificationType.PostRemoved or NotificationType.CommentRemoved => opened.ForumPostId is { } postId
                 ? Url.Action("Post", "Forum", new { area = Roles.Mother, id = postId })!
                 : Url.Action("Index", "Forum", new { area = Roles.Mother })!,
-            NotificationType.ClosingNoteWritten => Url.Action("Consultation", "Appointments", new { area, id = opened.AppointmentId })!,
+            NotificationType.MotherDeletedAccount => Url.Action("Index", "Appointments", new { area })!,
+            NotificationType.ClosingNoteWritten =>Url.Action("Consultation", "Appointments", new { area, id = opened.AppointmentId })!,
             _ => Url.Action("Index", "Appointments", new { area }) + "#appointment-" + opened.AppointmentId
         };
         return LocalRedirect(url);

@@ -266,6 +266,13 @@ public class AccountController : Controller
         return RedirectToAction("Index", "Home");
     }
 
+    // After a mother deleted her account; she is already signed out.
+    [HttpGet]
+    public IActionResult Deleted()
+    {
+        return View();
+    }
+
     [HttpGet]
     public IActionResult AccessDenied()
     {

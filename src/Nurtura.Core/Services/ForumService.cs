@@ -326,13 +326,17 @@ public class ForumService
             return ForumSaveResult.Invalid;
         }
 
-        _db.ForumComments.Add(new ForumComment
+        // The notification links to the comment, whose id exists only after the first save; both in one transaction.
+        await using var transaction = await _db.Database.BeginTransactionAsync(cancellationToken);
+        var comment = new ForumComment
         {
             ForumPostId = postId,
             AuthorProfileId = me.Id,
             Body = clean,
             CreatedAt = DateTime.UtcNow
-        });
+        };
+        _db.ForumComments.Add(comment);
+        await _db.SaveChangesAsync(cancellationToken);
 
         if (post.AuthorProfileId is { } authorId && authorId != me.Id)
         {
@@ -342,11 +346,12 @@ public class ForumService
                 .SingleOrDefaultAsync(cancellationToken);
             if (authorUserId is not null)
             {
-                NotificationWriter.AddForumComment(_db, authorUserId, postId, me.DisplayName, post.Title);
+                NotificationWriter.AddForumComment(_db, authorUserId, postId, comment.Id, me.DisplayName, post.Title);
+                await _db.SaveChangesAsync(cancellationToken);
             }
         }
 
-        await _db.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
         return new ForumSaveResult(ForumSaveStatus.Saved, postId, AssistantText.IsUrgent(clean));
     }
 
