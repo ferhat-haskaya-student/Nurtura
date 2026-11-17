@@ -17,7 +17,7 @@
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/Nurtura.Web.styles.css" asp-append-version="true" />
 </head>
-<body>
+<body class="d-flex flex-column min-vh-100">
     <header>
         <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
             <div class="container-fluid">
@@ -98,15 +98,16 @@
             </div>
         </nav>
     </header>
-    <div class="container">
+    <div class="container flex-grow-1">
         <main role="main" class="pb-3">
             @RenderBody()
         </main>
     </div>
 
-    <footer class="border-top footer text-muted">
+    <footer class="border-top footer text-muted small py-3">
         <div class="container">
-            &copy; 2026 - @L["AppName"] - <a asp-area="" asp-controller="Home" asp-action="Privacy">@L["Nav_Privacy"]</a>
+            <div>@L["Footer_Notice"]</div>
+            <div>&copy; @DateTime.Now.Year - @L["AppName"] - <a asp-area="" asp-controller="Home" asp-action="Privacy">@L["Nav_Privacy"]</a></div>
         </div>
     </footer>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>

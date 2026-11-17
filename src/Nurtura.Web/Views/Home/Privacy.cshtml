@@ -1,6 +1,28 @@
 ﻿@{
-    ViewData["Title"] = "Privacy Policy";
+    ViewData["Title"] = L["Privacy_Title"];
 }
-<h1>@ViewData["Title"]</h1>
 
-<p>Use this page to detail your site's privacy policy.</p>
+<div class="row">
+    <div class="col-12 col-lg-8">
+        <h1 class="h3 mb-3">@ViewData["Title"]</h1>
+        <p>@L["Privacy_Intro"]</p>
+
+        <h2 class="h5 mt-4">@L["Privacy_Stored_Heading"]</h2>
+        <p>@L["Privacy_Stored_Text"]</p>
+
+        <h2 class="h5 mt-4">@L["Privacy_Default_Heading"]</h2>
+        <p>@L["Privacy_Default_Text"]</p>
+
+        <h2 class="h5 mt-4">@L["Privacy_WhoSees_Heading"]</h2>
+        <p>@L["Privacy_WhoSees_Text"]</p>
+
+        <h2 class="h5 mt-4">@L["Privacy_Assistant_Heading"]</h2>
+        <p>@L["Privacy_Assistant_Text"]</p>
+
+        <h2 class="h5 mt-4">@L["Privacy_Delete_Heading"]</h2>
+        <p>@L["Privacy_Delete_Text"]</p>
+
+        <h2 class="h5 mt-4">@L["Privacy_NotMedical_Heading"]</h2>
+        <p>@L["Notice_NotMedicalService"]</p>
+    </div>
+</div>

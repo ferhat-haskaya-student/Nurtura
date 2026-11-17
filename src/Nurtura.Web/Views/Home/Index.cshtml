@@ -1,8 +1,28 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = L["Nav_Home"];
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6">
+        <h1 class="display-5 mb-2">@L["AppName"]</h1>
+        <p class="lead mb-4">@L["Home_Tagline"]</p>
+
+        <ul class="list-group mb-4">
+            <li class="list-group-item">@L["Home_Point_Checkins"]</li>
+            <li class="list-group-item">@L["Home_Point_Baby"]</li>
+            <li class="list-group-item">@L["Home_Point_Guides"]</li>
+            <li class="list-group-item">@L["Home_Point_Consultation"]</li>
+        </ul>
+
+        <div class="alert alert-info mb-4" role="note">@L["Notice_NotMedicalService"]</div>
+
+        <div class="d-grid gap-2 d-sm-flex mb-3">
+            <a class="btn btn-primary" asp-controller="Account" asp-action="Register">@L["Nav_Register"]</a>
+            <a class="btn btn-outline-primary" asp-controller="Account" asp-action="Login">@L["Nav_Login"]</a>
+        </div>
+
+        <p>
+            @L["Home_ProfessionalPrompt"] <a asp-controller="Account" asp-action="RegisterProfessional">@L["Home_ProfessionalLink"]</a>
+        </p>
+    </div>
 </div>
