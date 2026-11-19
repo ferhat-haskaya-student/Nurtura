@@ -29,4 +29,17 @@ public class HomeController : Controller
     {
         return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
     }
+
+    // Shown in place of an empty error response (see UseStatusCodePagesWithReExecute in Program.cs).
+    // The response keeps its original status code.
+    [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+    public IActionResult Status(int code)
+    {
+        if (code == StatusCodes.Status404NotFound)
+        {
+            return View("NotFound");
+        }
+
+        return View("Error", new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+    }
 }

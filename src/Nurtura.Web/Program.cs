@@ -166,6 +166,12 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
+// An empty error response (a page that does not exist, or another user's record) shows a friendly page in the
+// app's layout instead of a blank browser page. The status code stays the same. Not for the chat hub.
+app.UseWhen(
+    context => !context.Request.Path.StartsWithSegments("/hubs"),
+    branch => branch.UseStatusCodePagesWithReExecute("/Home/Status", "?code={0}"));
+
 app.UseHttpsRedirection();
 app.UseRequestLocalization();
 app.UseRouting();

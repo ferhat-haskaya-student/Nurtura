@@ -1,0 +1,13 @@
+@using Nurtura.Web.Identity
+@{
+    ViewData["Title"] = L["NotFound_Title"];
+}
+
+@* The same page whether the address does not exist or belongs to someone else, so it never tells which. *@
+<div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6">
+        <h1 class="h3">@ViewData["Title"]</h1>
+        <p>@L["NotFound_Message"]</p>
+        <a class="btn btn-primary" asp-area="@(RoleHome.AreaFor(User) ?? "")" asp-controller="Home" asp-action="Index">@L["Error_BackHome"]</a>
+    </div>
+</div>
