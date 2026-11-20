@@ -159,6 +159,28 @@ using (var scope = app.Services.CreateScope())
 }
 
 // Configure the HTTP request pipeline.
+
+// Security headers on every response, set just before it is sent so the error handler (which clears headers)
+// cannot drop them. Not a full Content-Security-Policy: several views still use inline scripts and styles.
+app.Use(async (context, next) =>
+{
+    context.Response.OnStarting(() =>
+    {
+        var headers = context.Response.Headers;
+        // No other site may show Nurtura inside a frame (clickjacking).
+        headers["X-Frame-Options"] = "DENY";
+        headers["Content-Security-Policy"] = "frame-ancestors 'none'";
+        // The browser uses the declared file type and never guesses another.
+        headers["X-Content-Type-Options"] = "nosniff";
+        // Other sites see only "nurtura", never the full address with record ids.
+        headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
+        // The app never uses the camera, microphone or location.
+        headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()";
+        return Task.CompletedTask;
+    });
+    await next();
+});
+
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
