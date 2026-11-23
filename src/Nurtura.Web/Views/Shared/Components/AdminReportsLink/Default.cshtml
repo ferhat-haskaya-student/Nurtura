@@ -1,9 +1,11 @@
+@using Nurtura.Web.Navigation
 @model int
 @{
     var label = Model > 0 ? L["Nav_AdminReportsOpen", Model].Value : L["Nav_AdminReports"].Value;
 }
 
-<a class="nav-link text-dark" asp-area="Admin" asp-controller="Reports" asp-action="Index" aria-label="@label">
+<a class="nav-link text-dark" asp-area="Admin" asp-controller="Reports" asp-action="Index" aria-label="@label"
+   aria-current="@MenuCurrent.Section(ViewContext, "Admin", "Reports")">
     @L["Nav_AdminReports"]
     @if (Model > 0)
     {

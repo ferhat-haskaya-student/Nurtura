@@ -1,8 +1,13 @@
 ﻿@using System.Globalization
 @using Nurtura.Web.Localization
 @using Nurtura.Core.Identity
+@using Nurtura.Web.Navigation
 @{
     var currentCulture = CultureInfo.CurrentUICulture.Name;
+    // Home is the public page, or a mother's or professional's own home. The admin's home has its own link, Numbers.
+    var homeCurrent = MenuCurrent.Page(ViewContext, "", "Home", "Index")
+        ?? MenuCurrent.Page(ViewContext, Roles.Mother, "Home", "Index")
+        ?? MenuCurrent.Page(ViewContext, Roles.Professional, "Home", "Index");
     var returnUrl = $"{Context.Request.PathBase}{Context.Request.Path}{Context.Request.QueryString}";
 }
 <!DOCTYPE html>
@@ -18,6 +23,7 @@
     <link rel="stylesheet" href="~/Nurtura.Web.styles.css" asp-append-version="true" />
 </head>
 <body class="d-flex flex-column min-vh-100">
+    <a class="visually-hidden-focusable position-absolute top-0 start-0 z-3 m-2 p-2 bg-white border rounded" href="#main-content">@L["Nav_SkipToContent"]</a>
     <header>
         <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
             <div class="container-fluid">
@@ -30,53 +36,53 @@
                         @await Component.InvokeAsync("NotificationBell")
                     </div>
                 }
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#main-menu" aria-controls="main-menu"
                         aria-expanded="false" aria-label="@L["Nav_ToggleNavigation"]">
                     <span class="navbar-toggler-icon"></span>
                 </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+                <div id="main-menu" class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">@L["Nav_Home"]</a>
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index" aria-current="@homeCurrent">@L["Nav_Home"]</a>
                         </li>
                         @if (User.IsInRole(Roles.Mother))
                         {
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="Mother" asp-controller="Baby" asp-action="Index">@L["Nav_Baby"]</a>
+                                <a class="nav-link text-dark" asp-area="Mother" asp-controller="Baby" asp-action="Index" aria-current="@MenuCurrent.Section(ViewContext, "Mother", "Baby", "Sleep", "Feeding")">@L["Nav_Baby"]</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="Mother" asp-controller="Guides" asp-action="Index">@L["Nav_Guides"]</a>
+                                <a class="nav-link text-dark" asp-area="Mother" asp-controller="Guides" asp-action="Index" aria-current="@MenuCurrent.Section(ViewContext, "Mother", "Guides")">@L["Nav_Guides"]</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="Mother" asp-controller="Forum" asp-action="Index">@L["Nav_Forum"]</a>
+                                <a class="nav-link text-dark" asp-area="Mother" asp-controller="Forum" asp-action="Index" aria-current="@MenuCurrent.Section(ViewContext, "Mother", "Forum")">@L["Nav_Forum"]</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="Mother" asp-controller="Book" asp-action="Index">@L["Nav_Book"]</a>
+                                <a class="nav-link text-dark" asp-area="Mother" asp-controller="Book" asp-action="Index" aria-current="@MenuCurrent.Section(ViewContext, "Mother", "Book")">@L["Nav_Book"]</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="Mother" asp-controller="Appointments" asp-action="Index">@L["Nav_MyAppointments"]</a>
+                                <a class="nav-link text-dark" asp-area="Mother" asp-controller="Appointments" asp-action="Index" aria-current="@MenuCurrent.Section(ViewContext, "Mother", "Appointments")">@L["Nav_MyAppointments"]</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="Mother" asp-controller="MyAccount" asp-action="Index">@L["Nav_MyAccount"]</a>
+                                <a class="nav-link text-dark" asp-area="Mother" asp-controller="MyAccount" asp-action="Index" aria-current="@MenuCurrent.Section(ViewContext, "Mother", "MyAccount")">@L["Nav_MyAccount"]</a>
                             </li>
                         }
                         @if (User.IsInRole(Roles.Admin))
                         {
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="Admin" asp-controller="Home" asp-action="Index">@L["Nav_AdminNumbers"]</a>
+                                <a class="nav-link text-dark" asp-area="Admin" asp-controller="Home" asp-action="Index" aria-current="@MenuCurrent.Section(ViewContext, "Admin", "Home")">@L["Nav_AdminNumbers"]</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="Admin" asp-controller="Professionals" asp-action="Index">@L["Nav_AdminProfessionals"]</a>
+                                <a class="nav-link text-dark" asp-area="Admin" asp-controller="Professionals" asp-action="Index" aria-current="@MenuCurrent.Section(ViewContext, "Admin", "Professionals")">@L["Nav_AdminProfessionals"]</a>
                             </li>
                             <li class="nav-item">
                                 @await Component.InvokeAsync("AdminReportsLink")
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="Admin" asp-controller="Guides" asp-action="Index">@L["Nav_AdminGuides"]</a>
+                                <a class="nav-link text-dark" asp-area="Admin" asp-controller="Guides" asp-action="Index" aria-current="@MenuCurrent.Section(ViewContext, "Admin", "Guides")">@L["Nav_AdminGuides"]</a>
                             </li>
                         }
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">@L["Nav_Privacy"]</a>
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy" aria-current="@MenuCurrent.Page(ViewContext, "", "Home", "Privacy")">@L["Nav_Privacy"]</a>
                         </li>
                     </ul>
                     <partial name="_LoginPartial" />
@@ -99,7 +105,7 @@
         </nav>
     </header>
     <div class="container flex-grow-1">
-        <main role="main" class="pb-3">
+        <main role="main" id="main-content" tabindex="-1" class="pb-3">
             @RenderBody()
         </main>
     </div>

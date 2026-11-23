@@ -25,6 +25,18 @@ html {
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
   text-align: start;
 }
+/* The menu link of the page or section she is in (Navigation/MenuCurrent.cs). */
+.navbar .nav-link[aria-current] {
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 0.3em;
+}
+
+/* Focused only by the skip link, so no frame around the whole page. */
+#main-content:focus {
+  outline: none;
+}
+
 /* Time picker wheels (wwwroot/js/time-picker.js). Items are 40px high (ITEM_HEIGHT there); five show at once,
    and the 80px padding lets the first and last item reach the middle band. */
 .time-wheels {

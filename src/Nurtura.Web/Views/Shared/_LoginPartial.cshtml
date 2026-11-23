@@ -1,3 +1,4 @@
+@using Nurtura.Web.Navigation
 @if (User.Identity?.IsAuthenticated == true)
 {
     <div class="d-flex align-items-center gap-2 py-2 py-sm-0 me-sm-3">
@@ -11,10 +12,10 @@ else
 {
     <ul class="navbar-nav me-sm-3">
         <li class="nav-item">
-            <a class="nav-link text-dark" asp-area="" asp-controller="Account" asp-action="Login">@L["Nav_Login"]</a>
+            <a class="nav-link text-dark" asp-area="" asp-controller="Account" asp-action="Login" aria-current="@MenuCurrent.Page(ViewContext, "", "Account", "Login")">@L["Nav_Login"]</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link text-dark" asp-area="" asp-controller="Account" asp-action="Register">@L["Nav_Register"]</a>
+            <a class="nav-link text-dark" asp-area="" asp-controller="Account" asp-action="Register" aria-current="@MenuCurrent.Page(ViewContext, "", "Account", "Register")">@L["Nav_Register"]</a>
         </li>
     </ul>
 }
