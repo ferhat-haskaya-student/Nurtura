@@ -161,15 +161,21 @@ using (var scope = app.Services.CreateScope())
 // Configure the HTTP request pipeline.
 
 // Security headers on every response, set just before it is sent so the error handler (which clears headers)
-// cannot drop them. Not a full Content-Security-Policy: several views still use inline scripts and styles.
+// cannot drop them.
+// Content-Security-Policy: the browser runs only Nurtura's own script files, so a script hidden in a post, note or
+// message never runs. Inline scripts do not run either: they belong in wwwroot/js. Inline styles stay allowed, and
+// Bootstrap's icons are data: images. No form-action: it would block the redirect to Google sign-in.
+const string contentSecurityPolicy =
+    "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; " +
+    "connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'";
 app.Use(async (context, next) =>
 {
     context.Response.OnStarting(() =>
     {
         var headers = context.Response.Headers;
-        // No other site may show Nurtura inside a frame (clickjacking).
+        // No other site may show Nurtura inside a frame (clickjacking); frame-ancestors says the same.
         headers["X-Frame-Options"] = "DENY";
-        headers["Content-Security-Policy"] = "frame-ancestors 'none'";
+        headers["Content-Security-Policy"] = contentSecurityPolicy;
         // The browser uses the declared file type and never guesses another.
         headers["X-Content-Type-Options"] = "nosniff";
         // Other sites see only "nurtura", never the full address with record ids.

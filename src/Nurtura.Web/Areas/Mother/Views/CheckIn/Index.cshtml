@@ -112,14 +112,6 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
-    <script>
-        (function () {
-            // Picking another day opens that day's check-in.
-            var dateForm = document.querySelector('[data-checkin-date-form]');
-            dateForm.querySelector('input[name="date"]').addEventListener('change', function () {
-                dateForm.submit();
-            });
-        })();
-    </script>
+    <script src="~/js/checkin-date.js" asp-append-version="true"></script>
     <script src="~/js/note-counter.js" asp-append-version="true"></script>
 }
