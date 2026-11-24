@@ -78,12 +78,12 @@ public sealed class SleepPickerClockTests(NurturaAppFactory factory) : Integrati
             [
                 // Left at "now".
                 "0:00:00", "0:00:00",
-                // 5 hours ago, 37 + 3 seconds into the minute: ticks at once.
-                "5:00:40", "5:00:44",
+                // 5 hours ago, 37 + 3 seconds into the minute. Not running: stands still.
+                "5:00:40", "5:00:40",
                 // With an end: the length, which stands still.
                 "4 h", "7 h 13 min", "7 h 13 min",
                 // The end cleared.
-                "8:13:49", "8:13:50",
+                "8:13:49", "8:13:49",
                 // Picked back to its "now".
                 "0:00:00", "0:00:00"
             ],
@@ -172,7 +172,8 @@ public sealed class SleepPickerClockTests(NurturaAppFactory factory) : Integrati
         Assert.Equal(
             [
                 "2 h", "45 min", "3 h 45 min", "3 h 45 min",
-                Clock(now - start.AddHours(-3) + Seconds(1)), Clock(now - start.AddHours(-3) + Seconds(2)),
+                // The end cleared: the time since the start, which stands still.
+                Clock(now - start.AddHours(-3) + Seconds(1)), Clock(now - start.AddHours(-3) + Seconds(1)),
                 Clock(now - start + Seconds(2)),
                 "3 h", "3 h"
             ],
@@ -269,7 +270,7 @@ public sealed class SleepPickerClockTests(NurturaAppFactory factory) : Integrati
             return seen;
             """);
 
-        Assert.Equal(["5:00:37", "5:00:38", "3 h"], seen);
+        Assert.Equal(["5:00:37", "5:00:37", "3 h"], seen);
     }
 
     // ---- The server's answers
@@ -296,8 +297,8 @@ public sealed class SleepPickerClockTests(NurturaAppFactory factory) : Integrati
         Assert.Equal("2 h 30 min", await Edge(refusedSave).RunAsync<string>("return clock();"));
         var edge = Edge(refusedStart);
         var seen = await edge.RunAsync<string[]>("var first = clock(); await advance(1000); return [first, clock()];");
-        var expected = edge.ServerNow - now.AddHours(-2.5);
-        Assert.Equal([Clock(expected), Clock(expected + Seconds(1))], seen);
+        var expected = Clock(edge.ServerNow - now.AddHours(-2.5));
+        Assert.Equal([expected, expected], seen);
     }
 
     private static string AnswerScript(HttpStatusCode status, string json, string button) => $$"""
@@ -319,29 +320,41 @@ public sealed class SleepPickerClockTests(NurturaAppFactory factory) : Integrati
         return (json, DateTimeOffset.FromUnixTimeMilliseconds(screen.GetProperty("serverNow").GetInt64()).UtcDateTime);
     }
 
-    // Picked, Start: the clock goes on from the picked start. Stop: the length.
+    // Picked: stands still. Start: ticks from the picked start. Stop: the length. End cleared: stands still. Resume: ticks.
     [Fact]
-    public async Task StartAndStop_AfterAPick()
+    public async Task StartStopAndResume_AfterAPick()
     {
         var html = await NewHtmlAsync();
         var start = TestData.Minute(DateTime.UtcNow.AddHours(-5));
         var started = await ApiAsync("start", SleepForm.Fields(Users.A.BabyId, null, start), HttpStatusCode.OK);
         using var answer = JsonDocument.Parse(started.Json);
         var id = answer.RootElement.GetProperty("sleepId").GetInt32();
-        var stopped = await ApiAsync("stop", SleepForm.Fields(Users.A.BabyId, id, start.AddHours(-1)), HttpStatusCode.OK);
+        var earlier = start.AddHours(-1);
+        var stopped = await ApiAsync("stop", SleepForm.Fields(Users.A.BabyId, id, earlier), HttpStatusCode.OK);
+        var resumed = await ApiAsync("resume", SleepForm.Fields(Users.A.BabyId, id, earlier), HttpStatusCode.OK);
 
         // The server answers at once.
         var edge = new EdgePage(Factory, html) { ServerNow = started.ServerNow };
         var seen = await edge.RunAsync<string[]>($$"""
             await pick('start', '{{Field(start)}}');
             var seen = [clock()];
+            await advance(2000);
+            seen.push(clock());
             {{AnswerScript(HttpStatusCode.OK, started.Json, "stop")}}
             seen.push(clock());
             await advance(1000);
             seen.push(clock());
-            await pick('start', '{{Field(start.AddHours(-1))}}');
+            await pick('start', '{{Field(earlier)}}');
             seen.push(clock());
             {{AnswerScript(HttpStatusCode.OK, stopped.Json, "resume")}}
+            seen.push(clock());
+            await advance(1000);
+            seen.push(clock());
+            await clear('end');
+            seen.push(clock());
+            await advance(1000);
+            seen.push(clock());
+            {{AnswerScript(HttpStatusCode.OK, resumed.Json, "stop")}}
             seen.push(clock());
             await advance(1000);
             seen.push(clock());
@@ -349,11 +362,16 @@ public sealed class SleepPickerClockTests(NurturaAppFactory factory) : Integrati
             """);
 
         var running = started.ServerNow - start;
-        var length = Length(TestData.Minute(stopped.ServerNow) - start.AddHours(-1));
+        var length = Length(TestData.Minute(stopped.ServerNow) - earlier);
+        var sinceCleared = Clock(stopped.ServerNow - earlier + Seconds(1));
         Assert.Equal(
             [
-                Clock(running), Clock(running), Clock(running + Seconds(1)), Clock(running + TimeSpan.FromHours(1) + Seconds(1)),
-                length, length
+                Clock(running), Clock(running),
+                Clock(running), Clock(running + Seconds(1)),
+                Clock(running + TimeSpan.FromHours(1) + Seconds(1)),
+                length, length,
+                sinceCleared, sinceCleared,
+                Clock(resumed.ServerNow - earlier), Clock(resumed.ServerNow - earlier + Seconds(1))
             ],
             seen);
     }
@@ -378,8 +396,8 @@ public sealed class SleepPickerClockTests(NurturaAppFactory factory) : Integrati
             return seen;
             """);
 
-        var expected = refused.ServerNow - start;
-        Assert.Equal([Clock(expected), "1", Clock(expected + Seconds(1))], seen);
+        var expected = Clock(refused.ServerNow - start);
+        Assert.Equal([expected, "1", expected], seen);
     }
 
     // ---- Only the clock

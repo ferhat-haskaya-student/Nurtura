@@ -4,8 +4,9 @@
 // data-format="clock" shows h:mm:ss; "duration" shows the localized data-template-hm / -h / -m.
 // A script that changes these attributes (sleep-timer-api.js) sends "sleep-timer:refresh" to the document.
 //
-// On the timer screen the clock follows the picked times before anything is saved: only a start counts from it, a start
-// and an end show the length. The attributes stay as the server gave them.
+// On the timer screen the clock follows the picked times before anything is saved: only a start shows the time since it,
+// a start and an end show the length. Only a running sleep ticks, so the clock and the button agree. The attributes stay
+// as the server gave them.
 (function () {
     var MINUTE_MS = 60000;
     var HOUR_MS = 60 * MINUTE_MS;
@@ -32,17 +33,20 @@
         return template.replace('{0}', hours > 0 ? hours : minutes).replace('{1}', minutes);
     }
 
+    // The server's time.
+    function now() {
+        return Date.now() + clockOffset;
+    }
+
     function update() {
-        var now = Date.now() + clockOffset;
         ticking.forEach(function (item) {
             var element = item.element;
-            element.textContent = item.format === 'clock'
-                ? clockText(now - item.since)
-                : durationText(now - item.since, element.dataset);
+            var ms = now() - item.since;
+            element.textContent = item.format === 'clock' ? clockText(ms) : durationText(ms, element.dataset);
         });
     }
 
-    // Ticks only while something on the page counts.
+    // Ticks only while something on the page runs.
     function run() {
         clearInterval(timer);
         if (ticking.length > 0) {
@@ -97,7 +101,7 @@
         };
     }
 
-    // since: counts from there; text: stands still.
+    // since: ticks from there; text: stands still.
     function picked() {
         var start = read(startField);
         var end = read(endField);
@@ -116,7 +120,12 @@
         var unchanged = runningSince === null
             ? start.text === form.elements.DefaultStart.value
             : toWarsaw(start.utc) === toWarsaw(runningSince);
-        return unchanged ? server : { since: start.utc };
+        if (unchanged) {
+            return server;
+        }
+
+        // Not running: the time since the start, until Start or Resume.
+        return runningSince === null ? { text: clockText(now() - start.utc) } : { since: start.utc };
     }
 
     function follow() {
