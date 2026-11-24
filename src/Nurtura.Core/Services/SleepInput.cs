@@ -3,7 +3,13 @@ using Nurtura.Core.Entities;
 namespace Nurtura.Core.Services;
 
 // What the timer screen sends. Times are UTC; an empty end means the timer runs.
-public sealed record SleepInput(DateTime StartUtc, DateTime? EndUtc, string? Note, bool IsShared);
+// TimerStartedAt is the moment of the tap, only for Start on a new sleep with the start left at "now".
+public sealed record SleepInput(
+    DateTime StartUtc,
+    DateTime? EndUtc,
+    string? Note,
+    bool IsShared,
+    DateTime? TimerStartedAt = null);
 
 public enum SleepSaveStatus
 {

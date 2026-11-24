@@ -62,9 +62,9 @@
                                 @if (sleep.Running is not null)
                                 {
                                     @L["Sleep_TileSleeping"]
-                                    <span data-running-since="@(new DateTimeOffset(sleep.Running.StartTime).ToUnixTimeMilliseconds())"
+                                    <span data-running-since="@(new DateTimeOffset(sleep.Running.ClockStart).ToUnixTimeMilliseconds())"
                                           data-format="duration" data-template-hm="@L["Duration_HoursMinutes"]"
-                                          data-template-h="@L["Duration_Hours"]" data-template-m="@L["Duration_Minutes"]">@SleepText.Duration(L, now - sleep.Running.StartTime)</span>
+                                          data-template-h="@L["Duration_Hours"]" data-template-m="@L["Duration_Minutes"]">@SleepText.Duration(L, now - sleep.Running.ClockStart)</span>
                                 }
                                 else if (sleep.Last is not null)
                                 {

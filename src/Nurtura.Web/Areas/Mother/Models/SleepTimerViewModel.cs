@@ -61,7 +61,7 @@ public class SleepTimerViewModel
     [BindNever]
     public SleepTimerState State { get; set; }
 
-    // UTC; set while it runs, for the ticking time.
+    // UTC; set while it runs, only for the ticking time (SleepRecord.ClockStart).
     [BindNever]
     public DateTime? RunningSince { get; set; }
 

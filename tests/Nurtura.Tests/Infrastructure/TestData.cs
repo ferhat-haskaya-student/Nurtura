@@ -169,13 +169,14 @@ public sealed class TestData(NurturaAppFactory factory)
             return sleep.Id;
         });
 
-    // A sleep with no end time: the timer runs.
-    public Task<int> AddRunningSleepAsync(int babyId, DateTime startUtc) =>
+    // A sleep with no end time: the timer runs. With the moment Start was tapped, when the start was left at "now".
+    public Task<int> AddRunningSleepAsync(int babyId, DateTime startUtc, DateTime? timerStartedAtUtc = null) =>
         DbAsync(async db =>
         {
             var sleep = new SleepRecord
             {
-                BabyId = babyId, StartTime = Minute(startUtc), CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow
+                BabyId = babyId, StartTime = Minute(startUtc), TimerStartedAt = timerStartedAtUtc,
+                CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow
             };
             db.SleepRecords.Add(sleep);
             await db.SaveChangesAsync();
@@ -188,7 +189,7 @@ public sealed class TestData(NurturaAppFactory factory)
         {
             var sleeps = await db.SleepRecords.AsNoTracking().OrderBy(s => s.Id).ToListAsync();
             return string.Join("\n", sleeps.Select(s =>
-                $"{s.Id}|{s.BabyId}|{s.StartTime:O}|{s.EndTime:O}|{s.Note}|{s.IsShared}|{s.UpdatedAt:O}"));
+                $"{s.Id}|{s.BabyId}|{s.StartTime:O}|{s.EndTime:O}|{s.TimerStartedAt:O}|{s.Note}|{s.IsShared}|{s.UpdatedAt:O}"));
         });
 
     public Task<int> AddFeedAsync(int babyId, DateTime timeUtc, string? note, bool shared) =>

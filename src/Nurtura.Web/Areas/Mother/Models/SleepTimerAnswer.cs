@@ -13,7 +13,7 @@ public sealed record SleepTimerAnswer
 
     public string? CommandText { get; init; }
 
-    // Set while it runs, for the ticking time.
+    // Set while it runs, only for the ticking time (SleepRecord.ClockStart).
     public long? RunningSince { get; init; }
 
     // Set when stopped: "7 h 13 min".

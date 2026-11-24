@@ -107,14 +107,14 @@ public class SleepTimerScreen
             return new SleepCommandResult(SleepCommandStatus.NotFound);
         }
 
-        var startUtc = StartUtc(model, command, sleep, modelState);
+        var (startUtc, tappedAt) = StartUtc(model, command, sleep, modelState);
         var endUtc = EndUtc(model, command, sleep, modelState);
         if (!modelState.IsValid)
         {
             return new SleepCommandResult(SleepCommandStatus.Refused, baby, sleep);
         }
 
-        var input = new SleepInput(startUtc!.Value, endUtc, model.Note, model.IsShared);
+        var input = new SleepInput(startUtc!.Value, endUtc, model.Note, model.IsShared, tappedAt);
         var result = sleep is null
             ? await _sleepService.CreateAsync(userId, baby.Id, input)
             : await _sleepService.UpdateAsync(userId, sleep.Id, input);
@@ -149,35 +149,38 @@ public class SleepTimerScreen
         model.State = sleep is null ? SleepTimerState.New
             : sleep.EndTime is null ? SleepTimerState.Running
             : SleepTimerState.Stopped;
-        model.RunningSince = sleep?.EndTime is null ? sleep?.StartTime : null;
-        model.IsLongRunning = model.RunningSince is not null
-            && DateTime.UtcNow - model.RunningSince.Value >= SleepRecord.LongRunning;
+        model.RunningSince = sleep?.EndTime is null ? sleep?.ClockStart : null;
+        model.IsLongRunning = sleep is not null && sleep.EndTime is null
+            && DateTime.UtcNow - sleep.StartTime >= SleepRecord.LongRunning;
         model.Duration = sleep?.EndTime - sleep?.StartTime;
         model.CanResume = sleep is not null && await _sleepService.CanResumeAsync(sleep);
     }
 
-    // Start on a new sleep with the start fields left at their "now" uses the exact time of the tap.
-    private DateTime? StartUtc(SleepTimerViewModel model, string command, SleepRecord? sleep, ModelStateDictionary modelState)
+    // Start on a new sleep with the start fields left at their "now" uses the exact time of the tap (TappedAt).
+    // Any other start is set by hand and has none.
+    private (DateTime? StartUtc, DateTime? TappedAt) StartUtc(
+        SleepTimerViewModel model, string command, SleepRecord? sleep, ModelStateDictionary modelState)
     {
         if (model.StartDate is null || model.StartTime is null)
         {
-            return null;
+            return (null, null);
         }
 
         if (command == SleepCommands.Start && sleep is null
             && model.DefaultStart == model.StartDate.Value.ToDateTime(model.StartTime.Value)
                 .ToString(DefaultStartFormat, CultureInfo.InvariantCulture))
         {
-            return DateTime.UtcNow;
+            var now = DateTime.UtcNow;
+            return (now, now);
         }
 
         if (!PolandTime.TryToUtc(model.StartDate.Value, model.StartTime.Value, out var utc))
         {
             modelState.AddModelError(nameof(model.StartTime), _localizer["Validation_TimeInvalid"]);
-            return null;
+            return (null, null);
         }
 
-        return utc;
+        return (utc, null);
     }
 
     private DateTime? EndUtc(SleepTimerViewModel model, string command, SleepRecord? sleep, ModelStateDictionary modelState)

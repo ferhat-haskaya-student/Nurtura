@@ -176,6 +176,12 @@ public class SleepService
             return new SleepSaveResult(SleepSaveStatus.Overlap, Clash: clash);
         }
 
+        // The moment of the tap stays while the start minute stays; a start set by hand clears it.
+        if (input.TimerStartedAt is not null || start != sleep.StartTime)
+        {
+            sleep.TimerStartedAt = input.TimerStartedAt;
+        }
+
         sleep.StartTime = start;
         sleep.EndTime = end;
         sleep.Note = note;

@@ -27,6 +27,13 @@ public class SleepRecord
 
     public string? Note { get; set; }
 
+    // UTC. The exact moment Start was tapped, only for the ticking clock, so it starts at 0:00:00.
+    // Empty when the start was set by hand.
+    public DateTime? TimerStartedAt { get; set; }
+
+    // What the ticking clock counts from. Everything else uses StartTime.
+    public DateTime ClockStart => TimerStartedAt ?? StartTime;
+
     // Private by default: only a professional she books can see a shared sleep.
     public bool IsShared { get; set; }
 
