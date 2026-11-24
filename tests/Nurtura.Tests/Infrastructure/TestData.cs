@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Nurtura.Core;
 using Nurtura.Core.Entities;
@@ -166,6 +167,28 @@ public sealed class TestData(NurturaAppFactory factory)
             db.SleepRecords.Add(sleep);
             await db.SaveChangesAsync();
             return sleep.Id;
+        });
+
+    // A sleep with no end time: the timer runs.
+    public Task<int> AddRunningSleepAsync(int babyId, DateTime startUtc) =>
+        DbAsync(async db =>
+        {
+            var sleep = new SleepRecord
+            {
+                BabyId = babyId, StartTime = Minute(startUtc), CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow
+            };
+            db.SleepRecords.Add(sleep);
+            await db.SaveChangesAsync();
+            return sleep.Id;
+        });
+
+    // Every sleep in the database, as one comparable string.
+    public Task<string> SleepSnapshotAsync() =>
+        DbAsync(async db =>
+        {
+            var sleeps = await db.SleepRecords.AsNoTracking().OrderBy(s => s.Id).ToListAsync();
+            return string.Join("\n", sleeps.Select(s =>
+                $"{s.Id}|{s.BabyId}|{s.StartTime:O}|{s.EndTime:O}|{s.Note}|{s.IsShared}|{s.UpdatedAt:O}"));
         });
 
     public Task<int> AddFeedAsync(int babyId, DateTime timeUtc, string? note, bool shared) =>

@@ -32,6 +32,9 @@ builder.Services.AddControllersWithViews(options =>
         options.ModelBinderProviders.Insert(0, new DateOnlyModelBinderProvider());
         options.ModelBinderProviders.Insert(0, new TimeOnlyModelBinderProvider());
     })
+    // The API controller checks its ModelState itself: another mother's id must be 404 first, and a refusal is 422 with
+    // the form's messages, not the automatic 400.
+    .ConfigureApiBehaviorOptions(options => options.SuppressModelStateInvalidFilter = true)
     .AddViewLocalization()
     .AddDataAnnotationsLocalization(options =>
         options.DataAnnotationLocalizerProvider = (_, factory) => factory.Create(typeof(SharedResource)));
@@ -99,6 +102,7 @@ builder.Services.AddScoped<DailyCheckInService>();
 builder.Services.AddScoped<MotherProfileService>();
 builder.Services.AddScoped<BabyService>();
 builder.Services.AddScoped<SleepService>();
+builder.Services.AddScoped<SleepTimerScreen>();
 builder.Services.AddScoped<FeedingService>();
 builder.Services.AddScoped<BabyRoutineService>();
 builder.Services.AddScoped<AvailabilityService>();
@@ -195,9 +199,10 @@ if (!app.Environment.IsDevelopment())
 }
 
 // An empty error response (a page that does not exist, or another user's record) shows a friendly page in the
-// app's layout instead of a blank browser page. The status code stays the same. Not for the chat hub.
+// app's layout instead of a blank browser page. The status code stays the same. Not for the chat hub and the API,
+// which are called by scripts.
 app.UseWhen(
-    context => !context.Request.Path.StartsWithSegments("/hubs"),
+    context => !context.Request.Path.StartsWithSegments("/hubs") && !context.Request.Path.StartsWithSegments("/api"),
     branch => branch.UseStatusCodePagesWithReExecute("/Home/Status", "?code={0}"));
 
 app.UseHttpsRedirection();
@@ -206,6 +211,9 @@ app.UseRouting();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+// Checks the token of controllers marked [RequireAntiforgeryToken] (the API). Forms keep [ValidateAntiForgeryToken].
+app.UseAntiforgery();
 
 app.MapStaticAssets();
 

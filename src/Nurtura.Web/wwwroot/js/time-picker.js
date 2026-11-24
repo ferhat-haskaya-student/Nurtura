@@ -276,5 +276,9 @@
         target.button.addEventListener('click', function () {
             open(target);
         });
+        // Another script set the field's inputs (sleep-timer-api.js): show the new value.
+        element.addEventListener('time-field:refresh', function () {
+            showLabel(target, readField(target));
+        });
     });
 })();

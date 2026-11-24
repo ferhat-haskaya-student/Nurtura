@@ -259,6 +259,7 @@
   "Sleep_AlreadyRunning": "Dla tego dziecka trwa już inny sen. Najpierw go zatrzymaj.",
   "Sleep_ResumeNotAllowed": "Ten sen skończył się zbyt dawno, aby go wznowić. Rozpocznij nowy sen.",
   "Sleep_Overlap": "Ten sen nakłada się na inny: {0}.",
+  "Sleep_SaveFailed": "Nie udało się zapisać. Sprawdź połączenie i spróbuj ponownie.",
   "Answer_Yes": "Tak",
   "Answer_No": "Nie",
   "Onboarding_Title": "Witaj w Nurturze",

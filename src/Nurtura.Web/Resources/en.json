@@ -259,6 +259,7 @@
   "Sleep_AlreadyRunning": "Another sleep is already running for this baby. Stop it first.",
   "Sleep_ResumeNotAllowed": "This sleep ended too long ago to resume. Start a new sleep instead.",
   "Sleep_Overlap": "This overlaps another sleep: {0}.",
+  "Sleep_SaveFailed": "Couldn't save. Check your connection and try again.",
   "Answer_Yes": "Yes",
   "Answer_No": "No",
   "Onboarding_Title": "Welcome to Nurtura",

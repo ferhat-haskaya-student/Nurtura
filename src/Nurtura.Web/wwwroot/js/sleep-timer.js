@@ -2,14 +2,11 @@
 // (data-running-since, UTC milliseconds), so closing the phone loses nothing.
 // data-server-now (UTC milliseconds when the page was made) corrects a phone clock that is off.
 // data-format="clock" shows h:mm:ss; "duration" shows the localized data-template-hm / -h / -m.
+// A script that changes these attributes (sleep-timer-api.js) sends "sleep-timer:refresh" to the document.
 (function () {
-    var elements = document.querySelectorAll('[data-running-since]');
-    if (elements.length === 0) {
-        return;
-    }
-
-    var serverNow = Number(document.querySelector('[data-server-now]').dataset.serverNow);
-    var clockOffset = serverNow - Date.now();
+    var elements = [];
+    var clockOffset = 0;
+    var timer = null;
 
     function pad(n) {
         return n < 10 ? '0' + n : String(n);
@@ -32,6 +29,19 @@
         });
     }
 
-    update();
-    setInterval(update, 1000);
+    // Ticks only while something on the page runs.
+    function refresh() {
+        clearInterval(timer);
+        elements = document.querySelectorAll('[data-running-since]');
+        if (elements.length === 0) {
+            return;
+        }
+
+        clockOffset = Number(document.querySelector('[data-server-now]').dataset.serverNow) - Date.now();
+        update();
+        timer = setInterval(update, 1000);
+    }
+
+    document.addEventListener('sleep-timer:refresh', refresh);
+    refresh();
 })();

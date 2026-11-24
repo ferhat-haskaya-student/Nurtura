@@ -62,11 +62,31 @@ public sealed partial class AppClient : IDisposable
         return await Http.PostAsync(url, new FormUrlEncodedContent(form));
     }
 
-    private async Task<string> TokenAsync()
+    // Posts to the API the way its script does: the form's fields, with the antiforgery token in a header (or without it).
+    public async Task<HttpResponseMessage> PostApiAsync(
+        string url, Dictionary<string, string> fields, bool withToken = true, string? language = null,
+        string? tokenPage = null)
     {
-        var html = await GetHtmlAsync(_tokenPage);
+        var request = new HttpRequestMessage(HttpMethod.Post, url) { Content = new FormUrlEncodedContent(fields) };
+        if (withToken)
+        {
+            request.Headers.Add("RequestVerificationToken", await TokenAsync(tokenPage));
+        }
+
+        if (language is not null)
+        {
+            request.Headers.AcceptLanguage.ParseAdd(language);
+        }
+
+        return await Http.SendAsync(request);
+    }
+
+    private async Task<string> TokenAsync(string? page = null)
+    {
+        page ??= _tokenPage;
+        var html = await GetHtmlAsync(page);
         var match = TokenPattern().Match(html);
-        Assert.True(match.Success, $"No antiforgery token on {_tokenPage}.");
+        Assert.True(match.Success, $"No antiforgery token on {page}.");
         return WebUtility.HtmlDecode(match.Groups[1].Value);
     }
 

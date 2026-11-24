@@ -7,13 +7,12 @@
     ViewData["Title"] = L["Sleep_Title"];
     var serverNow = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 
-    // The big round button: Start a new sleep, Stop a running one, Resume a stopped one (if CanResume).
-    var (command, buttonText) = Model.State switch
-    {
-        SleepTimerState.Running => ("stop", L["Sleep_Stop"]),
-        SleepTimerState.Stopped => ("resume", L["Sleep_Resume"]),
-        _ => ("start", L["Sleep_Start"])
-    };
+    var button = SleepTimerScreen.Button(Model);
+
+    // This screen's own address, also when a refused save is shown at /Mother/Sleep/Save.
+    var pageUrl = Model.SleepId is null
+        ? Url.Action("Timer", "Sleep", new { area = "Mother", id = Model.BabyId })
+        : Url.Action("Edit", "Sleep", new { area = "Mother", id = Model.SleepId });
 
     // Details stay folded unless there is something in them to see.
     var showDetails = !string.IsNullOrEmpty(Model.Note) || Model.IsShared
@@ -25,16 +24,18 @@
         <h1 class="h3 mb-1">@ViewData["Title"]</h1>
         <p class="text-body-secondary text-break mb-3">@Model.BabyName</p>
 
-        @if (Model.IsLongRunning)
-        {
-            <div class="alert alert-info" role="status">
-                @L["Sleep_LongRunning"]
-                <a href="#end" class="alert-link">@L["Sleep_SetEndTime"]</a>
-            </div>
-        }
+        @* wwwroot/js/sleep-timer-api.js shows and hides what is d-none here, so Start, Stop and Resume need no reload. *@
+        <div class="alert alert-info @(Model.IsLongRunning ? null : "d-none")" role="status" data-sleep-long-running>
+            @L["Sleep_LongRunning"]
+            <a href="#end" class="alert-link">@L["Sleep_SetEndTime"]</a>
+        </div>
 
-        <form asp-area="Mother" asp-controller="Sleep" asp-action="Save" method="post" data-submit-once>
-            <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+        <form asp-area="Mother" asp-controller="Sleep" asp-action="Save" method="post" data-submit-once
+              data-sleep-form data-api-url="@Url.Content("~/api/sleep/")" data-page-url="@pageUrl"
+              data-text-save-failed="@L["Sleep_SaveFailed"]">
+            <div data-sleep-messages aria-live="assertive">
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+            </div>
             <input type="hidden" name="babyId" value="@Model.BabyId" />
             <input type="hidden" name="sleepId" value="@Model.SleepId" />
             <input asp-for="DefaultStart" type="hidden" />
@@ -49,24 +50,24 @@
                 @if (Model.RunningSince is not null)
                 {
                     var elapsed = DateTime.UtcNow - Model.RunningSince.Value;
-                    <p class="display-5 mb-3" aria-live="off"
+                    <p class="display-5 mb-3" aria-live="off" data-sleep-clock
                        data-running-since="@(new DateTimeOffset(Model.RunningSince.Value).ToUnixTimeMilliseconds())"
                        data-format="clock">@((int)elapsed.TotalHours):@elapsed.Minutes.ToString("00"):@elapsed.Seconds.ToString("00")</p>
                 }
                 else if (Model.Duration is not null)
                 {
-                    <p class="display-5 mb-3">@SleepText.Duration(L, Model.Duration.Value)</p>
+                    <p class="display-5 mb-3" data-sleep-clock>@SleepText.Duration(L, Model.Duration.Value)</p>
                 }
                 else
                 {
-                    <p class="display-5 mb-3 text-body-secondary">0:00:00</p>
+                    <p class="display-5 mb-3 text-body-secondary" data-sleep-clock>0:00:00</p>
                 }
 
                 @* A stopped sleep that can no longer be resumed has no big button: only Save and Reset. *@
-                @if (Model.State != SleepTimerState.Stopped || Model.CanResume)
+                @if (button is not null)
                 {
-                    <button type="submit" name="command" value="@command"
-                            class="btn btn-primary rounded-circle fs-4" style="width: 9rem; height: 9rem">@buttonText</button>
+                    <button type="submit" name="command" value="@button.Value.Command" data-sleep-button
+                            class="btn btn-primary rounded-circle fs-4" style="width: 9rem; height: 9rem">@L[button.Value.TextKey]</button>
                 }
             </div>
 
@@ -102,28 +103,25 @@
             <button type="submit" name="command" value="save" class="btn btn-outline-primary w-100 mb-3">@L["Sleep_Save"]</button>
         </form>
 
-        @if (Model.SleepId is not null)
-        {
-            <button type="button" class="btn btn-outline-secondary w-100 mb-3" data-bs-toggle="modal"
-                    data-bs-target="#reset-sleep">@L["Sleep_Reset"]</button>
+        <button type="button" class="btn btn-outline-secondary w-100 mb-3 @(Model.SleepId is null ? "d-none" : null)"
+                data-bs-toggle="modal" data-bs-target="#reset-sleep" data-sleep-reset>@L["Sleep_Reset"]</button>
 
-            <div class="modal fade" id="reset-sleep" tabindex="-1" aria-labelledby="reset-sleep-title" aria-hidden="true">
-                <div class="modal-dialog modal-dialog-centered">
-                    <div class="modal-content">
-                        <div class="modal-body">
-                            <h2 class="h5 mb-0" id="reset-sleep-title">@L["Sleep_ResetQuestion"]</h2>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">@L["Sleep_Keep"]</button>
-                            <form asp-area="Mother" asp-controller="Sleep" asp-action="Reset" asp-route-id="@Model.SleepId" method="post"
-                                  data-submit-once>
-                                <button type="submit" class="btn btn-outline-danger">@L["Sleep_Discard"]</button>
-                            </form>
-                        </div>
+        <div class="modal fade" id="reset-sleep" tabindex="-1" aria-labelledby="reset-sleep-title" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-body">
+                        <h2 class="h5 mb-0" id="reset-sleep-title">@L["Sleep_ResetQuestion"]</h2>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">@L["Sleep_Keep"]</button>
+                        <form asp-area="Mother" asp-controller="Sleep" asp-action="Reset" asp-route-id="@Model.SleepId" method="post"
+                              data-submit-once data-sleep-reset-form>
+                            <button type="submit" class="btn btn-outline-danger">@L["Sleep_Discard"]</button>
+                        </form>
                     </div>
                 </div>
             </div>
-        }
+        </div>
 
         <a asp-area="Mother" asp-controller="Baby" asp-action="Index" asp-route-id="@Model.BabyId">@L["Sleep_Back"]</a>
     </div>
@@ -136,4 +134,5 @@
     <script src="~/js/note-counter.js" asp-append-version="true"></script>
     <script src="~/js/sleep-timer.js" asp-append-version="true"></script>
     <script src="~/js/time-picker.js" asp-append-version="true"></script>
+    <script src="~/js/sleep-timer-api.js" asp-append-version="true"></script>
 }
