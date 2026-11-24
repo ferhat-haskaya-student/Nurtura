@@ -32,7 +32,8 @@
 
         <form asp-area="Mother" asp-controller="Sleep" asp-action="Save" method="post" data-submit-once
               data-sleep-form data-api-url="@Url.Content("~/api/sleep/")" data-page-url="@pageUrl"
-              data-text-save-failed="@L["Sleep_SaveFailed"]">
+              data-text-save-failed="@L["Sleep_SaveFailed"]" data-template-hm="@L["Duration_HoursMinutes"]"
+              data-template-h="@L["Duration_Hours"]" data-template-m="@L["Duration_Minutes"]">
             <div data-sleep-messages aria-live="assertive">
                 <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
             </div>
