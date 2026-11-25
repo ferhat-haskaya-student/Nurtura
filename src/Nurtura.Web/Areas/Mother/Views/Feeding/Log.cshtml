@@ -7,6 +7,10 @@
     // Details stay folded unless there is something in them to see.
     var showDetails = !string.IsNullOrEmpty(Model.Note) || Model.IsShared
         || ViewData.ModelState[nameof(Model.Note)]?.Errors.Count > 0;
+
+    // jQuery Validate makes its own rules of min, max and step; without these texts its messages are English.
+    var minutesRange = L["Validation_Range", "", FeedingRecord.MinutesMin, FeedingRecord.MinutesMax];
+    var amountRange = L["Validation_Range", "", FeedingRecord.AmountMlMin, FeedingRecord.AmountMlMax];
 }
 
 <div class="row justify-content-center">
@@ -69,7 +73,9 @@
                         }
                     </div>
                     <input asp-for="Minutes" type="number" class="form-control" min="@FeedingRecord.MinutesMin"
-                           max="@FeedingRecord.MinutesMax" step="1" inputmode="numeric" data-minutes-input />
+                           max="@FeedingRecord.MinutesMax" step="1" inputmode="numeric" data-minutes-input
+                           data-val-number="@L["Validation_Number"]" data-msg-step="@L["Validation_Number"]"
+                           data-msg-min="@minutesRange" data-msg-max="@minutesRange" />
                     <span asp-validation-for="Minutes" class="text-danger"></span>
                 </div>
             </div>
@@ -78,7 +84,9 @@
                 <div class="mb-3">
                     <label asp-for="AmountMl" class="form-label fw-semibold"></label>
                     <input asp-for="AmountMl" type="number" class="form-control" min="@FeedingRecord.AmountMlMin"
-                           max="@FeedingRecord.AmountMlMax" step="1" inputmode="numeric" />
+                           max="@FeedingRecord.AmountMlMax" step="1" inputmode="numeric"
+                           data-val-number="@L["Validation_Number"]" data-msg-step="@L["Validation_Number"]"
+                           data-msg-min="@amountRange" data-msg-max="@amountRange" />
                     <span asp-validation-for="AmountMl" class="text-danger"></span>
                 </div>
 

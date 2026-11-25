@@ -38,6 +38,7 @@ builder.Services.AddControllersWithViews(options =>
     .AddViewLocalization()
     .AddDataAnnotationsLocalization(options =>
         options.DataAnnotationLocalizerProvider = (_, factory) => factory.Create(typeof(SharedResource)));
+builder.Services.ConfigureOptions<ModelBindingMessages>();
 
 // Language comes from the cookie first, then the browser, then English.
 builder.Services.Configure<RequestLocalizationOptions>(options =>

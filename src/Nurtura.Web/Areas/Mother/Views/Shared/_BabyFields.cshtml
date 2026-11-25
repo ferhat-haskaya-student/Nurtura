@@ -5,6 +5,9 @@
 @* The baby questions, used by onboarding (with the "Baby" prefix) and by adding and editing a baby. *@
 @{
     var today = PolandTime.Today.ToString(DateFormats.Display);
+
+    // jQuery Validate makes its own rules of min, max and step; without these texts its messages are English.
+    var weekRange = L["Validation_Range", "", Baby.BirthWeekMin, Baby.BirthWeekMax];
 }
 
 <div class="mb-3">
@@ -36,7 +39,9 @@
 
 <div class="mb-3">
     <label asp-for="BirthWeek" class="form-label"></label>
-    <input asp-for="BirthWeek" type="number" class="form-control" min="@Baby.BirthWeekMin" max="@Baby.BirthWeekMax" step="1" />
+    <input asp-for="BirthWeek" type="number" class="form-control" min="@Baby.BirthWeekMin" max="@Baby.BirthWeekMax" step="1"
+           data-val-number="@L["Validation_Number"]" data-msg-step="@L["Validation_Number"]"
+           data-msg-min="@weekRange" data-msg-max="@weekRange" />
     <span asp-validation-for="BirthWeek" class="text-danger"></span>
 </div>
 
