@@ -63,7 +63,7 @@ public static class GuidanceSeeder
                 Audience = page.Audience,
                 Title = page.Title,
                 Summary = page.Summary,
-                Body = page.Body,
+                Body = page.Body.ReplaceLineEndings("\n"),
                 RelatedTopic = page.Topic,
                 BabyAgeFromMonths = page.AgeFrom,
                 BabyAgeToMonths = page.AgeTo,
