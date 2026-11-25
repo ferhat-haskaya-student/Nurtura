@@ -50,7 +50,9 @@
             <a asp-area="Mother" asp-controller="Guides" asp-action="Index">@L["Guides_Related"]</a>
         </p>
 
-        <p class="small text-body-secondary border-top pt-3 mb-4">@L["Dashboard_BoundaryNote"]</p>
+        <p class="small text-body-secondary border-top pt-3 mb-4">
+            @L["Dashboard_BoundaryNote"] <a asp-area="Mother" asp-controller="Book" asp-action="Index">@L["Dashboard_BoundaryNoteBook"]</a>.
+        </p>
     </div>
 </div>
 
