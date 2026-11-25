@@ -55,6 +55,28 @@ public sealed class StatusPageTests(NurturaAppFactory factory) : IntegrationTest
         Assert.DoesNotContain("Development", html);
     }
 
+    // The page shows its title, its message and the home button, with nothing in between. A reference number could
+    // not be looked up by anybody, so none is shown. The request brings its own trace id, which must not appear.
+    [Theory]
+    [InlineData("/Home/Error")]
+    [InlineData("/Home/Status?code=500")]
+    public async Task ErrorPage_ShowsNoReference(string path)
+    {
+        const string traceId = "4bf92f3577b34da6a3ce929d0e0e4736";
+        using var client = Anonymous();
+        var request = new HttpRequestMessage(HttpMethod.Get, path);
+        request.Headers.Add("traceparent", $"00-{traceId}-00f067aa0ba902b7-01");
+
+        var response = await client.Http.SendAsync(request);
+
+        var html = await AssertStatusPageAsync(response, HttpStatusCode.OK, "Something went wrong");
+        Assert.Matches(
+            """<h1 class="h3">Something went wrong</h1>\s*<p>Sorry, this could not be finished\. Please try again in a moment\.</p>\s*<a class="btn btn-primary" href="/">""",
+            html);
+        Assert.DoesNotContain(traceId, html);
+        Assert.DoesNotContain("Reference", html);
+    }
+
     [Fact]
     public async Task ChatHub_MissingAddress_StaysEmpty()
     {

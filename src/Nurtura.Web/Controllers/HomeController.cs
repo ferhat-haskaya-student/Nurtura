@@ -1,7 +1,5 @@
-using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using Nurtura.Web.Identity;
-using Nurtura.Web.Models;
 
 namespace Nurtura.Web.Controllers;
 
@@ -27,7 +25,7 @@ public class HomeController : Controller
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
     public IActionResult Error()
     {
-        return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+        return View();
     }
 
     // Shown in place of an empty error response (see UseStatusCodePagesWithReExecute in Program.cs).
@@ -40,6 +38,6 @@ public class HomeController : Controller
             return View("NotFound");
         }
 
-        return View("Error", new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+        return View("Error");
     }
 }

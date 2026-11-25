@@ -75,7 +75,6 @@
   "Account_AccessDenied_BackHome": "Go to your home page",
   "Error_Title": "Something went wrong",
   "Error_Message": "Sorry, this could not be finished. Please try again in a moment.",
-  "Error_Reference": "Reference: {0}",
   "Error_BackHome": "Go to the home page",
   "NotFound_Title": "Page not found",
   "NotFound_Message": "This page does not exist or is not available to you.",

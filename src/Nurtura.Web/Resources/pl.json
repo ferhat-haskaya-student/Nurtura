@@ -75,7 +75,6 @@
   "Account_AccessDenied_BackHome": "Przejdź do swojej strony głównej",
   "Error_Title": "Coś poszło nie tak",
   "Error_Message": "Przepraszamy, nie udało się tego dokończyć. Spróbuj ponownie za chwilę.",
-  "Error_Reference": "Identyfikator: {0}",
   "Error_BackHome": "Przejdź do strony głównej",
   "NotFound_Title": "Nie znaleziono strony",
   "NotFound_Message": "Ta strona nie istnieje lub nie jest dla Ciebie dostępna.",

@@ -1,18 +1,13 @@
 ﻿@using Nurtura.Web.Identity
-@model ErrorViewModel
 @{
     ViewData["Title"] = L["Error_Title"];
 }
 
-@* Shown to users when something fails, so no technical details: only the reference that is also in the log. *@
+@* Shown to users when something fails, so no technical details. *@
 <div class="row justify-content-center">
     <div class="col-12 col-md-8 col-lg-6">
         <h1 class="h3">@ViewData["Title"]</h1>
         <p>@L["Error_Message"]</p>
-        @if (Model.ShowRequestId)
-        {
-            <p class="small text-muted">@L["Error_Reference", Model.RequestId!]</p>
-        }
         <a class="btn btn-primary" asp-area="@(RoleHome.AreaFor(User) ?? "")" asp-controller="Home" asp-action="Index">@L["Error_BackHome"]</a>
     </div>
 </div>
