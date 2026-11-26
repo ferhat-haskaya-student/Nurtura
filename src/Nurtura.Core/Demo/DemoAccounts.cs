@@ -5,21 +5,29 @@ namespace Nurtura.Core.Demo;
 // The demo accounts (design doc §4 "Demo data"). The domain cannot belong to anyone, like the tests' @test.nurtura.
 public static class DemoAccounts
 {
-    public const string KasiaEmail = "kasia@demo.nurtura";
-    public const string MartaEmail = "marta@demo.nurtura";
-    public const string OlaEmail = "ola@demo.nurtura";
+    // Named by type, so nobody has to remember which name is which (F, 26 Nov 2026).
+    public const string Domain = "@demo.nurtura";
 
-    public const string AnnaEmail = "anna@demo.nurtura";
-    public const string EwaEmail = "ewa@demo.nurtura";
-    public const string MagdaEmail = "magda@demo.nurtura";
-    public const string JoannaEmail = "joanna@demo.nurtura";
-    public const string NataliaEmail = "natalia@demo.nurtura";
+    public const string Mother1Email = "mother1" + Domain;
+    public const string Mother2Email = "mother2" + Domain;
+    public const string Mother3Email = "mother3" + Domain;
 
-    public static readonly string[] MotherEmails = [KasiaEmail, MartaEmail, OlaEmail];
+    public const string MidwifeEmail = "midwife" + Domain;
+    public const string LactationEmail = "lactation" + Domain;
+    public const string SleepEmail = "sleep" + Domain;
+    public const string PsychologistEmail = "psychologist" + Domain;
+    public const string DietitianEmail = "dietitian" + Domain;
 
-    public static readonly string[] ProfessionalEmails = [AnnaEmail, EwaEmail, MagdaEmail, JoannaEmail, NataliaEmail];
+    public static readonly string[] MotherEmails = [Mother1Email, Mother2Email, Mother3Email];
+
+    public static readonly string[] ProfessionalEmails =
+        [MidwifeEmail, LactationEmail, SleepEmail, PsychologistEmail, DietitianEmail];
 
     public static IEnumerable<string> All => MotherEmails.Concat(ProfessionalEmails);
+
+    // Every demo account, also those of an earlier run with other names.
+    public static bool IsDemo(string? email) =>
+        email is not null && email.EndsWith(Domain, StringComparison.OrdinalIgnoreCase);
 
     internal sealed record ProfessionalAccount(
         string Email,
@@ -32,15 +40,15 @@ public static class DemoAccounts
         // Her open hours each week (Poland time, start hours); none for the pending one.
         IReadOnlyDictionary<DayOfWeek, int[]> Hours);
 
-    private static readonly int[] AnnaHours = [9, 10, 11, 12];
-    private static readonly int[] EwaHours = [10, 11, 12, 13, 14, 15];
-    private static readonly int[] EwaSaturday = [9, 10, 11];
-    private static readonly int[] MagdaHours = [14, 15, 16, 17];
-    private static readonly int[] JoannaHours = [8, 9, 10, 11];
+    private static readonly int[] MidwifeHours = [9, 10, 11, 12];
+    private static readonly int[] LactationHours = [10, 11, 12, 13, 14, 15];
+    private static readonly int[] LactationSaturday = [9, 10, 11];
+    private static readonly int[] SleepHours = [14, 15, 16, 17];
+    private static readonly int[] PsychologistHours = [8, 9, 10, 11];
 
-    internal static readonly ProfessionalAccount Anna = new(
-        AnnaEmail,
-        "Anna Nowak",
+    internal static readonly ProfessionalAccount Midwife = new(
+        MidwifeEmail,
+        "Midwife",
         ProfessionalType.Midwife,
         ApprovalStatus.Approved,
         [Topic.RecoveryAfterBirth, Topic.PostpartumWellbeing, Topic.BabyFeeding],
@@ -49,14 +57,14 @@ public static class DemoAccounts
         "questions. Happy to talk in Polish or English.",
         new Dictionary<DayOfWeek, int[]>
         {
-            [DayOfWeek.Monday] = AnnaHours,
-            [DayOfWeek.Wednesday] = AnnaHours,
-            [DayOfWeek.Friday] = AnnaHours
+            [DayOfWeek.Monday] = MidwifeHours,
+            [DayOfWeek.Wednesday] = MidwifeHours,
+            [DayOfWeek.Friday] = MidwifeHours
         });
 
-    internal static readonly ProfessionalAccount Ewa = new(
-        EwaEmail,
-        "Ewa Kowalska",
+    internal static readonly ProfessionalAccount Lactation = new(
+        LactationEmail,
+        "Lactation consultant",
         ProfessionalType.LactationConsultant,
         ApprovalStatus.Approved,
         [Topic.BabyFeeding, Topic.Nutrition],
@@ -65,14 +73,14 @@ public static class DemoAccounts
         "starting solids.",
         new Dictionary<DayOfWeek, int[]>
         {
-            [DayOfWeek.Tuesday] = EwaHours,
-            [DayOfWeek.Thursday] = EwaHours,
-            [DayOfWeek.Saturday] = EwaSaturday
+            [DayOfWeek.Tuesday] = LactationHours,
+            [DayOfWeek.Thursday] = LactationHours,
+            [DayOfWeek.Saturday] = LactationSaturday
         });
 
-    internal static readonly ProfessionalAccount Magda = new(
-        MagdaEmail,
-        "Magda Wiśniewska",
+    internal static readonly ProfessionalAccount Sleep = new(
+        SleepEmail,
+        "Sleep consultant",
         ProfessionalType.SleepConsultant,
         ApprovalStatus.Approved,
         [Topic.BabySleep],
@@ -81,16 +89,16 @@ public static class DemoAccounts
         "baby's own pace.",
         new Dictionary<DayOfWeek, int[]>
         {
-            [DayOfWeek.Monday] = MagdaHours,
-            [DayOfWeek.Tuesday] = MagdaHours,
-            [DayOfWeek.Wednesday] = MagdaHours,
-            [DayOfWeek.Thursday] = MagdaHours,
-            [DayOfWeek.Friday] = MagdaHours
+            [DayOfWeek.Monday] = SleepHours,
+            [DayOfWeek.Tuesday] = SleepHours,
+            [DayOfWeek.Wednesday] = SleepHours,
+            [DayOfWeek.Thursday] = SleepHours,
+            [DayOfWeek.Friday] = SleepHours
         });
 
-    internal static readonly ProfessionalAccount Joanna = new(
-        JoannaEmail,
-        "Joanna Zielińska",
+    internal static readonly ProfessionalAccount Psychologist = new(
+        PsychologistEmail,
+        "Psychologist",
         ProfessionalType.Psychologist,
         ApprovalStatus.Approved,
         [Topic.EmotionalSupport, Topic.PostpartumWellbeing],
@@ -99,14 +107,14 @@ public static class DemoAccounts
         "life with a baby.",
         new Dictionary<DayOfWeek, int[]>
         {
-            [DayOfWeek.Monday] = JoannaHours,
-            [DayOfWeek.Tuesday] = JoannaHours,
-            [DayOfWeek.Thursday] = JoannaHours
+            [DayOfWeek.Monday] = PsychologistHours,
+            [DayOfWeek.Tuesday] = PsychologistHours,
+            [DayOfWeek.Thursday] = PsychologistHours
         });
 
-    internal static readonly ProfessionalAccount Natalia = new(
-        NataliaEmail,
-        "Natalia Lewandowska",
+    internal static readonly ProfessionalAccount Dietitian = new(
+        DietitianEmail,
+        "Dietitian",
         ProfessionalType.Dietitian,
         ApprovalStatus.Pending,
         [Topic.Nutrition],
@@ -114,5 +122,5 @@ public static class DemoAccounts
         "Dietitian. Eating well after birth and while breastfeeding, with simple meals for busy days.",
         new Dictionary<DayOfWeek, int[]>());
 
-    internal static readonly ProfessionalAccount[] Professionals = [Anna, Ewa, Magda, Joanna, Natalia];
+    internal static readonly ProfessionalAccount[] Professionals = [Midwife, Lactation, Sleep, Psychologist, Dietitian];
 }

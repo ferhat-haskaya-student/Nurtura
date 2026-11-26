@@ -107,12 +107,12 @@ public sealed class DemoDataTests
         }
 
         // Each mother's way of feeding.
-        Assert.All(Mother(data, DemoAccounts.KasiaEmail).Feeds, f => Assert.Equal(FeedingType.Bottle, f.Type));
-        Assert.DoesNotContain(Mother(data, DemoAccounts.MartaEmail).Feeds, f => f.Type == FeedingType.Bottle);
-        Assert.Contains(Mother(data, DemoAccounts.MartaEmail).Feeds, f => f.Type == FeedingType.Solid);
-        var ola = Mother(data, DemoAccounts.OlaEmail).Feeds;
-        Assert.Contains(ola, f => f.Type == FeedingType.Breast);
-        Assert.All(ola.Where(f => f.Type == FeedingType.Bottle), f => Assert.Equal(BottleContent.Formula, f.BottleContent));
+        Assert.All(Mother(data, DemoAccounts.Mother1Email).Feeds, f => Assert.Equal(FeedingType.Bottle, f.Type));
+        Assert.DoesNotContain(Mother(data, DemoAccounts.Mother2Email).Feeds, f => f.Type == FeedingType.Bottle);
+        Assert.Contains(Mother(data, DemoAccounts.Mother2Email).Feeds, f => f.Type == FeedingType.Solid);
+        var mother3Feeds = Mother(data, DemoAccounts.Mother3Email).Feeds;
+        Assert.Contains(mother3Feeds, f => f.Type == FeedingType.Breast);
+        Assert.All(mother3Feeds.Where(f => f.Type == FeedingType.Bottle), f => Assert.Equal(BottleContent.Formula, f.BottleContent));
     }
 
     // The agreed curve (F, with research): day 1 about 100 ml, end of week 1 about 350, end of month 1 about 550,
@@ -136,14 +136,14 @@ public sealed class DemoDataTests
     public void Mother1_DailyBottleMl_StaysCloseToTheAgreedCurve(string now, int seed)
     {
         var data = Make(now, seed);
-        var kasia = Mother(data, DemoAccounts.KasiaEmail);
+        var mother1 = Mother(data, DemoAccounts.Mother1Email);
         var current = BabyRoutine.RoutineDate(data.NowUtc);
 
         // Full routine days (07:00 to 07:00) only; today is not finished yet.
-        var days = kasia.Feeds
+        var days = mother1.Feeds
             .GroupBy(f => BabyRoutine.RoutineDate(f.Time))
             .Where(g => g.Key < current)
-            .Select(g => (Day: g.Key.DayNumber - kasia.Baby.BirthDate.DayNumber, Ml: g.Sum(f => f.AmountMl!.Value)))
+            .Select(g => (Day: g.Key.DayNumber - mother1.Baby.BirthDate.DayNumber, Ml: g.Sum(f => f.AmountMl!.Value)))
             .OrderBy(d => d.Day)
             .ToList();
         Assert.True(days.Count >= 80, $"Only {days.Count} full days with feeds.");
@@ -156,8 +156,8 @@ public sealed class DemoDataTests
         }
 
         // About 80% breast milk and 20% formula.
-        var formula = kasia.Feeds.Where(f => f.BottleContent == BottleContent.Formula).Sum(f => f.AmountMl!.Value);
-        Assert.InRange((double)formula / kasia.Feeds.Sum(f => f.AmountMl!.Value), 0.15, 0.25);
+        var formula = mother1.Feeds.Where(f => f.BottleContent == BottleContent.Formula).Sum(f => f.AmountMl!.Value);
+        Assert.InRange((double)formula / mother1.Feeds.Sum(f => f.AmountMl!.Value), 0.15, 0.25);
     }
 
     [Theory]
@@ -165,12 +165,12 @@ public sealed class DemoDataTests
     public void Mother1_Month3_FollowsFsRoutine(string now, int seed)
     {
         var data = Make(now, seed);
-        var kasia = Mother(data, DemoAccounts.KasiaEmail);
+        var mother1 = Mother(data, DemoAccounts.Mother1Email);
         var current = BabyRoutine.RoutineDate(data.NowUtc);
-        var month3 = kasia.Baby.BirthDate.AddDays(60);
+        var month3 = mother1.Baby.BirthDate.AddDays(60);
 
         // Night 19:00 to 07:00: the first night sleep starts from 19:00, before 19:30.
-        var bedtimes = kasia.Sleeps.GroupBy(s => BabyRoutine.RoutineDate(s.StartTime))
+        var bedtimes = mother1.Sleeps.GroupBy(s => BabyRoutine.RoutineDate(s.StartTime))
             .Where(g => g.Key >= month3 && g.Key < current)
             .Select(g => g.Where(s => !BabyRoutine.IsNap(s.StartTime)).Min(s => (DateTime?)s.StartTime))
             .OfType<DateTime>()
@@ -180,7 +180,7 @@ public sealed class DemoDataTests
         Assert.All(bedtimes, t => Assert.InRange(t, new TimeOnly(19, 0), new TimeOnly(19, 30)));
 
         // Usually one night feed (22:00 to 06:00), more only on a bad night.
-        var nightFeeds = kasia.Feeds
+        var nightFeeds = mother1.Feeds
             .Where(f => BabyRoutine.RoutineDate(f.Time) >= month3 && BabyRoutine.RoutineDate(f.Time) < current)
             .GroupBy(f => BabyRoutine.RoutineDate(f.Time))
             .Select(g => g.Count(f => BabyRoutine.IsNightFeed(f.Time)))
@@ -206,9 +206,9 @@ public sealed class DemoDataTests
             return (double)logged / (last.DayNumber - from.DayNumber);
         }
 
-        Assert.True(Rate(Mother(data, DemoAccounts.KasiaEmail), data.FirstDay) >= 0.85);
-        Assert.InRange(Rate(Mother(data, DemoAccounts.MartaEmail), data.FirstDay), 0.7, 0.95);
-        Assert.InRange(Rate(Mother(data, DemoAccounts.OlaEmail), data.FirstDay), 0.35, 0.65);
+        Assert.True(Rate(Mother(data, DemoAccounts.Mother1Email), data.FirstDay) >= 0.85);
+        Assert.InRange(Rate(Mother(data, DemoAccounts.Mother2Email), data.FirstDay), 0.7, 0.95);
+        Assert.InRange(Rate(Mother(data, DemoAccounts.Mother3Email), data.FirstDay), 0.35, 0.65);
     }
 
     [Theory]
@@ -238,8 +238,8 @@ public sealed class DemoDataTests
 
         // Mother 1 most days, mother 3 about half.
         var days = data.Today.DayNumber - data.FirstDay.DayNumber + 1;
-        Assert.True(Mother(data, DemoAccounts.KasiaEmail).CheckIns.Count >= days * 0.8);
-        Assert.InRange(Mother(data, DemoAccounts.OlaEmail).CheckIns.Count, days * 0.3, days * 0.7);
+        Assert.True(Mother(data, DemoAccounts.Mother1Email).CheckIns.Count >= days * 0.8);
+        Assert.InRange(Mother(data, DemoAccounts.Mother3Email).CheckIns.Count, days * 0.3, days * 0.7);
     }
 
     [Theory]
@@ -394,10 +394,10 @@ public sealed class DemoDataTests
         }
 
         // Mother 1 has a confirmed one in the next days, mother 3 a request; every past status appears.
-        Assert.Contains(active, a => a.Mother.Email == DemoAccounts.KasiaEmail
+        Assert.Contains(active, a => a.Mother.Email == DemoAccounts.Mother1Email
                                      && a.Appointment.Status == AppointmentStatus.Confirmed
                                      && SlotStartUtc(a.Slot) < nowUtc.AddDays(7));
-        Assert.Contains(active, a => a.Mother.Email == DemoAccounts.OlaEmail
+        Assert.Contains(active, a => a.Mother.Email == DemoAccounts.Mother3Email
                                      && a.Appointment.Status == AppointmentStatus.Requested);
         foreach (var status in new[]
                  {
@@ -414,16 +414,16 @@ public sealed class DemoDataTests
     public void Mother1_SharesHerLast2Weeks_ForTheUpcomingConsultation(string now, int seed)
     {
         var data = Make(now, seed);
-        var kasia = Mother(data, DemoAccounts.KasiaEmail);
+        var mother1 = Mother(data, DemoAccounts.Mother1Email);
         var from = data.Today.AddDays(-(Appointment.ShareDays - 1));
         var since = data.NowUtc.AddDays(-Appointment.ShareDays);
 
-        Assert.All(kasia.CheckIns.Where(c => c.Date >= from), c => Assert.True(c.IsShared));
-        Assert.All(kasia.Sleeps.Where(s => s.StartTime >= since), s => Assert.True(s.IsShared));
-        Assert.All(kasia.Feeds.Where(f => f.Time >= since), f => Assert.True(f.IsShared));
+        Assert.All(mother1.CheckIns.Where(c => c.Date >= from), c => Assert.True(c.IsShared));
+        Assert.All(mother1.Sleeps.Where(s => s.StartTime >= since), s => Assert.True(s.IsShared));
+        Assert.All(mother1.Feeds.Where(f => f.Time >= since), f => Assert.True(f.IsShared));
 
         // Older days stay private unless an earlier booking shared them.
-        Assert.Contains(kasia.CheckIns, c => !c.IsShared);
+        Assert.Contains(mother1.CheckIns, c => !c.IsShared);
     }
 
     [Theory]
@@ -527,6 +527,51 @@ public sealed class DemoDataTests
     public void Texts_HaveNoDiagnosisOrMedicine()
     {
         var data = DemoDataGenerator.Generate(DateTime.UtcNow);
+        var written = WrittenTexts(data);
+        Assert.True(written.Count > 50);
+        Assert.All(written, text => Assert.False(MedicalWords.IsMatch(text), text));
+        Assert.All(data.Professionals, p => Assert.True(p.Profile.Bio.Length <= ProfessionalProfile.BioMaxLength));
+    }
+
+    // The first run's first names and surnames (F, 26 Nov 2026: names by type instead).
+    private static readonly Regex OldNames = new(
+        @"\b(Kasia|Marta|Ola|Zosia|Antek|Lena|Anna|Ewa|Magda|Joanna|Natalia|Nowak|Kowalska|Wiśniewska|Zielińska|" +
+        @"Lewandowska)\b",
+        RegexOptions.IgnoreCase);
+
+    [Fact]
+    public void Names_AreByType_AndNoTextHasAPersonalName()
+    {
+        var data = DemoDataGenerator.Generate(DateTime.UtcNow);
+
+        Assert.Equal(["Mother 1", "Mother 2", "Mother 3"], data.Mothers.Select(m => m.Profile.DisplayName));
+        Assert.Equal(["Baby 1", "Baby 2", "Baby 3"], data.Mothers.Select(m => m.Baby.Name));
+        Assert.Equal(
+            ["mother1@demo.nurtura", "mother2@demo.nurtura", "mother3@demo.nurtura"],
+            data.Mothers.Select(m => m.Email));
+        Assert.Equal(
+            [
+                ("midwife@demo.nurtura", "Midwife", ApprovalStatus.Approved),
+                ("lactation@demo.nurtura", "Lactation consultant", ApprovalStatus.Approved),
+                ("sleep@demo.nurtura", "Sleep consultant", ApprovalStatus.Approved),
+                ("psychologist@demo.nurtura", "Psychologist", ApprovalStatus.Approved),
+                ("dietitian@demo.nurtura", "Dietitian", ApprovalStatus.Pending)
+            ],
+            data.Professionals.Select(p => (p.Email, p.Profile.DisplayName, p.Profile.ApprovalStatus)));
+
+        // Not in any text, name, email or notification either.
+        var everything = WrittenTexts(data)
+            .Concat(data.Emails)
+            .Concat(data.Mothers.Select(m => m.Profile.DisplayName))
+            .Concat(data.Mothers.Select(m => m.Baby.Name))
+            .Concat(data.Professionals.Select(p => p.Profile.DisplayName))
+            .Concat(data.Notifications.Select(n => n.Notification.OtherName));
+        Assert.All(everything, text => Assert.False(OldNames.IsMatch(text), text));
+    }
+
+    // Everything the demo people wrote.
+    private static List<string> WrittenTexts(DemoData data)
+    {
         var texts = new List<string?>();
         foreach (var mother in data.Mothers)
         {
@@ -552,11 +597,7 @@ public sealed class DemoDataTests
         }
 
         texts.AddRange(data.CommentReports.Select(r => r.Report.Note));
-
-        var written = texts.OfType<string>().Distinct().ToList();
-        Assert.True(written.Count > 50);
-        Assert.All(written, text => Assert.False(MedicalWords.IsMatch(text), text));
-        Assert.All(data.Professionals, p => Assert.True(p.Profile.Bio.Length <= ProfessionalProfile.BioMaxLength));
+        return texts.OfType<string>().Distinct().ToList();
     }
 
     [Fact]
@@ -567,6 +608,7 @@ public sealed class DemoDataTests
         Assert.NotNull(DemoSeeder.RefusalReason(isDevelopment: false, "nurtura_test"));
         Assert.Null(DemoSeeder.RefusalReason(isDevelopment: true, "nurtura"));
         Assert.Equal("--seed-demo", DemoSeeder.Flag);
+        Assert.Equal("--reset-demo", DemoSeeder.ResetFlag);
     }
 
     [Fact]

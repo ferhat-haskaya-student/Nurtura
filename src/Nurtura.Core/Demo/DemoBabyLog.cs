@@ -34,26 +34,26 @@ internal static class DemoBabyLog
     // Mother 1's agreed daily bottle ml (F, with research; design doc §4 "Demo data"), by the baby's day of life
     // (0 = the birth day): day 1 about 100, end of week 1 about 350, end of month 1 about 550, month 2 about 700,
     // month 3 about 800. Straight lines in between.
-    private static readonly (int Day, int Ml)[] KasiaCurve = [(0, 100), (6, 350), (29, 550), (59, 700), (89, 800)];
+    private static readonly (int Day, int Ml)[] Mother1Curve = [(0, 100), (6, 350), (29, 550), (59, 700), (89, 800)];
 
-    public static double KasiaDailyMl(int day)
+    public static double Mother1DailyMl(int day)
     {
-        if (day <= KasiaCurve[0].Day)
+        if (day <= Mother1Curve[0].Day)
         {
-            return KasiaCurve[0].Ml;
+            return Mother1Curve[0].Ml;
         }
 
-        for (var i = 1; i < KasiaCurve.Length; i++)
+        for (var i = 1; i < Mother1Curve.Length; i++)
         {
-            var (toDay, toMl) = KasiaCurve[i];
+            var (toDay, toMl) = Mother1Curve[i];
             if (day <= toDay)
             {
-                var (fromDay, fromMl) = KasiaCurve[i - 1];
+                var (fromDay, fromMl) = Mother1Curve[i - 1];
                 return fromMl + (toMl - fromMl) * (double)(day - fromDay) / (toDay - fromDay);
             }
         }
 
-        return KasiaCurve[^1].Ml;
+        return Mother1Curve[^1].Ml;
     }
 
     public static List<LogDay> Timeline(
@@ -158,15 +158,15 @@ internal static class DemoBabyLog
         }
     }
 
-    // Mother 1, Zosia, from her birth day: bottles of expressed milk with about 20% formula (by volume, mostly the
+    // Mother 1, baby 1, from her birth day: bottles of expressed milk with about 20% formula (by volume, mostly the
     // night or bedtime bottle). Wakes every 2 to 3 hours at first, then about every 3; in month 2 longer stretches
     // with 2 night feeds; in month 3 F's routine, night 19:00 to 07:00 with one feed around 01:00 and a 2 to 3 hour
     // cycle of nap, feed and play in the day. Wake-up is never before 07:00 and month 3 bedtime never before 19:00,
     // so the routine page sorts the night and the naps cleanly.
-    public static void Kasia(DemoMother mother, DateOnly last, DateTime nowUtc, ISet<DateOnly> badNights, Random rng)
+    public static void Mother1(DemoMother mother, DateOnly last, DateTime nowUtc, ISet<DateOnly> badNights, Random rng)
     {
         var birth = mother.Baby.BirthDate;
-        var timeline = Timeline(birth, last, date => KasiaShape(date.DayNumber - birth.DayNumber, rng), badNights, rng);
+        var timeline = Timeline(birth, last, date => Mother1Shape(date.DayNumber - birth.DayNumber, rng), badNights, rng);
 
         // 2 or 3 days with nothing logged, never in the last 9 days.
         var missed = rng.Sample(Days(birth.AddDays(3), last.AddDays(-9)), rng.Pick(2, 3));
@@ -176,7 +176,7 @@ internal static class DemoBabyLog
         foreach (var day in timeline.Where(d => !missed.Contains(d.Date)))
         {
             var feeds = day.Feeds.OrderBy(f => f.Time).ToList();
-            var target = KasiaDailyMl(day.Date.DayNumber - birth.DayNumber) * rng.Between(0.92, 1.08);
+            var target = Mother1DailyMl(day.Date.DayNumber - birth.DayNumber) * rng.Between(0.92, 1.08);
             var weights = feeds.Select(_ => rng.Between(0.85, 1.15)).ToArray();
             var amounts = weights.Select(w => Math.Max(5, RoundTo5(target * w / weights.Sum()))).ToArray();
 
@@ -215,7 +215,7 @@ internal static class DemoBabyLog
         Truncate(mother, nowUtc);
     }
 
-    private static DayShape KasiaShape(int age, Random rng)
+    private static DayShape Mother1Shape(int age, Random rng)
     {
         if (age < 21)
         {
@@ -237,13 +237,13 @@ internal static class DemoBabyLog
         return new DayShape(420, 440, 1140, 1160, 75, 105, 45, 90, 1);
     }
 
-    // Mother 2, Antek, about 4 to 7 months: breastfed (side and minutes), fewer night feeds as he grows, solids
+    // Mother 2, baby 2, about 4 to 7 months: breastfed (side and minutes), fewer night feeds as he grows, solids
     // from a few days after he turns 6 months (WHO: from about 6 months), once a day, twice in the last 2 weeks.
-    public static void Marta(DemoMother mother, DateOnly first, DateOnly last, DateTime nowUtc, ISet<DateOnly> badNights,
+    public static void Mother2(DemoMother mother, DateOnly first, DateOnly last, DateTime nowUtc, ISet<DateOnly> badNights,
         Random rng)
     {
         var birth = mother.Baby.BirthDate;
-        var timeline = Timeline(first, last, date => MartaShape(date.DayNumber - birth.DayNumber, rng), badNights, rng);
+        var timeline = Timeline(first, last, date => Mother2Shape(date.DayNumber - birth.DayNumber, rng), badNights, rng);
 
         // About 85% of days logged.
         var missed = rng.Sample(Days(first.AddDays(1), last.AddDays(-3)), (int)Math.Round(timeline.Count * 0.15));
@@ -293,7 +293,7 @@ internal static class DemoBabyLog
         Truncate(mother, nowUtc);
     }
 
-    private static DayShape MartaShape(int age, Random rng)
+    private static DayShape Mother2Shape(int age, Random rng)
     {
         if (age < 150)
         {
@@ -308,14 +308,14 @@ internal static class DemoBabyLog
         return new DayShape(390, 450, 1170, 1230, 120, 155, 45, 90, rng.Chance(0.5) ? 1 : 0);
     }
 
-    // Mother 3, Lena, about 1 to 4 months: breastfed in the day, formula bottles at night and at bedtime (plus one
+    // Mother 3, baby 3, about 1 to 4 months: breastfed in the day, formula bottles at night and at bedtime (plus one
     // in the day on some days), bottles growing from about 90 to about 180 ml. Logs on about half the days, in
     // streaks; some logged days have feeds only.
-    public static void Ola(DemoMother mother, DateOnly first, DateOnly last, DateTime nowUtc, ISet<DateOnly> badNights,
+    public static void Mother3(DemoMother mother, DateOnly first, DateOnly last, DateTime nowUtc, ISet<DateOnly> badNights,
         Random rng)
     {
         var birth = mother.Baby.BirthDate;
-        var timeline = Timeline(first, last, date => OlaShape(date.DayNumber - birth.DayNumber, rng), badNights, rng);
+        var timeline = Timeline(first, last, date => Mother3Shape(date.DayNumber - birth.DayNumber, rng), badNights, rng);
         var logged = HalfInStreaks(timeline.Select(d => d.Date).ToList(), rng);
         var feedNotes = new NotePool(DemoTexts.BreastNotes, rng);
 
@@ -351,7 +351,7 @@ internal static class DemoBabyLog
         Truncate(mother, nowUtc);
     }
 
-    private static DayShape OlaShape(int age, Random rng)
+    private static DayShape Mother3Shape(int age, Random rng)
     {
         if (age < 60)
         {

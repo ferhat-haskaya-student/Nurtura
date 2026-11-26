@@ -165,8 +165,10 @@ using (var scope = app.Services.CreateScope())
 }
 
 // Demo accounts with 3 months of logs, only when F asks for it: dotnet run --project src/Nurtura.Web -- --seed-demo
-// Only in Development, never on the test database. Seeds and stops; the app is not started.
-if (args.Contains(DemoSeeder.Flag))
+// (adds them if there are none) or -- --reset-demo (replaces them). Only in Development, never on the test database.
+// Seeds and stops; the app is not started.
+var resetDemo = args.Contains(DemoSeeder.ResetFlag);
+if (resetDemo || args.Contains(DemoSeeder.Flag))
 {
     using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<NurturaDbContext>();
@@ -180,14 +182,19 @@ if (args.Contains(DemoSeeder.Flag))
 
     var demoPassword = app.Configuration["Seed:TestPassword"]
         ?? throw new InvalidOperationException("Configuration value 'Seed:TestPassword' not found.");
-    var result = await DemoSeeder.SeedAsync(
-        scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>(),
-        db,
-        demoPassword,
-        DateTime.UtcNow);
+    var demoUsers = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+    var result = resetDemo
+        ? await DemoSeeder.ResetAsync(demoUsers, db, demoPassword, DateTime.UtcNow)
+        : await DemoSeeder.SeedAsync(demoUsers, db, demoPassword, DateTime.UtcNow);
     foreach (var line in result.Lines)
     {
         Console.WriteLine(line);
+    }
+
+    // A refused reset changed nothing and says why.
+    if (resetDemo && !result.Seeded)
+    {
+        Environment.ExitCode = 1;
     }
 
     return;

@@ -26,7 +26,7 @@ public static class DemoDataGenerator
         AddProfessionals(data, new Random(seed + 10));
         AddAppointments(data, new Random(seed + 11));
         AddForum(data, new Random(seed + 12));
-        AddAssistantQueries(data, new Random(seed + 13));
+        data.AssistantQueries.AddRange(AssistantQueries(today, seed));
         return data;
     }
 
@@ -35,51 +35,51 @@ public static class DemoDataGenerator
         var (first, today, nowUtc) = (data.FirstDay, data.Today, data.NowUtc);
         var last = BabyRoutine.RoutineDate(nowUtc);
 
-        var kasia = Mother(data, DemoAccounts.KasiaEmail, "Kasia", isFirstBaby: true, HelpAtHome.Yes,
+        var mother1 = Mother(data, DemoAccounts.Mother1Email, "Mother 1", isFirstBaby: true, HelpAtHome.Yes,
             [Topic.BabySleep, Topic.BabyFeeding, Topic.PostpartumWellbeing],
             [SupportType.TalkingToProfessional, SupportType.ReadingGuides],
             new Baby
             {
-                Name = "Zosia", BirthDate = first, BirthType = BirthType.Natural, BirthWeek = 39,
+                Name = "Baby 1", BirthDate = first, BirthType = BirthType.Natural, BirthWeek = 39,
                 FeedingType = BabyFeedingType.Bottle
             });
-        var marta = Mother(data, DemoAccounts.MartaEmail, "Marta", isFirstBaby: false, HelpAtHome.Sometimes,
+        var mother2 = Mother(data, DemoAccounts.Mother2Email, "Mother 2", isFirstBaby: false, HelpAtHome.Sometimes,
             [Topic.BabyFeeding, Topic.Nutrition],
             [SupportType.ReadingGuides, SupportType.JustTracking],
             new Baby
             {
-                Name = "Antek", BirthDate = today.AddMonths(-7), BirthType = BirthType.CSection, BirthWeek = 40,
+                Name = "Baby 2", BirthDate = today.AddMonths(-7), BirthType = BirthType.CSection, BirthWeek = 40,
                 FeedingType = BabyFeedingType.StartingSolids
             });
-        var ola = Mother(data, DemoAccounts.OlaEmail, "Ola", isFirstBaby: true, HelpAtHome.MostlyAlone,
+        var mother3 = Mother(data, DemoAccounts.Mother3Email, "Mother 3", isFirstBaby: true, HelpAtHome.MostlyAlone,
             [Topic.EmotionalSupport, Topic.BabyFeeding],
             [SupportType.SharingWithMothers, SupportType.TalkingToProfessional],
             new Baby
             {
-                Name = "Lena", BirthDate = today.AddMonths(-4), BirthType = BirthType.Natural, BirthWeek = 38,
+                Name = "Baby 3", BirthDate = today.AddMonths(-4), BirthType = BirthType.Natural, BirthWeek = 38,
                 FeedingType = BabyFeedingType.Both
             });
 
         // A few bad nights each; mother 1 has more of them in the first 6 weeks.
         var rng = new Random(seed);
-        var kasiaBad = rng.Sample(Dates(first.AddDays(3), first.AddDays(41)), 4);
-        kasiaBad.UnionWith(rng.Sample(Dates(first.AddDays(42), last.AddDays(-1)), 3));
-        var martaBad = rng.Sample(Dates(first, last.AddDays(-1)), 5);
-        var olaBad = rng.Sample(Dates(first, last.AddDays(-1)), 5);
+        var mother1Bad = rng.Sample(Dates(first.AddDays(3), first.AddDays(41)), 4);
+        mother1Bad.UnionWith(rng.Sample(Dates(first.AddDays(42), last.AddDays(-1)), 3));
+        var mother2Bad = rng.Sample(Dates(first, last.AddDays(-1)), 5);
+        var mother3Bad = rng.Sample(Dates(first, last.AddDays(-1)), 5);
 
-        DemoBabyLog.Kasia(kasia, last, nowUtc, kasiaBad, new Random(seed + 1));
-        DemoBabyLog.Marta(marta, first, last, nowUtc, martaBad, new Random(seed + 2));
-        DemoBabyLog.Ola(ola, first, last, nowUtc, olaBad, new Random(seed + 3));
+        DemoBabyLog.Mother1(mother1, last, nowUtc, mother1Bad, new Random(seed + 1));
+        DemoBabyLog.Mother2(mother2, first, last, nowUtc, mother2Bad, new Random(seed + 2));
+        DemoBabyLog.Mother3(mother3, first, last, nowUtc, mother3Bad, new Random(seed + 3));
 
-        DemoCheckIns.Generate(kasia,
+        DemoCheckIns.Generate(mother1,
             new CheckInStyle(0.9, 0, 0, 0, 0, 0.25, false, 0.25, [], AlwaysToday: true),
-            first, nowUtc, kasiaBad, new Random(seed + 4));
-        DemoCheckIns.Generate(marta,
-            new CheckInStyle(0.8, 0.1, -0.4, -0.2, 0.3, 0.22, false, 0.1, DemoTexts.CheckInMarta, AlwaysToday: false),
-            first, nowUtc, martaBad, new Random(seed + 5));
-        DemoCheckIns.Generate(ola,
-            new CheckInStyle(0.5, -0.4, -0.1, -0.1, 0.3, 0.35, true, 0.05, DemoTexts.CheckInOla, AlwaysToday: false),
-            first, nowUtc, olaBad, new Random(seed + 6));
+            first, nowUtc, mother1Bad, new Random(seed + 4));
+        DemoCheckIns.Generate(mother2,
+            new CheckInStyle(0.8, 0.1, -0.4, -0.2, 0.3, 0.22, false, 0.1, DemoTexts.CheckInMother2, AlwaysToday: false),
+            first, nowUtc, mother2Bad, new Random(seed + 5));
+        DemoCheckIns.Generate(mother3,
+            new CheckInStyle(0.5, -0.4, -0.1, -0.1, 0.3, 0.35, true, 0.05, DemoTexts.CheckInMother3, AlwaysToday: false),
+            first, nowUtc, mother3Bad, new Random(seed + 6));
     }
 
     // She signed up and finished onboarding early on the first day, before her first log.
@@ -171,29 +171,29 @@ public static class DemoDataGenerator
         var (first, today, nowUtc) = (data.FirstDay, data.Today, data.NowUtc);
         PastBooking[] past =
         [
-            new(DemoAccounts.KasiaEmail, DemoAccounts.EwaEmail, first.AddDays(12), 1, Topic.BabyFeeding,
-                DemoTexts.ConcernKasiaFeeding, AppointmentStatus.Completed, Share: true,
-                Chat: DemoTexts.ChatKasiaFeeding, Note: DemoTexts.NoteKasiaFeeding),
-            new(DemoAccounts.KasiaEmail, DemoAccounts.AnnaEmail, first.AddDays(35), 1, Topic.RecoveryAfterBirth,
-                DemoTexts.ConcernKasiaRecovery, AppointmentStatus.Completed,
-                Chat: DemoTexts.ChatKasiaRecovery, Note: DemoTexts.NoteKasiaRecovery,
+            new(DemoAccounts.Mother1Email, DemoAccounts.LactationEmail, first.AddDays(12), 1, Topic.BabyFeeding,
+                DemoTexts.ConcernMother1Feeding, AppointmentStatus.Completed, Share: true,
+                Chat: DemoTexts.ChatMother1Feeding, Note: DemoTexts.NoteMother1Feeding),
+            new(DemoAccounts.Mother1Email, DemoAccounts.MidwifeEmail, first.AddDays(35), 1, Topic.RecoveryAfterBirth,
+                DemoTexts.ConcernMother1Recovery, AppointmentStatus.Completed,
+                Chat: DemoTexts.ChatMother1Recovery, Note: DemoTexts.NoteMother1Recovery,
                 EndedBy: AppointmentParty.Professional, EndedAfterMinutes: 52),
-            new(DemoAccounts.KasiaEmail, DemoAccounts.MagdaEmail, first.AddDays(50), 1, Topic.BabySleep,
-                DemoTexts.ConcernKasiaNaps, AppointmentStatus.Cancelled),
-            new(DemoAccounts.KasiaEmail, DemoAccounts.JoannaEmail, first.AddDays(70), 2, Topic.EmotionalSupport,
-                DemoTexts.ConcernKasiaFeelings, AppointmentStatus.Completed, Share: true,
-                Chat: DemoTexts.ChatKasiaFeelings, Note: DemoTexts.NoteKasiaFeelings),
-            new(DemoAccounts.MartaEmail, DemoAccounts.EwaEmail, today.AddDays(-14), 0, Topic.BabyFeeding,
-                DemoTexts.ConcernMartaSolids, AppointmentStatus.Completed, Share: true,
-                Chat: DemoTexts.ChatMartaSolids, Note: DemoTexts.NoteMartaSolids,
+            new(DemoAccounts.Mother1Email, DemoAccounts.SleepEmail, first.AddDays(50), 1, Topic.BabySleep,
+                DemoTexts.ConcernMother1Naps, AppointmentStatus.Cancelled),
+            new(DemoAccounts.Mother1Email, DemoAccounts.PsychologistEmail, first.AddDays(70), 2, Topic.EmotionalSupport,
+                DemoTexts.ConcernMother1Feelings, AppointmentStatus.Completed, Share: true,
+                Chat: DemoTexts.ChatMother1Feelings, Note: DemoTexts.NoteMother1Feelings),
+            new(DemoAccounts.Mother2Email, DemoAccounts.LactationEmail, today.AddDays(-14), 0, Topic.BabyFeeding,
+                DemoTexts.ConcernMother2Solids, AppointmentStatus.Completed, Share: true,
+                Chat: DemoTexts.ChatMother2Solids, Note: DemoTexts.NoteMother2Solids,
                 EndedBy: AppointmentParty.Mother, EndedAfterMinutes: 47),
-            new(DemoAccounts.MartaEmail, DemoAccounts.AnnaEmail, today.AddDays(-10), 2, Topic.PostpartumWellbeing,
-                DemoTexts.ConcernMartaEnergy, AppointmentStatus.Expired),
-            new(DemoAccounts.OlaEmail, DemoAccounts.JoannaEmail, first.AddDays(48), 0, Topic.EmotionalSupport,
-                DemoTexts.ConcernOlaLonely, AppointmentStatus.Completed, Share: true,
-                Chat: DemoTexts.ChatOlaLonely, Note: DemoTexts.NoteOlaLonely),
-            new(DemoAccounts.OlaEmail, DemoAccounts.MagdaEmail, today.AddDays(-21), 2, Topic.BabySleep,
-                DemoTexts.ConcernOlaBedtime, AppointmentStatus.Rejected)
+            new(DemoAccounts.Mother2Email, DemoAccounts.MidwifeEmail, today.AddDays(-10), 2, Topic.PostpartumWellbeing,
+                DemoTexts.ConcernMother2Energy, AppointmentStatus.Expired),
+            new(DemoAccounts.Mother3Email, DemoAccounts.PsychologistEmail, first.AddDays(48), 0, Topic.EmotionalSupport,
+                DemoTexts.ConcernMother3Lonely, AppointmentStatus.Completed, Share: true,
+                Chat: DemoTexts.ChatMother3Lonely, Note: DemoTexts.NoteMother3Lonely),
+            new(DemoAccounts.Mother3Email, DemoAccounts.SleepEmail, today.AddDays(-21), 2, Topic.BabySleep,
+                DemoTexts.ConcernMother3Bedtime, AppointmentStatus.Rejected)
         ];
 
         foreach (var booking in past)
@@ -271,21 +271,21 @@ public static class DemoDataGenerator
         }
 
         // Mother 1: a confirmed consultation in the next days, her last 2 weeks shared.
-        var kasia = data.Mothers.Single(m => m.Email == DemoAccounts.KasiaEmail);
-        var magda = data.Professionals.Single(p => p.Email == DemoAccounts.MagdaEmail);
-        var kasiaSlot = magda.Slots.OrderBy(Start).First(s => Start(s) >= nowUtc.AddHours(36));
-        var kasiaCreated = nowUtc.AddDays(-2).AddMinutes(-rng.Pick(0, 240));
-        var kasiaNext = Book(data, kasia, magda, kasiaSlot, Topic.BabySleep, DemoTexts.ConcernKasiaRoutine, kasiaCreated);
-        Accept(data, kasiaNext, kasiaCreated.AddMinutes(rng.Pick(120, 300)));
-        Share(kasia, kasiaNext, nowUtc);
+        var mother1 = data.Mothers.Single(m => m.Email == DemoAccounts.Mother1Email);
+        var sleep = data.Professionals.Single(p => p.Email == DemoAccounts.SleepEmail);
+        var mother1Slot = sleep.Slots.OrderBy(Start).First(s => Start(s) >= nowUtc.AddHours(36));
+        var mother1Created = nowUtc.AddDays(-2).AddMinutes(-rng.Pick(0, 240));
+        var mother1Next = Book(data, mother1, sleep, mother1Slot, Topic.BabySleep, DemoTexts.ConcernMother1Routine, mother1Created);
+        Accept(data, mother1Next, mother1Created.AddMinutes(rng.Pick(120, 300)));
+        Share(mother1, mother1Next, nowUtc);
 
         // Mother 3: a request waiting for the professional, well before it would expire.
-        var ola = data.Mothers.Single(m => m.Email == DemoAccounts.OlaEmail);
-        var anna = data.Professionals.Single(p => p.Email == DemoAccounts.AnnaEmail);
-        var olaSlot = anna.Slots.OrderBy(Start).First(s => Start(s) >= nowUtc.AddDays(3));
-        var olaCreated = nowUtc.AddHours(-rng.Pick(18, 30));
-        var olaNext = Book(data, ola, anna, olaSlot, Topic.BabyFeeding, DemoTexts.ConcernOlaFeeding, olaCreated);
-        Share(ola, olaNext, nowUtc);
+        var mother3 = data.Mothers.Single(m => m.Email == DemoAccounts.Mother3Email);
+        var midwife = data.Professionals.Single(p => p.Email == DemoAccounts.MidwifeEmail);
+        var mother3Slot = midwife.Slots.OrderBy(Start).First(s => Start(s) >= nowUtc.AddDays(3));
+        var mother3Created = nowUtc.AddHours(-rng.Pick(18, 30));
+        var mother3Next = Book(data, mother3, midwife, mother3Slot, Topic.BabyFeeding, DemoTexts.ConcernMother3Feeding, mother3Created);
+        Share(mother3, mother3Next, nowUtc);
     }
 
     private static DateTime Start(AvailabilitySlot slot) => DemoTime.Utc(slot.Date, slot.StartHour, 0);
@@ -476,11 +476,11 @@ public static class DemoDataGenerator
             data.Posts.Add(post);
         }
 
-        // Kasia saved Ola's 4am post; Ola reported the blunt comment under it as unkind, still open.
+        // Mother 1 saved mother 3's 4am post; mother 3 reported the blunt comment under it as unkind, still open.
         var fourAm = data.Posts.Single(p => p.Post.Title == DemoTexts.FourAmTitle);
         data.SavedPosts.Add(new DemoSavedPost
         {
-            Mother = By(DemoAccounts.KasiaEmail),
+            Mother = By(DemoAccounts.Mother1Email),
             Post = fourAm,
             Saved = new SavedPost { SavedAt = fourAm.Post.CreatedAt.AddHours(26) }
         });
@@ -488,7 +488,7 @@ public static class DemoDataGenerator
         var unkind = fourAm.Comments.Single(c => c.Comment.Body == DemoTexts.UnkindComment);
         data.CommentReports.Add(new DemoCommentReport
         {
-            Reporter = By(DemoAccounts.OlaEmail),
+            Reporter = By(DemoAccounts.Mother3Email),
             Comment = unkind,
             Report = new CommentReport
             {
@@ -502,8 +502,13 @@ public static class DemoDataGenerator
 
     // About 40 Assistant searches over the 3 months: most matched with a suggested topic, some without a topic,
     // some not matched, two with the urgent card. Only what the app stores: date, matched, topic, urgent.
-    private static void AddAssistantQueries(DemoData data, Random rng)
+    // They depend only on the run's date and the seed, so the reset can find an earlier run's rows again
+    // (an AssistantQuery has no owner).
+    public static List<AssistantQuery> AssistantQueries(DateOnly today, int seed = DefaultSeed)
     {
+        var rng = new Random(seed + 13);
+        var firstDay = today.AddMonths(-3);
+        var queries = new List<AssistantQuery>();
         var searches = new List<(bool Matched, Topic? Topic, bool Urgent)>();
         void Add(int count, bool matched, Topic? topic)
         {
@@ -524,19 +529,21 @@ public static class DemoDataGenerator
         searches.Add((true, Topic.EmotionalSupport, true));
         searches.Add((false, null, true));
 
-        var span = data.Today.DayNumber - data.FirstDay.DayNumber + 1;
+        var span = today.DayNumber - firstDay.DayNumber + 1;
         var shuffled = searches.OrderBy(_ => rng.Next()).ToList();
         for (var i = 0; i < shuffled.Count; i++)
         {
             var day = (int)(span * (i + rng.NextDouble()) / shuffled.Count);
-            data.AssistantQueries.Add(new AssistantQuery
+            queries.Add(new AssistantQuery
             {
-                Date = data.FirstDay.AddDays(Math.Min(day, span - 1)),
+                Date = firstDay.AddDays(Math.Min(day, span - 1)),
                 Matched = shuffled[i].Matched,
                 SuggestedTopic = shuffled[i].Topic,
                 UrgentShown = shuffled[i].Urgent
             });
         }
+
+        return queries;
     }
 
     private static List<DateOnly> Dates(DateOnly from, DateOnly to)
