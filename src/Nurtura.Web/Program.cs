@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
 using Nurtura.Core;
 using Nurtura.Core.Content;
+using Nurtura.Core.Demo;
 using Nurtura.Core.Identity;
 using Nurtura.Core.Services;
 using Nurtura.Data;
@@ -161,6 +162,35 @@ using (var scope = app.Services.CreateScope())
             scope.ServiceProvider.GetRequiredService<INurturaDbContext>(),
             testPassword);
     }
+}
+
+// Demo accounts with 3 months of logs, only when F asks for it: dotnet run --project src/Nurtura.Web -- --seed-demo
+// Only in Development, never on the test database. Seeds and stops; the app is not started.
+if (args.Contains(DemoSeeder.Flag))
+{
+    using var scope = app.Services.CreateScope();
+    var db = scope.ServiceProvider.GetRequiredService<NurturaDbContext>();
+    var refusal = DemoSeeder.RefusalReason(app.Environment.IsDevelopment(), db.Database.GetDbConnection().Database);
+    if (refusal is not null)
+    {
+        Console.Error.WriteLine(refusal);
+        Environment.ExitCode = 1;
+        return;
+    }
+
+    var demoPassword = app.Configuration["Seed:TestPassword"]
+        ?? throw new InvalidOperationException("Configuration value 'Seed:TestPassword' not found.");
+    var result = await DemoSeeder.SeedAsync(
+        scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>(),
+        db,
+        demoPassword,
+        DateTime.UtcNow);
+    foreach (var line in result.Lines)
+    {
+        Console.WriteLine(line);
+    }
+
+    return;
 }
 
 // Configure the HTTP request pipeline.
