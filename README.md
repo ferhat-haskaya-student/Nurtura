@@ -1,8 +1,8 @@
 # Nurtura
 
 Nurtura is a responsive, phone-first web app for mothers in the first year after birth. It helps a
-mother track and organize her own wellbeing and her baby's sleep and feeding. It never diagnoses:
-no text, label or logic in the app draws a medical conclusion. Medical feedback comes only from a
+mother track and organize her own wellbeing and her baby's sleep and feeding. It never diagnoses.
+No text, label or logic in the app draws a medical conclusion. Medical feedback comes only from a
 certified professional in a booked consultation. Nurtura is a master's thesis project.
 
 ## Features
@@ -66,6 +66,9 @@ Apply the migrations, then run the app:
 dotnet ef database update --project src/Nurtura.Data --startup-project src/Nurtura.Web
 dotnet run --project src/Nurtura.Web --launch-profile https
 ```
+
+The migrations enable the PostgreSQL `unaccent` extension (used by the Assistant and forum search),
+so the database user needs permission to create it.
 
 Open https://localhost:7130. Google sign-in expects this address
 (https://localhost:7130/signin-google). The `http` profile runs on http://localhost:5050.
